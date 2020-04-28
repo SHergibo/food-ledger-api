@@ -11,11 +11,6 @@ const roles = ['admin', 'user', 'ghost'];
 let Schema = Mongoose.Schema;
 
 let schema = new Schema({
-    username : {
-        type : String,
-        unique : true,
-        trim : true
-    },
     firstname : {
         type : String,
         required : true,
@@ -50,7 +45,6 @@ let schema = new Schema({
     },
     householdcode : {
         type : String,
-        required : true,
         trim : true
     }
 });
@@ -83,7 +77,7 @@ schema.methods.passwordMatches = async function(pwd){
 };
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'username', 'firstname', 'lastname', 'email', 'role'];
+    const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdcode"];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];

@@ -4,7 +4,7 @@ let Schema = Mongoose.Schema;
 
 let schema = new Schema({
     member : {
-        type : Object,
+        type : Array, //TODO changer en objet par la suite
         required: true
     },
     householdname : {

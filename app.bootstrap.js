@@ -12,7 +12,7 @@ const { port, env } = require('./config/environment.config');
 const App = require ('./config/app.config');
 const Mongoose =require ('./config/mongoose.config');
 
-// Mongoose.connect();
+Mongoose.connect();
 
 App.listen( port, () => Logger.info(`HTTP server is now running on port ${port} (${env})`));
 

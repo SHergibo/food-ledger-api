@@ -22,7 +22,8 @@ exports.connect = () => {
     console.log(mongo.uri)
     Mongoose.connect(mongo.uri, {
         keepAlive : 1,
-        useNewUrlParser : true
+        useNewUrlParser : true,
+        useUnifiedTopology: true,
     });
     Logger.info('MongoDB server is now running on port 27017');
     return Mongoose.connection;
