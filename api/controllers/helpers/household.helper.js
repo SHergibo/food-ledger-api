@@ -1,7 +1,6 @@
 const Household = require('../../models/household.model');
 
 exports.addHousehold = async (body) => {
-    console.log(body);
     const householdcode = `${body.householdname}-2020` //TODO générer aléatoirement
     const household = new Household({
         member: [body.usercode], //TODO provisoire
@@ -14,7 +13,6 @@ exports.addHousehold = async (body) => {
 };
 
 exports.patchMemberHousehold = async (body) => {
-    console.log(body);
     let household = await Household.findOne({householdcode : body.householdcode});
     let members = household.member;
     members.push(body.usercode);

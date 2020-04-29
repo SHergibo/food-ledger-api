@@ -1,4 +1,5 @@
 const User = require('./../models/user.model'),
+      Household = require('./../models/household.model'),
       Helpers = require('./helpers/household.helper');
       Boom = require('@hapi/boom'),
       TokenAuth = require('./../models/token-auth.model');
@@ -14,10 +15,29 @@ exports.add = async (req, res, next) =>{
     // console.log(req.body);
     try{
         let user;
+        let arrayOtherMember;
+        let searchUserArray = [];
         const userCode = generateUserCode(`${req.body.firstname}${req.body.lastname}`);
 
         if(req.body.householdcode){
-            //find le ménage avec le code si ok => on continu sinon return error et stop la création de l'utilisateur
+            const household = await Household.findOne({householdcode : req.body.householdcode});
+            if(!household){
+                //TODO provisoire
+                return res.status(404).send({error : "No familly found with this household code"});
+            }
+        }
+
+        if(req.body.othermember){
+            arrayOtherMember = req.body.othermember;
+            for (const usercode of arrayOtherMember){
+                const searchUser = await User.findOne({usercode});
+                if(!searchUser){
+                    //TODO provisoire (envoyer plus d'information pour utilisation dans le front, tableau du ou des mauvais usercodes ???)
+                    searchUserArray = [];
+                    return res.status(404).send({error : `No user with this usercode ${usercode}`});
+                }
+                searchUserArray.push(searchUser);
+            }
         }
 
         if(req.body.householdname || req.body.householdcode){
@@ -27,21 +47,31 @@ exports.add = async (req, res, next) =>{
         }
         //Si création d'un utilisateur en même temps qu'un ménage
         if(req.body.householdname){
-            const household = await Helpers.addHousehold({
+            let household = await Helpers.addHousehold({
                 householdname : req.body.householdname,
                 usercode : userCode,
                 userId : user._id
             })
             user = await User.findByIdAndUpdate(user._id,  {householdcode : household.householdcode}, {override : true, upsert : true, new : true});
+            if(req.body.othermember){
+                //Si création d'un user avec autre usercode
+                for (const [index, usercode] of arrayOtherMember.entries()){
+                    searchUser = await User.findByIdAndUpdate(searchUserArray[index]._id,  {householdcode : household.householdcode}, {override : true, upsert : true, new : true});
+                    let newMember = household.member;
+                    newMember.push(usercode);
+                    household = await Household.findByIdAndUpdate(household._id,  {member : newMember}, {override : true, upsert : true, new : true});
+                }
+                searchUserArray = [];
+            }
         //Si création d'un utilisateur avec un code famille
         }else if(req.body.householdcode){
-            //TODO test si householdcode existe
             await Helpers.patchMemberHousehold({
                 householdcode : req.body.householdcode,
                 usercode : userCode
             })
         }else{
-            //message erreur besoin d'un nom de famille ou d'un code famille
+            //TODO provisoire
+            return res.status(400).send({error : "Need a household name or a household code"});
         }
         
         await TokenAuth.generate(user);

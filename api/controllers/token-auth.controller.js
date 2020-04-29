@@ -24,7 +24,6 @@ exports.createNewToken = async (req, res, next) => {
 exports.updateUsedToken = async (req, res, next) => {
   try {
     let findTokenAuth = await TokenAuth.findOne({ token: req.params.tokenId });
-    console.log(findTokenAuth)
     if (findTokenAuth.expires < Moment().toDate()) {
       return res.status(401).send({ error: 'Verification token expired' });
     } else {
