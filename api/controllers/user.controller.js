@@ -29,14 +29,23 @@ exports.add = async (req, res, next) =>{
 
         if(req.body.othermember){
             arrayOtherMember = req.body.othermember;
-            for (const usercode of arrayOtherMember){
-                const searchUser = await User.findOne({usercode});
+            for (const otherUsercode of arrayOtherMember){
+                const searchUser = await User.findOne({usercode : otherUsercode});
                 if(!searchUser){
                     //TODO provisoire (envoyer plus d'information pour utilisation dans le front, tableau du ou des mauvais usercodes ???)
                     searchUserArray = [];
-                    return res.status(404).send({error : `No user with this usercode ${usercode}`});
+                    return res.status(404).send({error : `No user with this usercode ${otherUsercode}`});
                 }
                 searchUserArray.push(searchUser);
+
+                //Supprime le membre de la liste membre de son ancienne famille
+                const householdOtherUser = await Household.findOne({userId : searchUser._id});
+                let arrayMember = householdOtherUser.member;
+                let indexMember = arrayMember.indexOf(otherUsercode);
+                if(indexMember > -1){
+                    arrayMember.splice(indexMember, 1);
+                    await Household.findByIdAndUpdate(householdOtherUser._id,  {member : arrayMember}, {override : true, upsert : true, new : true});
+                }
             }
         }
 
@@ -111,9 +120,35 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.userId);
+        let user = await User.findById(req.params.userId);
+        const household = await Household.findOne({userId : req.params.userId});
+        //Delete si pas de délégation de famille à un autre membre de la même famille
+        if(!req.query.delegateUserCode){
+            let arrayMember = household.member;
+            let indexUserToDelete = arrayMember.indexOf(user.usercode);
+            arrayMember.splice(indexUserToDelete, 1);
+            //Boucle dans le tableau des membres de la famille sans l'utilisateur voulant supprimmer son compte
+            for (const usercode of arrayMember){
+                let memberOfHousehold = await User.findOne({usercode});
+                let olderHousehold = await Household.findOne({userId : memberOfHousehold._id});
+                //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
+                if(olderHousehold){
+                    await User.findByIdAndUpdate(memberOfHousehold._id,  {householdcode : olderHousehold.householdcode}, {override : true, upsert : true, new : true});
+                    let addMember = olderHousehold.member;
+                    addMember.push(usercode);
+                    await Household.findByIdAndUpdate(olderHousehold._id,  {member : addMember}, {override : true, upsert : true, new : true});
+                }
+                //Si le membre n'avait pas d'ancienn famille, ajout de "none dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
+                else{
+                    await User.findByIdAndUpdate(memberOfHousehold._id,  {householdcode : "none"}, {override : true, upsert : true, new : true});
+                }
+            }
+        }
+        await Household.findByIdAndDelete(household._id);
+        user = await User.findByIdAndDelete(req.params.userId);
         return res.json(user.transform());
     } catch (error) {
+        console.log(error);
         next(Boom.badImplementation(error.message));        
     }
 };

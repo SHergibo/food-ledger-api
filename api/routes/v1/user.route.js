@@ -15,6 +15,7 @@ router
     .route('/:userId')
         .get(authorize([ADMIN, LOGGED_USER]), UserController.findOne)
         .patch(authorize([ADMIN, LOGGED_USER]), UserController.update)
-        .delete(authorize([ADMIN, LOGGED_USER]), UserController.remove);
+        .delete(/*authorize([ADMIN, LOGGED_USER]),*/ UserController.remove);
+
 
 module.exports = router;
