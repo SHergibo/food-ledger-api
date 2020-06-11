@@ -8,7 +8,6 @@ const router = Express.Router();
 
 router
     .route('/')
-        // .get(HouseholdController.findAll)
         .post(HouseholdController.add);
 
 router

@@ -8,7 +8,6 @@ const router = Express.Router();
 
 router
     .route('/')
-        // .get(UserController.findAll)
         .post(UserController.add);
 
 router

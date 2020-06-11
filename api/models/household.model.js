@@ -18,6 +18,11 @@ let schema = new Schema({
         required : true,
         trim : true
     },
+    isWaiting : {
+        type : Boolean,
+        default : false,
+        required : true
+    },
     userId : {
         type : Schema.Types.ObjectId,
         ref : 'User',
