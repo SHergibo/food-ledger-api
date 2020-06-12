@@ -2,12 +2,28 @@ const Household = require('../../models/household.model');
 const User = require('../../models/user.model');
 const Notification = require('../../models/notification.model');
 
+createObjectMemberNoExport = async (body) => {
+    let objectMember = {
+        userId : body._id,
+        usercode: body.usercode,
+        firstname : body.firstname,
+        lastname : body.lastname,
+        isFlaged : false,
+    };
+    return objectMember;
+};
+
+exports.createObjectMember = async (body) => {
+    return await createObjectMemberNoExport(body);
+};
+
 exports.addHousehold = async (body) => {
     const householdcode = `${body.householdname}-2020` //TODO générer aléatoirement
+    let objectMember = await createObjectMemberNoExport(body.user);
     const household = new Household({
-        member: [body.usercode], //TODO provisoire
+        member: [objectMember],
         householdname: body.householdname,
-        userId: body.userId,
+        userId: body.user._id,
         householdcode: householdcode
     });
     await household.save();
@@ -16,8 +32,10 @@ exports.addHousehold = async (body) => {
 
 exports.patchMemberHousehold = async (body) => {
     let household = await Household.findOne({ householdcode: body.householdcode });
+    let user = await User.findOne({usercode : body.usercode});
+    let objectMember = await createObjectMemberNoExport(user);
     let members = household.member;
-    members.push(body.usercode);
+    members.push(objectMember);
     const householdPatchedMembers = await Household.findByIdAndUpdate(household._id, { member: members }, { override: true, upsert: true, new: true });
     return householdPatchedMembers;
 };
@@ -32,7 +50,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
     } else {
         //Supprimer l'ancien admin de la liste des membres et mais isWaiting en true pour bloquer toutes éditions/suppressions/ajour de produit dans la famille
         let arrayMember = household.member;
-        let indexMember = arrayMember.indexOf(oldAdmin.usercode);
+        let indexMember = arrayMember.findIndex(obj => obj.usercode === oldAdmin.usercode);
         if (indexMember > -1) {
             arrayMember.splice(indexMember, 1);
         }

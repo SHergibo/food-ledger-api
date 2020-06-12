@@ -41,7 +41,7 @@ exports.add = async (req, res, next) => {
                 //Supprime le membre de la liste membre de son ancienne famille
                 const householdOtherUser = await Household.findOne({ userId: searchUser._id });
                 let arrayMember = householdOtherUser.member;
-                let indexMember = arrayMember.indexOf(otherUsercode);
+                let indexMember = arrayMember.findIndex(obj => obj.usercode === otherUsercode);
                 if (indexMember > -1) {
                     arrayMember.splice(indexMember, 1);
                     await Household.findByIdAndUpdate(householdOtherUser._id, { member: arrayMember }, { override: true, upsert: true, new: true });
@@ -58,16 +58,16 @@ exports.add = async (req, res, next) => {
         if (req.body.householdname) {
             let household = await Helpers.addHousehold({
                 householdname: req.body.householdname,
-                usercode: userCode,
-                userId: user._id
+                user : user
             });
             user = await User.findByIdAndUpdate(user._id, { householdcode: household.householdcode }, { override: true, upsert: true, new: true });
             if (req.body.othermember) {
                 //Si création d'un user avec autre usercode
-                for (const [index, usercode] of arrayOtherMember.entries()) {
-                    searchUser = await User.findByIdAndUpdate(searchUserArray[index]._id, { householdcode: household.householdcode }, { override: true, upsert: true, new: true });
+                for (const otherUser of searchUserArray) {
+                    searchUser = await User.findByIdAndUpdate(otherUser._id, { householdcode: household.householdcode }, { override: true, upsert: true, new: true });
                     let newMember = household.member;
-                    newMember.push(usercode);
+                    let objectMember = await Helpers.createObjectMember(searchUser);
+                    newMember.push(objectMember);
                     household = await Household.findByIdAndUpdate(household._id, { member: newMember }, { override: true, upsert: true, new: true });
                 }
                 searchUserArray = [];
@@ -127,22 +127,22 @@ exports.remove = async (req, res, next) => {
         //Delete si pas de délégation de famille à un autre membre de la même famille
         if (!queryUserCode) {
             let arrayMember = household.member;
-            let indexUserToDelete = arrayMember.indexOf(user.usercode);
+            let indexUserToDelete = arrayMember.findIndex(obj => obj.usercode === user.usercode);
             arrayMember.splice(indexUserToDelete, 1);
+            console.log(arrayMember);
             //Boucle dans le tableau des membres de la famille sans l'utilisateur voulant supprimmer son compte
-            for (const usercode of arrayMember) {
-                let memberOfHousehold = await User.findOne({ usercode });
-                let olderHousehold = await Household.findOne({ userId: memberOfHousehold._id });
+            for (const otherUser of arrayMember) {
+                let olderHousehold = await Household.findOne({ userId: otherUser.userId });
                 //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
                 if (olderHousehold) {
-                    await User.findByIdAndUpdate(memberOfHousehold._id, { householdcode: olderHousehold.householdcode }, { override: true, upsert: true, new: true });
+                    await User.findByIdAndUpdate(otherUser.userId, { householdcode: olderHousehold.householdcode }, { override: true, upsert: true, new: true });
                     let addMember = olderHousehold.member;
-                    addMember.push(usercode);
+                    addMember.push(otherUser);
                     await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
                 }
-                //Si le membre n'avait pas d'ancienn famille, ajout de "none dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
+                //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
                 else {
-                    await User.findByIdAndUpdate(memberOfHousehold._id, { householdcode: "none" }, { override: true, upsert: true, new: true });
+                    await User.findByIdAndUpdate(otherUser.userId, { householdcode: "none" }, { override: true, upsert: true, new: true });
                 }
             }
             await Household.findByIdAndDelete(household._id);
