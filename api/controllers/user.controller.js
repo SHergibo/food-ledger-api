@@ -1,8 +1,8 @@
 const User = require('./../models/user.model'),
-  Household = require('./../models/household.model'),
-  Helpers = require('./helpers/household.helper');
-Boom = require('@hapi/boom'),
-  TokenAuth = require('./../models/token-auth.model');
+      Household = require('./../models/household.model'),
+      Helpers = require('./helpers/household.helper'),
+      Boom = require('@hapi/boom'),
+      TokenAuth = require('./../models/token-auth.model');
 
 const generateUserCode = (username) => {
   return `${username}-2020` //TODO générer aleatoirement
@@ -131,6 +131,7 @@ exports.remove = async (req, res, next) => {
       household = await Household.findOne({ householdcode: user.householdcode });
     }
 
+    //met à jour le tableau des membres d'une famille sans la personne qui va supprimer son compte
     let arrayMember = household.member;
     let indexUserToDelete = arrayMember.findIndex(obj => obj.usercode === user.usercode);
     arrayMember.splice(indexUserToDelete, 1);
