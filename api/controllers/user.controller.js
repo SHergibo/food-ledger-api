@@ -120,6 +120,9 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
+
+    //TODO check l'id de l'utilisateur à supprimer avec l'id livrer par l'accessToken pour bloquer une personne ayant l'id d'une autre personne
+
     let paramsUserId = req.params.userId;
     let queryUserCode = req.query.delegateUserCode;
     const user = await User.findById(paramsUserId);
@@ -139,22 +142,7 @@ exports.remove = async (req, res, next) => {
     //Delete si pas de délégation de famille à un autre membre de la même famille
     if (user.role === "admin") {
       if (!queryUserCode) {
-        //Boucle dans le tableau des membres de la famille sans l'utilisateur voulant supprimmer son compte
-        for (const otherUser of arrayMember) {
-          let olderHousehold = await Household.findOne({ userId: otherUser.userId });
-          //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
-          if (olderHousehold) {
-            await User.findByIdAndUpdate(otherUser.userId, { householdcode: olderHousehold.householdcode }, { override: true, upsert: true, new: true });
-            let addMember = olderHousehold.member;
-            addMember.push(otherUser);
-            await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
-          }
-          //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
-          else {
-            await User.findByIdAndUpdate(otherUser.userId, { householdcode: "none" }, { override: true, upsert: true, new: true });
-          }
-        }
-        await Household.findByIdAndDelete(household._id);
+        await Helpers.noMoreAdmin(arrayMember, household._id);
       } else if (queryUserCode) {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserCode);
         if (requestSwitchAdmin.status) {
@@ -163,7 +151,6 @@ exports.remove = async (req, res, next) => {
         }
       }
     } else if (user.role === "user") {
-      //TODO ne pas oublier de changer le role d'un membre d'admin en user lors d'un changement de famille (dans la route request)
       await Household.findByIdAndUpdate(household._id, { member: arrayMember }, { override: true, upsert: true, new: true });
 
       let olderHousehold = await Household.findOne({ userId: user._id });

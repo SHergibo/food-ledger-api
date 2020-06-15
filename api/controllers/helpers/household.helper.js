@@ -4,11 +4,11 @@ const Notification = require('../../models/notification.model');
 
 createObjectMemberNoExport = async (body) => {
     let objectMember = {
-        userId : body._id,
+        userId: body._id,
         usercode: body.usercode,
-        firstname : body.firstname,
-        lastname : body.lastname,
-        isFlaged : false,
+        firstname: body.firstname,
+        lastname: body.lastname,
+        isFlagged: false,
     };
     return objectMember;
 };
@@ -32,7 +32,7 @@ exports.addHousehold = async (body) => {
 
 exports.patchMemberHousehold = async (body) => {
     let household = await Household.findOne({ householdcode: body.householdcode });
-    let user = await User.findOne({usercode : body.usercode});
+    let user = await User.findOne({ usercode: body.usercode });
     let objectMember = await createObjectMemberNoExport(user);
     let members = household.member;
     members.push(objectMember);
@@ -66,4 +66,27 @@ exports.requestSwitchAdmin = async (userId, query) => {
         await notification.save();
         return household;
     }
+};
+
+exports.noMoreAdmin = async (arrayMember, householdId) => {
+    for (const otherUser of arrayMember) {
+        let olderHousehold = await Household.findOne({ userId: otherUser.userId });
+        //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
+        if (olderHousehold) {
+
+            if(otherUser.isFlagged === true){
+                otherUser.isFlagged = false;
+            }
+            
+            await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdcode: olderHousehold.householdcode }, { override: true, upsert: true, new: true });
+            let addMember = olderHousehold.member;
+            addMember.push(otherUser);
+            await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
+        }
+        //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
+        else {
+            await User.findByIdAndUpdate(otherUser.userId, { householdcode: "none" }, { override: true, upsert: true, new: true });
+        }
+    }
+    return await Household.findByIdAndDelete(householdId);
 };
