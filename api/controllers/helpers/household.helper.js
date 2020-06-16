@@ -61,7 +61,8 @@ exports.requestSwitchAdmin = async (userId, query) => {
             message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
             householdId: household._id,
             userId: delegate._id,
-            type: "request-admin"
+            type: "request-admin",
+            urlRequest : "switch-admin"
         });
         await notification.save();
         return household;

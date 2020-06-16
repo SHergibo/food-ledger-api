@@ -3,6 +3,7 @@ const Mongoose = require('mongoose');
 let Schema = Mongoose.Schema;
 
 const types = ['information', 'request-admin', 'request-addUser'];
+const url = ['switch-admin', 'add-user-respond'];
 
 let schema = new Schema({
     message : {
@@ -14,6 +15,10 @@ let schema = new Schema({
         type : Schema.Types.ObjectId,
         ref : 'User',
     },
+    otherUserId : {
+        type : Schema.Types.ObjectId,
+        ref : 'User',
+    },
     householdId : {
         type : Schema.Types.ObjectId,
         ref : 'Household',
@@ -21,6 +26,11 @@ let schema = new Schema({
     type : {
         type : String,
         enum : types,
+        required : true
+    },
+    urlRequest : {
+        type : String,
+        enum : url,
         required : true
     }
 });
