@@ -15,7 +15,7 @@ router
         .post(/*authorize([ADMIN, LOGGED_USER]),*/ RequestController.addUserRequest);
 
 router
-    .route('/add-user-respond')
+    .route('/add-user-respond/:notificationId')
         .get(/*authorize([ADMIN, LOGGED_USER]),*/ RequestController.addUserRespond);
 
 module.exports = router;
