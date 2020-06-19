@@ -109,11 +109,11 @@ exports.addUserRequest = async (req, res, next) => {
     let userId;
     let message;
     let user = await User.findOne({ usercode: req.body.usercode });
-    let otherHousehold = await Household.findOne({householdcode : user.householdcode});
+    let otherHousehold = await Household.findOne({ householdcode: user.householdcode });
     let otherUserId;
 
     //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
-    if(otherHousehold.isWaiting === true){
+    if (otherHousehold.isWaiting === true) {
       //TODO provisoire
       return res.status(400).send({ error: "User can't switch familly at the moment because it's familly doesn't have an admin" });
     }
@@ -153,7 +153,7 @@ exports.addUserRespond = async (req, res, next) => {
       return res.status(400).send({ error: "Query needed" });
     }
 
-    if (req.query.acceptedRequest !== "yes" || req.query.acceptedRequest !== "no") {
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
       //TODO provisoire
       return res.status(400).send({ error: "Query must be yes or no" });
     }
@@ -168,10 +168,9 @@ exports.addUserRespond = async (req, res, next) => {
     }
 
     let notification = await Notification.findById(req.params.notificationId);
-
+    let user;
     if (req.query.acceptedRequest === "yes") {
 
-      let user;
       if (notification.otherUserId) {
         user = await User.findById(notification.otherUserId);
       } else {
@@ -180,12 +179,15 @@ exports.addUserRespond = async (req, res, next) => {
 
 
       let oldHousehold = await Household.findOne({ householdcode: user.householdcode });
-      let oldMemberArray = oldHousehold.member;
+      let oldMemberArray = [];
+      if(oldHousehold){
+        oldMemberArray = oldHousehold.member;
+      }
       let newHousehold = await Household.findById(notification.householdId);
       let newMemberArray = newHousehold.member;
 
       //Envoie une notification au membre admin ayant d'autre membre dans sa famille si cette admin veut rentrer dans une nouvelle famille en tant que simple user
-      if(notification.otherUserId && user.role === "admin" && oldMemberArray.length > 1){
+      if (notification.otherUserId && user.role === "admin" && oldMemberArray.length > 1) {
         //Créée nouvelle notification pour obliger l'user à déléguer ses droit admin à une autre personne avant de pouvoir switch de famille
         let newNotification = await new Notification({
           message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droit d'administration à un autre membre de votre famille.",
@@ -201,29 +203,38 @@ exports.addUserRespond = async (req, res, next) => {
       //Chercher le user dans l'array member de son ancienne famille
       let indexMember = oldMemberArray.findIndex(obj => obj.usercode === user.usercode);
 
-      if (user.role === "admin" && oldHousehold.member.length > 1 && !req.query.otherMember) {
+      if (user.role === "admin" && oldMemberArray.length > 1 && !req.query.otherMember) {
         //TODO provisoire
         return res.status(400).send({ error: "Query needed" });
       }
 
+      if (oldHousehold) {
+        newMemberArray.push(oldMemberArray[indexMember]);
+      } else {
+        let objectMember = await Helpers.createObjectMember(user);
+        newMemberArray.push(objectMember);
+      }
       //Ajoute le membre dans sa nouvelle famille
-      newMemberArray.push(oldHousehold.member[indexMember]);
       await Household.findByIdAndUpdate(newHousehold._id, { member: newMemberArray }, { override: true, upsert: true, new: true });
+
 
       //check si le membre est user
       if (user.role === "user") {
         //Change le householdcode dans user
-        user = await User.findOneAndUpdate(user._id, { householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
+        user = await User.findByIdAndUpdate(user._id, { householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
 
-        //Supprime le membre de son ancienne famille
-        oldMemberArray.splice(indexMember, 1);
-        await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
+        if (oldHousehold) {
+          //Supprime le membre de son ancienne famille
+          oldMemberArray.splice(indexMember, 1);
+          await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
+        }
+
       }
 
       //check si le membre est admin et qu'il n'y a aucun membre dans sa famille
-      if (user.role === "admin" && oldHousehold.member.length === 1) {
+      if (user.role === "admin" && oldMemberArray.length === 1) {
         //Change le rôle d'admin en user et le householdcode
-        user = await User.findOneAndUpdate(user._id, { role: "user", householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
+        user = await User.findByIdAndUpdate(user._id, { role: "user", householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
 
         //Supprime le membre de son ancienne famille
         oldMemberArray = [];
@@ -231,9 +242,9 @@ exports.addUserRespond = async (req, res, next) => {
       }
 
       //check si le membre est admin et qu'il y a d'autre membre dans sa famille et utiliser query otherMember
-      if (user.role === "admin" && oldHousehold.member.length > 1 && req.query.otherMember) {
+      if (user.role === "admin" && oldMemberArray.length > 1 && req.query.otherMember) {
         //Change le rôle d'admin en user et le householdcode
-        user = await User.findOneAndUpdate(user._id, { role: "user", householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
+        user = await User.findByIdAndUpdate(user._id, { role: "user", householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
 
         //Supprimer le membre de son ancienne famille et créée et envoie une notification au délégué(e)
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
@@ -249,6 +260,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.json(user.transform());
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

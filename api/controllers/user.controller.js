@@ -1,5 +1,6 @@
 const User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
+      Notification = require('./../models/notification.model'),
       Helpers = require('./helpers/household.helper'),
       Boom = require('@hapi/boom'),
       TokenAuth = require('./../models/token-auth.model');
@@ -12,15 +13,15 @@ const generateUserCode = (username) => {
 * Post one user
 */
 exports.add = async (req, res, next) => {
-  // console.log(req.body);
   try {
     let user;
     let arrayOtherMember;
     let searchUserArray = [];
     const userCode = generateUserCode(`${req.body.firstname}${req.body.lastname}`);
+    let household;
 
-    if (req.body.householdcode) {
-      const household = await Household.findOne({ householdcode: req.body.householdcode });
+    if (req.query.householdcode) {
+      household = await Household.findOne({ householdcode: req.query.householdcode });
       if (!household) {
         //TODO provisoire
         return res.status(404).send({ error: "No familly found with this household code" });
@@ -37,47 +38,56 @@ exports.add = async (req, res, next) => {
           return res.status(404).send({ error: `No user with this usercode ${otherUsercode}` });
         }
         searchUserArray.push(searchUser);
-
-        //Supprime le membre de la liste membre de son ancienne famille
-        const householdOtherUser = await Household.findOne({ userId: searchUser._id });
-        let arrayMember = householdOtherUser.member;
-        let indexMember = arrayMember.findIndex(obj => obj.usercode === otherUsercode);
-        if (indexMember > -1) {
-          arrayMember.splice(indexMember, 1);
-          await Household.findByIdAndUpdate(householdOtherUser._id, { member: arrayMember }, { override: true, upsert: true, new: true });
-        }
       }
     }
 
-    if (req.body.householdname || req.body.householdcode) {
+    if (req.body.householdname || req.query.householdcode) {
       req.body.usercode = userCode;
+      if(req.query.householdcode){
+        req.body.householdcode = "none";
+      }
       user = new User(req.body);
       await user.save();
     }
     //Si création d'un utilisateur en même temps qu'un ménage
     if (req.body.householdname) {
-      let household = await Helpers.addHousehold({
+      let newHousehold = await Helpers.addHousehold({
         householdname: req.body.householdname,
         user: user
       });
-      user = await User.findByIdAndUpdate(user._id, { householdcode: household.householdcode }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(user._id, { householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
+
+
       if (req.body.othermember) {
         //Si création d'un user avec autre usercode
         for (const otherUser of searchUserArray) {
-          searchUser = await User.findByIdAndUpdate(otherUser._id, { householdcode: household.householdcode }, { override: true, upsert: true, new: true });
-          let newMember = household.member;
-          let objectMember = await Helpers.createObjectMember(searchUser);
-          newMember.push(objectMember);
-          household = await Household.findByIdAndUpdate(household._id, { member: newMember }, { override: true, upsert: true, new: true });
+          //New notif pour otherMember
+          let notification = await new Notification({
+            message: `L'administrateur de la famille ${newHousehold.householdname} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`,
+            householdId: newHousehold._id,
+            userId: otherUser._id,
+            type: "request-addUser",
+            urlRequest: "add-user-respond"
+          });
+          await notification.save();
         }
         searchUserArray = [];
       }
+
+
       //Si création d'un utilisateur avec un code famille
-    } else if (req.body.householdcode) {
-      await Helpers.patchMemberHousehold({
-        householdcode: req.body.householdcode,
-        usercode: userCode
-      })
+    } else if (req.query.householdcode) {
+
+      //Envoie notif à l'admin de la famille en question
+      let notification = await new Notification({
+        message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
+        householdId: household._id,
+        userId: household.userId,
+        otherUserId: user._id,
+        type: "request-addUser",
+        urlRequest: "add-user-respond"
+      });
+      await notification.save();
     } else {
       //TODO provisoire
       return res.status(400).send({ error: "Need a household name or a household code" });

@@ -30,16 +30,6 @@ exports.addHousehold = async (body) => {
     return household;
 };
 
-exports.patchMemberHousehold = async (body) => {
-    let household = await Household.findOne({ householdcode: body.householdcode });
-    let user = await User.findOne({ usercode: body.usercode });
-    let objectMember = await createObjectMemberNoExport(user);
-    let members = household.member;
-    members.push(objectMember);
-    const householdPatchedMembers = await Household.findByIdAndUpdate(household._id, { member: members }, { override: true, upsert: true, new: true });
-    return householdPatchedMembers;
-};
-
 exports.requestSwitchAdmin = async (userId, query) => {
     let delegate = await User.findOne({ usercode: query });
     let oldAdmin = await User.findById(userId);
