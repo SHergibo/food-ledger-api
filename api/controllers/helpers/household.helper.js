@@ -35,8 +35,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
     let oldAdmin = await User.findById(userId);
     let household = await Household.findOne({ userId });
     if (!delegate) {
-        //TODO provisoire
-        return { status: 400, message: { error: "Invalid usercode" } };
+        return { status: 400, message: "Invalid usercode" };
     } else {
         //Supprimer l'ancien admin de la liste des membres et mais isWaiting en true pour bloquer toutes éditions/suppressions/ajour de produit dans la famille
         let arrayMember = household.member;

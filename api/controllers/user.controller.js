@@ -23,8 +23,7 @@ exports.add = async (req, res, next) => {
     if (req.query.householdcode) {
       household = await Household.findOne({ householdcode: req.query.householdcode });
       if (!household) {
-        //TODO provisoire
-        return res.status(404).send({ error: "No familly found with this household code" });
+        throw Boom.notFound('No familly found with this household code');
       }
     }
 
@@ -35,7 +34,7 @@ exports.add = async (req, res, next) => {
         if (!searchUser) {
           //TODO provisoire (envoyer plus d'information pour utilisation dans le front, tableau du ou des mauvais usercodes ???)
           searchUserArray = [];
-          return res.status(404).send({ error: `No user with this usercode ${otherUsercode}` });
+          throw Boom.notFound(`No user with this usercode ${otherUsercode}`);
         }
         searchUserArray.push(searchUser);
       }
@@ -89,14 +88,12 @@ exports.add = async (req, res, next) => {
       });
       await notification.save();
     } else {
-      //TODO provisoire
-      return res.status(400).send({ error: "Need a household name or a household code" });
+      throw Boom.badRequest('Need a household name or a household code');
     }
 
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
-    console.log(error);
     next(User.checkDuplicateEmail(error));
   }
 };
@@ -156,8 +153,7 @@ exports.remove = async (req, res, next) => {
       } else if (queryUserCode) {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserCode);
         if (requestSwitchAdmin.status) {
-          //TODO provisoire
-          return res.status(requestSwitchAdmin.status).send(requestSwitchAdmin.message);
+          throw Boom.badRequest(requestSwitchAdmin.message);
         }
       }
     } else if (user.role === "user") {
