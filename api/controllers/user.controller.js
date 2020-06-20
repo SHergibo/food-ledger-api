@@ -3,11 +3,8 @@ const User = require('./../models/user.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      TokenAuth = require('./../models/token-auth.model');
-
-const generateUserCode = (username) => {
-  return `${username}-2020` //TODO générer aleatoirement
-}
+      TokenAuth = require('./../models/token-auth.model'),
+      cryptoRandomString = require('crypto-random-string');
 
 /**
 * Post one user
@@ -17,7 +14,7 @@ exports.add = async (req, res, next) => {
     let user;
     let arrayOtherMember;
     let searchUserArray = [];
-    const userCode = generateUserCode(`${req.body.firstname}${req.body.lastname}`);
+    const userCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let household;
 
     if (req.query.householdcode) {
@@ -94,6 +91,7 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
+    console.log(error);
     next(User.checkDuplicateEmail(error));
   }
 };

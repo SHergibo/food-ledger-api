@@ -1,6 +1,7 @@
 const Household = require('../../models/household.model');
 const User = require('../../models/user.model');
 const Notification = require('../../models/notification.model');
+const cryptoRandomString = require('crypto-random-string');
 
 createObjectMemberNoExport = async (body) => {
     let objectMember = {
@@ -18,7 +19,7 @@ exports.createObjectMember = async (body) => {
 };
 
 exports.addHousehold = async (body) => {
-    const householdcode = `${body.householdname}-2020` //TODO générer aléatoirement
+    const householdcode = cryptoRandomString({length: 10, type: 'url-safe'});
     let objectMember = await createObjectMemberNoExport(body.user);
     const household = new Household({
         member: [objectMember],
