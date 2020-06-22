@@ -1,7 +1,8 @@
-const Household = require('../../models/household.model');
-const User = require('../../models/user.model');
-const Notification = require('../../models/notification.model');
-const cryptoRandomString = require('crypto-random-string');
+const Household = require('../../models/household.model'),
+      User = require('../../models/user.model'),
+      Notification = require('../../models/notification.model'),
+      cryptoRandomString = require('crypto-random-string'),
+      Moment = require('moment-timezone');
 
 createObjectMemberNoExport = async (body) => {
     let objectMember = {
@@ -52,7 +53,8 @@ exports.requestSwitchAdmin = async (userId, query) => {
             householdId: household._id,
             userId: delegate._id,
             type: "request-admin",
-            urlRequest : "switch-admin"
+            urlRequest : "switch-admin",
+            expirationDate: Moment().add(1, "minutes").toDate() //TODO Mettre 1j
         });
         await notification.save();
         return household;

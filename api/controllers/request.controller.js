@@ -1,8 +1,9 @@
 const Household = require('./../models/household.model'),
-  User = require('./../models/user.model'),
-  Notification = require('./../models/notification.model'),
-  Helpers = require('./helpers/household.helper'),
-  Boom = require('@hapi/boom');
+      User = require('./../models/user.model'),
+      Notification = require('./../models/notification.model'),
+      Helpers = require('./helpers/household.helper'),
+      Boom = require('@hapi/boom'),
+      Moment = require('moment-timezone');
 
 /**
 * Switch admin request
@@ -66,7 +67,8 @@ exports.switchAdminRequest = async (req, res, next) => {
             householdId: notification.householdId,
             userId: otherMember._id,
             type: "request-admin",
-            urlRequest: "switch-admin"
+            urlRequest: "switch-admin",
+            expirationDate: Moment().add(1, "minutes").toDate() //TODO mettre 1j
           });
           await newNotification.save();
 

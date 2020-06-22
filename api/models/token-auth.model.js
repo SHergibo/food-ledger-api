@@ -1,6 +1,6 @@
 const Mongoose = require('mongoose'),
       Crypto = require('crypto'),
-      Moment = require('moment-timezone')
+      Moment = require('moment-timezone');
 
 let Schema = Mongoose.Schema;
 
@@ -35,7 +35,7 @@ schema.statics.generate = function(user) {
     tokenObject.userId = user._id;
     tokenObject.userEmail = user.email;
     tokenObject.used = false;
-    tokenObject.expires = Moment().add(5, "minutes").toDate();
+    tokenObject.expires = Moment().add(15, "minutes").toDate();
     tokenObject.save();
 };
 

@@ -1,4 +1,6 @@
 const Logger = require('./config/logger.config');
+const CronJob = require('cron').CronJob;
+const NotificationCronJob = require('./api/tasks/notification.cronjob.task');
 
 const [major, minor] = process.versions.node.split('.').map(parseFloat);
 
@@ -15,5 +17,8 @@ const Mongoose =require ('./config/mongoose.config');
 Mongoose.connect();
 
 App.listen( port, () => Logger.info(`HTTP server is now running on port ${port} (${env})`));
+
+// const job = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
+// job.start();
 
 module.exports = App;

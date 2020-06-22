@@ -1,7 +1,7 @@
 const TokenAuth = require('../models/token-auth.model'),
   Boom = require('@hapi/boom'),
   User = require('./../models/user.model'),
-  Moment = require('moment-timezone')
+  Moment = require('moment-timezone');
 
 /** 
 * POST token 

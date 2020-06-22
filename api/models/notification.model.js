@@ -32,6 +32,9 @@ let schema = new Schema({
         type : String,
         enum : url,
         required : true
+    },
+    expirationDate: {
+        type: Date,
     }
 });
 
