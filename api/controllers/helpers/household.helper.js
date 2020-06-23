@@ -80,6 +80,9 @@ exports.noMoreAdmin = async (arrayMember, householdId) => {
         else {
             await User.findByIdAndUpdate(otherUser.userId, { householdcode: "none" }, { override: true, upsert: true, new: true });
         }
+
+        //Delete notification de type last-chance-request-admin
+        await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-admin" });
     }
     return await Household.findByIdAndDelete(householdId);
 };

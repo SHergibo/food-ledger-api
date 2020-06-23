@@ -23,6 +23,9 @@ let schema = new Schema({
         default : false,
         required : true
     },
+    lastChance : {
+        type : Date,
+    },
     userId : {
         type : Schema.Types.ObjectId,
         ref : 'User',
