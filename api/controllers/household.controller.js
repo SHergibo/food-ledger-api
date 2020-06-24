@@ -8,7 +8,7 @@ const Household = require('./../models/household.model'),
 exports.add = async (req, res, next) => {
     try {
         const household = await Helpers.addHousehold(req.body);
-        return res.json(household);
+        return res.json(household.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));
     }
@@ -20,7 +20,7 @@ exports.add = async (req, res, next) => {
 exports.findOne = async (req, res, next) => {
     try {
         const household = await Household.findById(req.params.householdId);
-        return res.json(household);
+        return res.json(household.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));
     }
@@ -32,7 +32,7 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
     try {
         const household = await Household.findByIdAndUpdate(req.params.householdId, req.body, { override: true, upsert: true, new: true });
-        return res.json(household);
+        return res.json(household.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));
     }
@@ -44,7 +44,7 @@ exports.update = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
     try {
         const household = await Household.findByIdAndDelete(req.params.householdId);
-        return res.json(household);
+        return res.json(household.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));
     }

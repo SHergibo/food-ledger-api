@@ -8,7 +8,7 @@ const Notification = require('./../models/household.model'),
 exports.findAll = async (req, res, next) => {
     try {
         const notifications = await Notification.find({userId : req.params.userId});
-        return res.json(notifications);
+        return res.json(notifications.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));
     }

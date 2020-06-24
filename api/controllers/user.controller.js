@@ -163,6 +163,14 @@ exports.remove = async (req, res, next) => {
       }
     }
 
+    //delete toutes les notifications de l'utilisateur à delete
+    let notifToDelete = await Notification.find({userId : user._id});
+
+    if(notifToDelete.length >= 1){
+      for (const notif of notifToDelete) {
+        await Notification.findByIdAndDelete(notif._id);
+      }
+    }
 
     await User.findByIdAndDelete(paramsUserId);
     return res.json(user.transform());

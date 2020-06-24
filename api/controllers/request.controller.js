@@ -152,7 +152,7 @@ exports.addUserRequest = async (req, res, next) => {
     });
     await notification.save();
 
-    return res.json(notification);
+    return res.json(notification.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }

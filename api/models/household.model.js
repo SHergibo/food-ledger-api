@@ -34,3 +34,12 @@ let schema = new Schema({
 });
 
 module.exports = Mongoose.model('Household', schema);
+
+schema.methods.transform = function() {
+    const fields = ['member', 'householdname', 'householdcode', 'isWaiting', 'userId'];
+    const object = {};
+    fields.forEach((field)=>{
+        object[field] = this[field];
+    });
+    return object;
+};

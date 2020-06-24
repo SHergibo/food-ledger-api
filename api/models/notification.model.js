@@ -39,3 +39,12 @@ let schema = new Schema({
 });
 
 module.exports = Mongoose.model('Notification', schema);
+
+schema.methods.transform = function() {
+    const fields = ['message', 'type', 'urlRequest', 'expirationDate'];
+    const object = {};
+    fields.forEach((field)=>{
+        object[field] = this[field];
+    });
+    return object;
+};
