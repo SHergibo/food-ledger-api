@@ -1,9 +1,9 @@
 const Household = require('./../models/household.model'),
-      User = require('./../models/user.model'),
-      Notification = require('./../models/notification.model'),
-      Helpers = require('./helpers/household.helper'),
-      Boom = require('@hapi/boom'),
-      Moment = require('moment-timezone');
+  User = require('./../models/user.model'),
+  Notification = require('./../models/notification.model'),
+  Helpers = require('./helpers/household.helper'),
+  Boom = require('@hapi/boom'),
+  Moment = require('moment-timezone');
 
 /**
 * Switch admin request
@@ -16,7 +16,7 @@ exports.switchAdminRequest = async (req, res, next) => {
     }
 
     const notification = await Notification.findById(req.params.notificationId);
-
+    
     if (!notification) {
       throw Boom.notFound('Notification not found!');
     }
@@ -24,31 +24,34 @@ exports.switchAdminRequest = async (req, res, next) => {
     let user;
     let household = await Household.findById(notification.householdId);
     let arrayMember = household.member;
-    if (notification.type === "request-admin") {
-      if (req.query.acceptedRequest === "yes") {
-        //Chercher si le nouvel admin à une ancienne famille et la supprimer
-        let oldHousehold = await Household.findOne({ userId: notification.userId });
-        if (oldHousehold) {
-          await Household.findByIdAndDelete(oldHousehold._id);
-        }
-
-        //Reset isFlagged en false pour les membres de la famille
-        for (const otherUser of arrayMember) {
-          if (otherUser.isFlagged === true) {
-            otherUser.isFlagged = false;
-          }
-        }
-
-        //Change userId de l'ancien admin par l'userId du nouvel admin, remet isWaiting en false dans household et reset isFlagged en false pour les membres
-        await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember }, { override: true, upsert: true, new: true });
-
-        //Met le role du nouvel admin en admin
-        user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
+    if (req.query.acceptedRequest === "yes") {
+      //Chercher si le nouvel admin à une ancienne famille et la supprimer
+      let oldHousehold = await Household.findOne({ userId: notification.userId });
+      if (oldHousehold) {
+        await Household.findByIdAndDelete(oldHousehold._id);
       }
-      if (req.query.acceptedRequest === "no") {
 
+      //Reset isFlagged en false pour les membres de la famille
+      for (const otherUser of arrayMember) {
+        if (otherUser.isFlagged === true) {
+          otherUser.isFlagged = false;
+        }
+        if (notification.type === "last-chance-request-admin") {
+          await Notification.findOneAndDelete({ userId: otherUser.userId, householdId: notification.householdId, type: "last-chance-request-admin" });
+        }
+      }
+
+      //Change userId de l'ancien admin par l'userId du nouvel admin, remet isWaiting en false dans household et reset isFlagged en false pour les membres
+      await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
+
+      //Met le role du nouvel admin en admin
+      user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
+
+    }
+    if (req.query.acceptedRequest === "no") {
+      user = await User.findById(notification.userId);
+      if (notification.type === "request-admin") {
         //flague le membre qui n'a pas accepté la requête de changement d'admin
-        user = await User.findById(notification.userId);
         let updatedArrayMember = household.member;
         let indexMember = updatedArrayMember.findIndex(obj => obj.usercode === user.usercode);
         updatedArrayMember[indexMember].isFlagged = true;
@@ -68,7 +71,7 @@ exports.switchAdminRequest = async (req, res, next) => {
             userId: otherMember._id,
             type: "request-admin",
             urlRequest: "switch-admin",
-            expirationDate: Moment().add(1, "minutes").toDate() //TODO mettre 1j
+            expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
           });
           await newNotification.save();
 
@@ -85,10 +88,26 @@ exports.switchAdminRequest = async (req, res, next) => {
           }
         }
       }
+      if(notification.type === "last-chance-request-admin"){
+        await Notification.findByIdAndDelete(req.params.notificationId);
+        let arrayLastChanceNotif = [];
 
-      //Delete la notification
-      await Notification.findByIdAndDelete(req.params.notificationId);
+        for (const member of arrayMember) {
+          let lastChanceNotif = await Notification.findOne({userId : member.userId, householdId : household._id, type : "last-chance-request-admin"});
+          if(lastChanceNotif){
+            arrayLastChanceNotif.push(lastChanceNotif);
+          }
+        }
+        console.log(arrayLastChanceNotif);
+
+        if(arrayLastChanceNotif.length === 0){
+          await Helpers.noMoreAdmin(arrayMember, household._id);
+        }
+      }
     }
+
+    //Delete la notification
+    await Notification.findByIdAndDelete(req.params.notificationId);
 
     return res.json(user.transform());
   } catch (error) {
@@ -174,7 +193,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       let oldHousehold = await Household.findOne({ householdcode: user.householdcode });
       let oldMemberArray = [];
-      if(oldHousehold){
+      if (oldHousehold) {
         oldMemberArray = oldHousehold.member;
       }
       let newHousehold = await Household.findById(notification.householdId);

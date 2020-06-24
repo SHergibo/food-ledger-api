@@ -54,7 +54,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
             userId: delegate._id,
             type: "request-admin",
             urlRequest : "switch-admin",
-            expirationDate: Moment().add(1, "minutes").toDate() //TODO Mettre 1j
+            expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
         });
         await notification.save();
         return household;

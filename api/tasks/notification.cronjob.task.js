@@ -4,6 +4,7 @@ const Notification = require('./../models/notification.model'),
       Helpers = require('./../controllers/helpers/household.helper');
       Moment = require('moment-timezone');
 
+//TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
 exports.cronJob = async () => {
   try {
     let notificationArray = await Notification.find({ type: "request-admin" });
@@ -34,7 +35,7 @@ exports.cronJob = async () => {
               userId: newArrayMember[0].userId,
               type: "request-admin",
               urlRequest: "switch-admin",
-              expirationDate: Moment().add(1, "minutes").toDate() //TODO mettre 1j à la place d'une minute
+              expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
             });
             await newNotification.save();
 
@@ -48,22 +49,13 @@ exports.cronJob = async () => {
                   userId: member.userId,
                   type: "last-chance-request-admin",
                   urlRequest: "switch-admin",
-                  // expirationDate: Moment().add(1, "minutes").toDate() //TODO mettre 1j à la place d'une minute
                 });
                 await lastChanceNotification.save();
               }
-              await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add(1, "minutes").toDate() }, { override: true, upsert: true, new: true });
+              await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() }, { override: true, upsert: true, new: true });
             }
-            // => request controller
-            //Si quelqu'un accepte => aller dans request.controller et rajouter la suppression des notifs des autre membres là-bas et deflagguer
-            //Si personne n'accepte aller dans request controller et utiliser le nouveau type en conditionnel pour ne pas créer des notifs
-             //=> checker si il y a d'autre personne avec des même notif dans la famille
-                //=> si oui, supprimer notif de la personne et rien d'autre
-                //=> si non, personne n'a accepté donc supprission famille et dispatch member
-            
           }
           await Notification.findByIdAndDelete(notif._id);
-          console.log("Création notif afk");
         }
       }
     }
@@ -71,7 +63,6 @@ exports.cronJob = async () => {
       if (household.lastChance < Moment().toDate()) {
         //delete famille
         await Helpers.noMoreAdmin(household.member, household._id);
-        console.log('delete household after 1 week');
       }
     }
   } catch (error) {

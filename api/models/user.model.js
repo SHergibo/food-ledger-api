@@ -25,7 +25,8 @@ let schema = new Schema({
         type : String,
         required : 'You must specify an email',
         trim : true,
-        lowercase : true
+        lowercase : true,
+        unique: true
     },
     password : {
         type : String,
