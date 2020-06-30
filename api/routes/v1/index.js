@@ -12,9 +12,9 @@ router.get('/status', (req, res) => res.send(200));
 
 router.use('/auth', AuthRoutes);
 router.use('/users', UserRoutes);
-router.use('/household', HouseholdRoutes);
-router.use('/notification', NotificationRoute);
-router.use('/request', RequestRoute);
+router.use('/households', HouseholdRoutes);
+router.use('/notifications', NotificationRoute);
+router.use('/requests', RequestRoute);
 router.use('/tokens', TokenAuthRoutes);
 
 module.exports = router;
