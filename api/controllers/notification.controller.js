@@ -1,4 +1,4 @@
-const Notification = require('./../models/household.model'),
+const Notification = require('./../models/notification.model'),
       Boom = require('@hapi/boom');
 
 
@@ -8,8 +8,18 @@ const Notification = require('./../models/household.model'),
 exports.findAll = async (req, res, next) => {
     try {
         const notifications = await Notification.find({userId : req.params.userId});
-        return res.json(notifications.transform());
+        const fields = ['_id', 'message', 'type', 'urlRequest', 'expirationDate'];
+        let arrayNotificationsTransformed = [];
+        notifications.forEach((item)=>{
+            const object = {};
+            fields.forEach((field)=>{
+                object[field] = item[field];
+            });
+            arrayNotificationsTransformed.push(object);
+        });
+        return res.json(arrayNotificationsTransformed);
     } catch (error) {
+        console.log(error);
         next(Boom.badImplementation(error.message));
     }
 };
