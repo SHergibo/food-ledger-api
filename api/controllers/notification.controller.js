@@ -19,7 +19,6 @@ exports.findAll = async (req, res, next) => {
         });
         return res.json(arrayNotificationsTransformed);
     } catch (error) {
-        console.log(error);
         next(Boom.badImplementation(error.message));
     }
 };
