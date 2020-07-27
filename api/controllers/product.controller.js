@@ -7,7 +7,7 @@ const Product = require('./../models/product.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    const household = await Household.findOne({householdcode : req.body.householdCode});
+    const household = await Household.findOne({ householdcode: req.body.householdCode });
     req.body.householdId = household._id; //TODO faire ceci dans le middleware ??
     const product = new Product(req.body);
     await product.save();
@@ -24,21 +24,29 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-      const household = await Household.findOne({householdcode : req.params.householdCode});
-      const products = await Product.find({householdId : household._id});
-      const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
-      let arrayProductsTransformed = [];
-      products.forEach((item)=>{
-          const object = {};
-          fields.forEach((field)=>{
-              object[field] = item[field];
-          });
-          arrayProductsTransformed.push(object);
+    let page = req.query.page || 0;
+    let limit = 10;
+    const household = await Household.findOne({ householdcode: req.params.householdCode });
+    const products = await Product.find({ householdId: household._id })
+    .skip(page * limit)
+    .limit(limit);
+
+
+    const totalProduct = await Product.estimatedDocumentCount();
+    const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
+    let arrayProductsTransformed = [];
+    products.forEach((item) => {
+      const object = {};
+      fields.forEach((field) => {
+        object[field] = item[field];
       });
-      return res.json(arrayProductsTransformed);
+      arrayProductsTransformed.push(object);
+    });
+    let finalObject = {arrayProduct : arrayProductsTransformed, totalProduct}
+    return res.json(finalObject);
   } catch (error) {
     console.log(error);
-      next(Boom.badImplementation(error.message));
+    next(Boom.badImplementation(error.message));
   }
 };
 
