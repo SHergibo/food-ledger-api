@@ -54,6 +54,7 @@ exports.findPaginate = async (req, res, next) => {
 * GET one product
 */
 exports.findOne = async (req, res, next) => {
+  console.log(req.params.productId);
   try {
     const product = await Product.findById(req.params.productId);
     return res.json(product.transform());
@@ -80,9 +81,30 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.productId);
-    return res.json(product.transform());
+    const product = await Product.findByIdAndRemove(req.params.productId);
+    let page = req.query.page || 0;
+    let limit = 10;
+    
+    const products = await Product.find({householdId: product.householdId})
+    .skip(page * limit)
+    .limit(limit);
+  
+    const totalProduct = await Product.estimatedDocumentCount();
+    const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
+    let arrayProductsTransformed = [];
+    products.forEach((item) => {
+      const object = {};
+      fields.forEach((field) => {
+        object[field] = item[field];
+      });
+      arrayProductsTransformed.push(object);
+    });
+    let finalObject = {arrayProduct : arrayProductsTransformed, totalProduct}
+
+
+    return res.json(finalObject);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

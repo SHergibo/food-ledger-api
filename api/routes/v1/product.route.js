@@ -12,7 +12,7 @@ router
         .get(authorize([ADMIN, LOGGED_USER]), ProductController.findPaginate);
 
 router
-  .route('/:householdCode')
+  .route('/pagination/:householdCode')
       .get(/*authorize([ADMIN, LOGGED_USER]),*/ ProductController.findPaginate);
 
 router
