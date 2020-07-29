@@ -9,22 +9,20 @@ const router = Express.Router();
 
 router
     .route('/')
-        .post(authorize([ADMIN, LOGGED_USER]), ProductController.add)
-        .get(authorize([ADMIN, LOGGED_USER]), ProductController.findPaginate);
+        .post(authorize([ADMIN, LOGGED_USER]), ProductController.add);
 
 router
   .route('/pagination/:householdCode')
-      .get(authorize([ADMIN, LOGGED_USER]), ProductController.findPaginate);
-
+      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.findPaginate);
+      
 router
     .route('/:productId')
-        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold,ProductController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), ProductController.update)
-        .delete(authorize([ADMIN, LOGGED_USER]), ProductController.remove);
+        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.findOne)
+        .patch(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.update)
+        .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.remove);
 
 router
     .route('/delete-pagination/:productId')
-        .delete(authorize([ADMIN, LOGGED_USER]), ProductController.removePagination);
-//TODO créer middleware pour test le householdId
+        .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.removePagination);
 
 module.exports = router;
