@@ -45,7 +45,6 @@ exports.findPaginate = async (req, res, next) => {
     let finalObject = {arrayProduct : arrayProductsTransformed, totalProduct}
     return res.json(finalObject);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -54,12 +53,10 @@ exports.findPaginate = async (req, res, next) => {
 * GET one product
 */
 exports.findOne = async (req, res, next) => {
-  console.log(req.params.productId);
   try {
     const product = await Product.findById(req.params.productId);
     return res.json(product.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -69,6 +66,8 @@ exports.findOne = async (req, res, next) => {
 */
 exports.update = async (req, res, next) => {
   try {
+    //TODO si product number devient 0, supprimer le produit de la liste des produits, l'ajouter dans l'historique
+    //Si produit number est 0 renvoyer la nouvelle liste produit avec pagination
     const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { override: true, upsert: true, new: true });
     return res.json(product.transform());
   } catch (error) {
@@ -80,6 +79,18 @@ exports.update = async (req, res, next) => {
 * DELETE product
 */
 exports.remove = async (req, res, next) => {
+  try {
+      const product = await Product.findByIdAndDelete(req.params.productId);
+      return res.json(product.transform());
+  } catch (error) {
+      next(Boom.badImplementation(error.message));
+  }
+};
+
+/**
+* DELETE product and send new product list using front-end pagination data
+*/
+exports.removePagination = async (req, res, next) => {
   try {
     const product = await Product.findByIdAndRemove(req.params.productId);
     let page = req.query.page || 0;
@@ -104,7 +115,6 @@ exports.remove = async (req, res, next) => {
 
     return res.json(finalObject);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
