@@ -11,10 +11,8 @@ exports.add = async (req, res, next) => {
     req.body.householdId = household._id; //TODO faire ceci dans le middleware ??
     const product = new Product(req.body);
     await product.save();
-    console.log(product.transform());
     return res.json(product.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -24,15 +22,31 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
+    let queryObject = req.query
     let page = req.query.page || 0;
     let limit = 10;
+
     const household = await Household.findOne({ householdcode: req.params.householdCode });
-    const products = await Product.find({ householdId: household._id })
-    .skip(page * limit)
-    .limit(limit);
+    let findObject = { householdId: household._id };
+    let totalProduct = await Product.estimatedDocumentCount();
+
+    for (const key in queryObject) {
+      if (key !== "page") {
+        findObject[key] = queryObject[key];
+      }
+    }
+
+    const products = await Product.find(findObject)
+      .skip(page * limit)
+      .limit(limit);
 
 
-    const totalProduct = await Product.estimatedDocumentCount();
+    if (Object.keys(findObject).length >= 2) {
+      const countProjuctSearch = await Product.find(findObject);
+      totalProduct = countProjuctSearch.length;
+    }
+
+
     const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
     let arrayProductsTransformed = [];
     products.forEach((item) => {
@@ -42,7 +56,7 @@ exports.findPaginate = async (req, res, next) => {
       });
       arrayProductsTransformed.push(object);
     });
-    let finalObject = {arrayProduct : arrayProductsTransformed, totalProduct}
+    let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct }
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -80,10 +94,10 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-      const product = await Product.findByIdAndDelete(req.params.productId);
-      return res.json(product.transform());
+    const product = await Product.findByIdAndDelete(req.params.productId);
+    return res.json(product.transform());
   } catch (error) {
-      next(Boom.badImplementation(error.message));
+    next(Boom.badImplementation(error.message));
   }
 };
 
@@ -95,11 +109,11 @@ exports.removePagination = async (req, res, next) => {
     const product = await Product.findByIdAndRemove(req.params.productId);
     let page = req.query.page || 0;
     let limit = 10;
-    
-    const products = await Product.find({householdId: product.householdId})
-    .skip(page * limit)
-    .limit(limit);
-  
+
+    const products = await Product.find({ householdId: product.householdId })
+      .skip(page * limit)
+      .limit(limit);
+
     const totalProduct = await Product.estimatedDocumentCount();
     const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
     let arrayProductsTransformed = [];
@@ -110,7 +124,7 @@ exports.removePagination = async (req, res, next) => {
       });
       arrayProductsTransformed.push(object);
     });
-    let finalObject = {arrayProduct : arrayProductsTransformed, totalProduct}
+    let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct }
 
 
     return res.json(finalObject);
