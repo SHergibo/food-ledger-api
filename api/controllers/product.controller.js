@@ -22,7 +22,9 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    let queryObject = req.query
+    let queryObject = req.query;
+    let queryWithSort = false;
+    let querySortObject = {};
     let page = req.query.page || 0;
     let limit = 10;
 
@@ -31,14 +33,27 @@ exports.findPaginate = async (req, res, next) => {
     let totalProduct = await Product.estimatedDocumentCount();
 
     for (const key in queryObject) {
-      if (key !== "page") {
+      if (key.split('-')[1] === "sort") {
+        queryWithSort = true;
+        querySortObject[key.split('-')[0]] = queryObject[key];
+      }
+      if (key !== "page" && key.split('-')[1] !== "sort") {
         findObject[key] = queryObject[key];
       }
     }
 
-    const products = await Product.find(findObject)
-      .skip(page * limit)
-      .limit(limit);
+    let products;
+    if (queryWithSort) {
+      products = await Product.find(findObject)
+        .skip(page * limit)
+        .limit(limit)
+        .sort(querySortObject);
+    } else {
+      products = await Product.find(findObject)
+        .skip(page * limit)
+        .limit(limit);
+    }
+
 
 
     if (Object.keys(findObject).length >= 2) {
@@ -59,6 +74,7 @@ exports.findPaginate = async (req, res, next) => {
     let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct }
     return res.json(finalObject);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
