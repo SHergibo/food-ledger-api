@@ -38,7 +38,12 @@ exports.findPaginate = async (req, res, next) => {
         querySortObject[key.split('-')[0]] = queryObject[key];
       }
       if (key !== "page" && key.split('-')[1] !== "sort") {
-        findObject[key] = queryObject[key];
+        if(key === "name" || key === "brand" || key === "type" || key === "location"){
+          findObject[key] = {$regex : queryObject[key], $options: 'i'};
+        }else{
+          findObject[key] = queryObject[key];
+        }
+        //TODO faire une regex?? pour rechercher par année ou mois/année ou jour/mois/année
       }
     }
 
