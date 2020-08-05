@@ -2,6 +2,7 @@ const Express = require('express'),
       ProductController = require(`${process.cwd()}/api/controllers/product.controller`);
 
 const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
+const { addProductHousehold } = require('../../middlewares/addProductHousehold.middleware');
 const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
 
 
@@ -9,7 +10,7 @@ const router = Express.Router();
 
 router
     .route('/')
-        .post(authorize([ADMIN, LOGGED_USER]), ProductController.add);
+        .post(authorize([ADMIN, LOGGED_USER]), addProductHousehold,ProductController.add);
 
 router
   .route('/pagination/:householdCode')

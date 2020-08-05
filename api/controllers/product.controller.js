@@ -7,8 +7,6 @@ const Product = require('./../models/product.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdcode: req.body.householdCode });
-    req.body.householdId = household._id; //TODO faire ceci dans le middleware ??
     const product = new Product(req.body);
     await product.save();
     return res.json(product.transform());
