@@ -1,6 +1,8 @@
 const Product = require('./../models/product.model'),
-  Household = require('./../models/household.model'),
-  Boom = require('@hapi/boom');
+      Household = require('./../models/household.model'),
+      Historic = require('./../models/historic.model'),
+      Helpers = require('./helpers/findByQueryParams.helpler');
+      Boom = require('@hapi/boom');
 
 /**
 * Post one product
@@ -18,66 +20,13 @@ exports.add = async (req, res, next) => {
 /**
 * GET products with pagination
 */
+
 exports.findPaginate = async (req, res, next) => {
   try {
-    let queryObject = req.query;
-    let queryWithSort = false;
-    let querySortObject = {};
-    let page = req.query.page || 0;
-    let limit = 10;
-
     const household = await Household.findOne({ householdcode: req.params.householdCode });
-    let findObject = { householdId: household._id };
-    let totalProduct = await Product.estimatedDocumentCount();
-
-    for (const key in queryObject) {
-      if (key.split('-')[1] === "sort") {
-        queryWithSort = true;
-        querySortObject[key.split('-')[0]] = queryObject[key];
-      }
-      if (key !== "page" && key.split('-')[1] !== "sort") {
-        if(key === "name" || key === "brand" || key === "type" || key === "location"){
-          findObject[key] = {$regex : queryObject[key], $options: 'i'};
-        }else{
-          findObject[key] = queryObject[key];
-        }
-        //TODO faire une regex?? pour rechercher par année ou mois/année ou jour/mois/année
-      }
-    }
-
-    let products;
-    if (queryWithSort) {
-      products = await Product.find(findObject)
-        .skip(page * limit)
-        .limit(limit)
-        .sort(querySortObject);
-    } else {
-      products = await Product.find(findObject)
-        .skip(page * limit)
-        .limit(limit);
-    }
-
-
-
-    if (Object.keys(findObject).length >= 2) {
-      const countProjuctSearch = await Product.find(findObject);
-      totalProduct = countProjuctSearch.length;
-    }
-
-
-    const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
-    let arrayProductsTransformed = [];
-    products.forEach((item) => {
-      const object = {};
-      fields.forEach((field) => {
-        object[field] = item[field];
-      });
-      arrayProductsTransformed.push(object);
-    });
-    let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct }
+    const finalObject = await Helpers.finalObject(req, household._id, Product);
     return res.json(finalObject);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -95,21 +44,48 @@ exports.findOne = async (req, res, next) => {
 };
 
 /**
-* PATCH product
+* PATCH one product
 */
 exports.update = async (req, res, next) => {
   try {
-    //TODO si product number devient 0, supprimer le produit de la liste des produits, l'ajouter dans l'historique
-    //Si produit number est 0 renvoyer la nouvelle liste produit avec pagination
-    const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { override: true, upsert: true, new: true });
-    return res.json(product.transform());
+    let response;
+    if (req.body.number == 0) {
+      let productToSwitch = await Product.findById(req.params.productId);
+      
+      let body = {
+        name : productToSwitch.name,
+        brand : productToSwitch.brand,
+        type : productToSwitch.type,
+        weight : productToSwitch.weight,
+        kcal : productToSwitch.kcal,
+        location : productToSwitch.location,
+        expirationDate : productToSwitch.expirationDate,
+        number : req.body.number,
+        householdId : productToSwitch.householdId,
+      }
+      //TODO mettre expiration vide
+      
+      const historic = new Historic(body);
+      await historic.save();
+
+      await Product.findByIdAndDelete(productToSwitch._id);
+      
+      const finalObject = await Helpers.finalObject(req, productToSwitch.householdId, Product);
+      //TODO plus besoin d'un final object si l'édition ne se fait plus dans le tableau dans le front
+      response = res.json(finalObject);
+    }else{
+      const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { override: true, upsert: true, new: true });
+      response = res.json(product.transform());
+    }
+    
+    return response;
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
 };
 
 /**
-* DELETE product
+* DELETE one product
 */
 exports.remove = async (req, res, next) => {
   try {
@@ -121,30 +97,12 @@ exports.remove = async (req, res, next) => {
 };
 
 /**
-* DELETE product and send new product list using front-end pagination data
+* DELETE one product and send new product list using front-end pagination data
 */
 exports.removePagination = async (req, res, next) => {
   try {
     const product = await Product.findByIdAndRemove(req.params.productId);
-    let page = req.query.page || 0;
-    let limit = 10;
-
-    const products = await Product.find({ householdId: product.householdId })
-      .skip(page * limit)
-      .limit(limit);
-
-    const totalProduct = await Product.estimatedDocumentCount();
-    const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
-    let arrayProductsTransformed = [];
-    products.forEach((item) => {
-      const object = {};
-      fields.forEach((field) => {
-        object[field] = item[field];
-      });
-      arrayProductsTransformed.push(object);
-    });
-    let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct }
-
+    const finalObject = await Helpers.finalObject(req, product.householdId, Product);
 
     return res.json(finalObject);
   } catch (error) {

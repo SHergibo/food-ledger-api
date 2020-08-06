@@ -10,7 +10,7 @@ const router = Express.Router();
 
 router
     .route('/')
-        .post(authorize([ADMIN, LOGGED_USER]), addProductHousehold,ProductController.add);
+        .post(authorize([ADMIN, LOGGED_USER]), addProductHousehold, ProductController.add);
 
 router
   .route('/pagination/:householdCode')

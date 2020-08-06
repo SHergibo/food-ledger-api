@@ -4,6 +4,7 @@ const Express = require('express'),
       NotificationRoute = require('./notification.route'),
       RequestRoute = require('./request.route'),
       ProductRoute = require('./product.route'),
+      HistoricRoute = require('./historic.route'),
       AuthRoutes = require('./auth.route'),
       TokenAuthRoutes = require('./token-auth.route');
 
@@ -17,6 +18,7 @@ router.use('/households', HouseholdRoutes);
 router.use('/notifications', NotificationRoute);
 router.use('/requests', RequestRoute);
 router.use('/products', ProductRoute);
+router.use('/historics', HistoricRoute);
 router.use('/tokens', TokenAuthRoutes);
 
 module.exports = router;
