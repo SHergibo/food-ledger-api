@@ -59,11 +59,10 @@ exports.update = async (req, res, next) => {
         weight : productToSwitch.weight,
         kcal : productToSwitch.kcal,
         location : productToSwitch.location,
-        expirationDate : productToSwitch.expirationDate,
+        expirationDate : [],
         number : req.body.number,
         householdId : productToSwitch.householdId,
       }
-      //TODO mettre expiration vide
       
       const historic = new Historic(body);
       await historic.save();
@@ -71,7 +70,6 @@ exports.update = async (req, res, next) => {
       await Product.findByIdAndDelete(productToSwitch._id);
       
       const finalObject = await Helpers.finalObject(req, productToSwitch.householdId, Product);
-      //TODO plus besoin d'un final object si l'édition ne se fait plus dans le tableau dans le front
       response = res.json(finalObject);
     }else{
       const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { override: true, upsert: true, new: true });

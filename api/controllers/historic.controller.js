@@ -64,16 +64,13 @@ exports.update = async (req, res, next) => {
         number : req.body.number,
         householdId : historicToSwitch.householdId,
       }
-
-      //TODO obligé de mettre une date dans le front pour la création du produit
       
       const product = new Product(body);
       await product.save();
 
       await Historic.findByIdAndDelete(historicToSwitch._id);
       
-      const finalObject = await Helpers.finalObject(req, historicToSwitch.householdId, Historic);
-      response = res.json(finalObject);
+      response = res.json(product.transform());
     }else{
       const historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true });
       response = res.json(historic.transform());
