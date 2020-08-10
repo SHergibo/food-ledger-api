@@ -1,7 +1,7 @@
 const Express = require('express'),
     Morgan = require('morgan'),
     Cors = require('cors'),
-    Helmet = require('helmet');
+    Helmet = require('helmet'),
     Compression = require('compression'),
     BodyParser = require('body-parser'),
     Router = require('./../api/routes/v1'),
