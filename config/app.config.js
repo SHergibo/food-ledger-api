@@ -8,7 +8,7 @@ const Express = require('express'),
     Strategies = require('./passport.config'),
     ServiceErrorHandler = require('../api/services/error-handler.service');
 
-const { HTTPLogs, api, env, environments } = require('./environment.config');
+const { HTTPLogs, api, env, environments, CorsOrigin } = require('./environment.config');
 
 const app = Express();
 
@@ -21,7 +21,9 @@ app.use(Express.static('public'));
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
 
-app.use(Cors());
+app.use(Cors({
+    origin: CorsOrigin
+}));
 
 app.use(Passport.initialize());
 

@@ -4,8 +4,8 @@
   "description": "api for preppers app",
   "main": "app.bootstrap.js",
   "scripts": {
-    "start": "node app.bootstrap.js",
-    "dev": "nodemon app.bootstrap.js"
+    "start": "node app.bootstrap.js -production",
+    "dev": "nodemon app.bootstrap.js -development"
   },
   "keywords": [
     "stock",
