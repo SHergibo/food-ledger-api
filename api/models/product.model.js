@@ -1,8 +1,21 @@
 const Mongoose = require('mongoose');
+const { min } = require('moment-timezone');
 
 let Schema = Mongoose.Schema;
 
 const types = ['Légume', 'Viande', 'Féculent', 'Poisson', 'Fruit', 'Boisson', 'Autre'];
+
+let expDateSchema = new Schema({
+  expDate: {
+    type: Date,
+    required: true
+  },
+  productLinkedToExpDate: {
+    type: Number,
+    required: true,
+    min: 1
+  }
+});
 
 let schema = new Schema({
   name: {
@@ -26,10 +39,7 @@ let schema = new Schema({
     type: String,
     trim: true
   },
-  expirationDate: {
-    type: Array,
-    required: true
-  },
+  expirationDate: [expDateSchema],
   location: {
     type: String,
     trim: true
@@ -43,6 +53,8 @@ let schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Household',
   }
+}, {
+  timestamps: true
 });
 
 schema.methods.transform = function () {

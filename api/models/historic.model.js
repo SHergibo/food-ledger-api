@@ -4,6 +4,15 @@ let Schema = Mongoose.Schema;
 
 const types = ['Légume', 'Viande', 'Féculent', 'Poisson', 'Fruit', 'Boisson', 'Autre'];
 
+let expDateSchemaHistoric = new Schema({
+  expDate: {
+    type: Date
+  },
+  productLinkedToExpDate: {
+    type: Number
+  }
+});
+
 let schema = new Schema({
   name: {
     type: String,
@@ -26,9 +35,7 @@ let schema = new Schema({
     type: String,
     trim: true
   },
-  expirationDate: {
-    type: Array,
-  },
+  expirationDate: [expDateSchemaHistoric],
   location: {
     type: String,
     trim: true
@@ -42,6 +49,8 @@ let schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Household',
   }
+}, {
+  timestamps: true
 });
 
 schema.methods.transform = function () {
