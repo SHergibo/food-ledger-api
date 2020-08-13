@@ -5,7 +5,7 @@
   "main": "app.bootstrap.js",
   "scripts": {
     "start": "node app.bootstrap.js",
-    "dev" : "nodemon app.bootstrap.js"
+    "dev": "nodemon app.bootstrap.js"
   },
   "keywords": [
     "stock",
@@ -17,7 +17,6 @@
   "dependencies": {
     "@hapi/boom": "^9.1.0",
     "bcrypt": "^4.0.1",
-    "body-parser": "^1.19.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "cron": "^1.8.2",

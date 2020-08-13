@@ -3,7 +3,6 @@ const Express = require('express'),
     Cors = require('cors'),
     Helmet = require('helmet'),
     Compression = require('compression'),
-    BodyParser = require('body-parser'),
     Router = require('./../api/routes/v1'),
     Passport = require('passport'),
     Strategies = require('./passport.config'),
@@ -19,8 +18,8 @@ app.use(Compression());
 
 app.use(Express.static('public'));
 
-app.use(BodyParser.json());
-app.use(BodyParser.urlencoded({ extended: true }));
+app.use(Express.json());
+app.use(Express.urlencoded({ extended: true }));
 
 app.use(Cors());
 
