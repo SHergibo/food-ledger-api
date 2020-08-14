@@ -24,14 +24,14 @@ exports.checkSameHousehold = async (req, res, next) => {
     }
 
     if (household) {
-      householdCode = household.householdcode;
+      householdCode = household.householdCode;
     }
 
     if (req.params.householdCode) {
       householdCode = req.params.householdCode;
     }
 
-    if (householdCode === req.user.householdcode) {
+    if (householdCode === req.user.householdCode) {
       return next();
     } else {
       return next(Boom.unauthorized("Ce produit n'appartient pas à votre famille !"));

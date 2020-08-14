@@ -7,12 +7,12 @@ let schema = new Schema({
         type : Array,
         required: true
     },
-    householdname : {
+    householdName : {
         type : String,
         required : true,
         trim : true
     },
-    householdcode : {
+    householdCode : {
         type : String,
         unique : true,
         required : true,
@@ -36,7 +36,7 @@ let schema = new Schema({
 module.exports = Mongoose.model('Household', schema);
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'member', 'householdname', 'householdcode', 'isWaiting', 'userId'];
+    const fields = ['_id', 'member', 'householdName', 'householdCode', 'isWaiting', 'userId'];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];

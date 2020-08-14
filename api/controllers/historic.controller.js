@@ -1,7 +1,8 @@
 const Historic = require('./../models/historic.model'),
       Product = require('./../models/product.model'),
       Household = require('./../models/household.model'),
-      Helpers = require('./helpers/findByQueryParams.helpler');
+      FindByIdHelper = require('./helpers/findByQueryParams.helper'),
+      SortExpDateHelper = require('./helpers/sortExpDate.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -22,8 +23,8 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdcode: req.params.householdCode });
-    const finalObject = await Helpers.finalObject(req, household._id, Historic);
+    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const finalObject = await FindByIdHelper.finalObject(req, household._id, Historic);
 
     return res.json(finalObject);
   } catch (error) {
@@ -48,29 +49,16 @@ exports.findOne = async (req, res, next) => {
 */
 exports.update = async (req, res, next) => {
   try {
-
     let response;
     if (req.body.number >= 1) {
-      let historicToSwitch = await Historic.findById(req.params.historicId);
+      let newBody = await SortExpDateHelper.sortExpDate(req.body);
       
-      let body = {
-        name : historicToSwitch.name,
-        brand : historicToSwitch.brand,
-        type : historicToSwitch.type,
-        weight : historicToSwitch.weight,
-        kcal : historicToSwitch.kcal,
-        location : historicToSwitch.location,
-        expirationDate : historicToSwitch.expirationDate,
-        number : req.body.number,
-        householdId : historicToSwitch.householdId,
-      }
-      
-      const product = new Product(body);
+      const product = new Product(newBody);
       await product.save();
 
-      await Historic.findByIdAndDelete(historicToSwitch._id);
+      await Historic.findByIdAndDelete(req.params.historicId);
       
-      response = res.json(product.transform());
+      response = res.status(204).send();
     }else{
       const historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true });
       response = res.json(historic.transform());
@@ -78,7 +66,6 @@ exports.update = async (req, res, next) => {
     
     return response;
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -101,7 +88,7 @@ exports.remove = async (req, res, next) => {
 exports.removePagination = async (req, res, next) => {
   try {
     const historic = await Historic.findByIdAndRemove(req.params.historicId);
-    const finalObject = await Helpers.finalObject(req, historic.householdId, Historic);
+    const finalObject = await FindByIdHelper.finalObject(req, historic.householdId, Historic);
 
     return res.json(finalObject);
   } catch (error) {

@@ -17,8 +17,8 @@ exports.add = async (req, res, next) => {
     const userCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let household;
 
-    if (req.query.householdcode) {
-      household = await Household.findOne({ householdcode: req.query.householdcode });
+    if (req.query.householdCode) {
+      household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
         return res.status(400).send(Boom.badRequest('No familly found with this household code'));
         
@@ -41,21 +41,21 @@ exports.add = async (req, res, next) => {
       }
     }
 
-    if (req.body.householdname || req.query.householdcode) {
+    if (req.body.householdName || req.query.householdCode) {
       req.body.usercode = userCode;
-      if(req.query.householdcode){
-        req.body.householdcode = "none";
+      if(req.query.householdCode){
+        req.body.householdCode = "none";
       }
       user = new User(req.body);
       await user.save();
     }
     //Si création d'un utilisateur en même temps qu'un ménage
-    if (req.body.householdname) {
+    if (req.body.householdName) {
       let newHousehold = await Helpers.addHousehold({
-        householdname: req.body.householdname,
+        householdName: req.body.householdName,
         user: user
       });
-      user = await User.findByIdAndUpdate(user._id, { householdcode: newHousehold.householdcode }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
 
       if (req.body.othermember) {
@@ -63,7 +63,7 @@ exports.add = async (req, res, next) => {
         for (const otherUser of searchUserArray) {
           //New notif pour otherMember
           let notification = await new Notification({
-            message: `L'administrateur de la famille ${newHousehold.householdname} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`,
+            message: `L'administrateur de la famille ${newHousehold.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
             type: "request-addUser",
@@ -76,7 +76,7 @@ exports.add = async (req, res, next) => {
 
 
       //Si création d'un utilisateur avec un code famille
-    } else if (req.query.householdcode) {
+    } else if (req.query.householdCode) {
 
       //Envoie notif à l'admin de la famille en question
       let notification = await new Notification({
@@ -140,7 +140,7 @@ exports.remove = async (req, res, next) => {
     if (user.role === "admin") {
       household = await Household.findOne({ userId: paramsUserId });
     } else if (user.role === "user") {
-      household = await Household.findOne({ householdcode: user.householdcode });
+      household = await Household.findOne({ householdCode: user.householdCode });
     }
 
     //met à jour le tableau des membres d'une famille sans la personne qui va supprimer son compte

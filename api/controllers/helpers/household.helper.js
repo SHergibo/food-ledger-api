@@ -20,13 +20,13 @@ exports.createObjectMember = async (body) => {
 };
 
 exports.addHousehold = async (body) => {
-    const householdcode = cryptoRandomString({length: 10, type: 'url-safe'});
+    const householdCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let objectMember = await createObjectMemberNoExport(body.user);
     const household = new Household({
         member: [objectMember],
-        householdname: body.householdname,
+        householdName: body.householdName,
         userId: body.user._id,
-        householdcode: householdcode
+        householdCode: householdCode
     });
     await household.save();
     return household;
@@ -71,14 +71,14 @@ exports.noMoreAdmin = async (arrayMember, householdId) => {
                 otherUser.isFlagged = false;
             }
             
-            await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdcode: olderHousehold.householdcode }, { override: true, upsert: true, new: true });
+            await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdCode: olderHousehold.householdCode }, { override: true, upsert: true, new: true });
             let addMember = olderHousehold.member;
             addMember.push(otherUser);
             await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
         }
-        //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdcode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
+        //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdCode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
         else {
-            await User.findByIdAndUpdate(otherUser.userId, { householdcode: "none" }, { override: true, upsert: true, new: true });
+            await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
         }
 
         //Delete notification de type last-chance-request-admin

@@ -44,7 +44,7 @@ let schema = new Schema({
         required : true,
         trim : true
     },
-    householdcode : {
+    householdCode : {
         type : String,
         trim : true
     }
@@ -78,7 +78,7 @@ schema.methods.passwordMatches = async function(pwd){
 };
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdcode"];
+    const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdCode"];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];

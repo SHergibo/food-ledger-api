@@ -1,15 +1,17 @@
 const Product = require('./../models/product.model'),
-      Household = require('./../models/household.model'),
-      Historic = require('./../models/historic.model'),
-      Helpers = require('./helpers/findByQueryParams.helpler');
-      Boom = require('@hapi/boom');
+  Household = require('./../models/household.model'),
+  Historic = require('./../models/historic.model'),
+  FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
+  SortExpDateHelper = require('./helpers/sortExpDate.helper'),
+  Boom = require('@hapi/boom');
 
 /**
 * Post one product
 */
 exports.add = async (req, res, next) => {
   try {
-    const product = new Product(req.body);
+    let newBody = await SortExpDateHelper.sortExpDate(req.body);
+    const product = new Product(newBody);
     await product.save();
     return res.json(product.transform());
   } catch (error) {
@@ -23,8 +25,8 @@ exports.add = async (req, res, next) => {
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdcode: req.params.householdCode });
-    const finalObject = await Helpers.finalObject(req, household._id, Product);
+    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const finalObject = await FindByQueryHelper.finalObject(req, household._id, Product);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -50,32 +52,17 @@ exports.update = async (req, res, next) => {
   try {
     let response;
     if (req.body.number == 0) {
-      let productToSwitch = await Product.findById(req.params.productId);
-      
-      let body = {
-        name : productToSwitch.name,
-        brand : productToSwitch.brand,
-        type : productToSwitch.type,
-        weight : productToSwitch.weight,
-        kcal : productToSwitch.kcal,
-        location : productToSwitch.location,
-        expirationDate : [],
-        number : req.body.number,
-        householdId : productToSwitch.householdId,
-      }
-      
-      const historic = new Historic(body);
+      const historic = new Historic(req.body);
       await historic.save();
 
-      await Product.findByIdAndDelete(productToSwitch._id);
-      
-      const finalObject = await Helpers.finalObject(req, productToSwitch.householdId, Product);
-      response = res.json(finalObject);
-    }else{
-      const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { override: true, upsert: true, new: true });
+      await Product.findByIdAndDelete(req.params.productId);
+
+      response = res.status(204).send();
+    } else {
+      let newBody = await SortExpDateHelper.sortExpDate(req.body);
+      const product = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true });
       response = res.json(product.transform());
     }
-    
     return response;
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -100,7 +87,7 @@ exports.remove = async (req, res, next) => {
 exports.removePagination = async (req, res, next) => {
   try {
     const product = await Product.findByIdAndRemove(req.params.productId);
-    const finalObject = await Helpers.finalObject(req, product.householdId, Product);
+    const finalObject = await FindByIdHelper.finalObject(req, product.householdId, Product);
 
     return res.json(finalObject);
   } catch (error) {

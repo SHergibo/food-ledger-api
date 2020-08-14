@@ -3,7 +3,7 @@ const Household = require('./../models/household.model'),
 
 exports.addProductHousehold = async (req, res, next) => {
   try {
-    const household = await Household.findOne({householdcode: req.user.householdcode});
+    const household = await Household.findOne({householdCode: req.user.householdCode});
 
     if(!household) return next(Boom.notFound("Cette famille n'existe pas !"));
 
