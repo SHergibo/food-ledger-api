@@ -2,9 +2,14 @@ const Moment = require('moment');
  
 const splitDate = (date) => {
   let splitDate = date.split('/');
-  let momentDate = Moment(`${splitDate[1]}-${splitDate[0]}-${splitDate[2]}`, "MM-DD-YYYY")
-  let newDate = Moment(momentDate).format();
-  return newDate;
+  if(splitDate[1]){
+    let momentDate = Moment(`${splitDate[1]}-${splitDate[0]}-${splitDate[2]}`, "MM-DD-YYYY")
+    let newDate = Moment(momentDate).format();
+    return newDate;
+  } else {
+    return date;
+  }
+
 };
 
 exports.sortExpDate = async (body) => {

@@ -15,6 +15,8 @@ let expDateSchema = new Schema({
     required: true,
     min: 1
   }
+}, { 
+  _id : false 
 });
 
 let schema = new Schema({

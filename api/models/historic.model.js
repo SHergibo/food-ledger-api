@@ -11,6 +11,8 @@ let expDateSchemaHistoric = new Schema({
   productLinkedToExpDate: {
     type: Number
   }
+}, { 
+  _id : false 
 });
 
 let schema = new Schema({

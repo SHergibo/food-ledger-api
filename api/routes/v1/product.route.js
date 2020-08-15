@@ -19,7 +19,7 @@ router
 router
     .route('/:productId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.update)
+        .patch(authorize([ADMIN, LOGGED_USER]), addProductHousehold, checkSameHousehold, ProductController.update)
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.remove);
 
 router

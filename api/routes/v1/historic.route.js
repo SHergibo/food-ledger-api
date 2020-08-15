@@ -19,7 +19,7 @@ router
 router
     .route('/:historicId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.update)
+        .patch(authorize([ADMIN, LOGGED_USER]), addProductHousehold, checkSameHousehold, HistoricController.update)
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.remove);
 
 router
