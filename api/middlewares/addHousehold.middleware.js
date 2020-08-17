@@ -1,7 +1,7 @@
-const Household = require('./../models/household.model'),
+const Household = require('../models/household.model'),
       Boom = require('@hapi/boom');
 
-exports.addProductHousehold = async (req, res, next) => {
+exports.addHousehold = async (req, res, next) => {
   try {
     const household = await Household.findOne({householdCode: req.user.householdCode});
 

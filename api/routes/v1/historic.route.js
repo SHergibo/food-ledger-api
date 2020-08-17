@@ -2,7 +2,7 @@ const Express = require('express'),
       HistoricController = require(`${process.cwd()}/api/controllers/historic.controller`);
 
 const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-const { addProductHousehold } = require('../../middlewares/addProductHousehold.middleware');
+const { addHousehold } = require('../../middlewares/addHousehold.middleware');
 const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
 
 
@@ -10,7 +10,7 @@ const router = Express.Router();
 
 router
     .route('/')
-        .post(authorize([ADMIN, LOGGED_USER]), addProductHousehold, HistoricController.add);
+        .post(authorize([ADMIN, LOGGED_USER]), addHousehold, HistoricController.add);
 
 router
   .route('/pagination/:householdCode')
@@ -19,7 +19,7 @@ router
 router
     .route('/:historicId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), addProductHousehold, checkSameHousehold, HistoricController.update)
+        .patch(authorize([ADMIN, LOGGED_USER]), addHousehold, checkSameHousehold, HistoricController.update)
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.remove);
 
 router
