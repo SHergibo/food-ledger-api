@@ -3,6 +3,7 @@ const Product = require('./../models/product.model'),
   Historic = require('./../models/historic.model'),
   FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
   SortExpDateHelper = require('./helpers/sortExpDate.helper'),
+  BrandLogic = require('./helpers/brandLogic.helper'),
   Boom = require('@hapi/boom');
 
 /**
@@ -10,6 +11,7 @@ const Product = require('./../models/product.model'),
 */
 exports.add = async (req, res, next) => {
   try {
+    await BrandLogic.brandLogicWhenCreate(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
     const product = new Product(newBody);
     await product.save();
@@ -51,7 +53,17 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     let response;
+
     if (req.body.number == 0) {
+      let oldProduct;
+      if(req.body.brand){
+        await BrandLogic.brandLogicWhenUpdate(req, "historic", true);
+      }else if (!req.body.brand){
+        await BrandLogic.brandLogicWhenSwitching(req, "historic");
+        oldProduct = await Product.findById(req.params.productId);
+        req.body.brand = oldProduct.brand;
+      }
+
       const historic = new Historic(req.body);
       await historic.save();
 
@@ -59,6 +71,11 @@ exports.update = async (req, res, next) => {
 
       response = res.status(204).send();
     } else {
+
+      if (req.body.brand) {
+        await BrandLogic.brandLogicWhenUpdate(req, "product", false);
+      }
+
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
       const product = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true });
       response = res.json(product.transform());
@@ -74,6 +91,7 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
+    await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndDelete(req.params.productId);
     return res.json(product.transform());
   } catch (error) {
@@ -86,9 +104,9 @@ exports.remove = async (req, res, next) => {
 */
 exports.removePagination = async (req, res, next) => {
   try {
+    await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndRemove(req.params.productId);
-    const finalObject = await FindByIdHelper.finalObject(req, product.householdId, Product);
-
+    const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));

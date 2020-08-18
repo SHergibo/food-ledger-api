@@ -12,6 +12,10 @@ let schema = new Schema({
     type: Number,
     required: true
   },
+  numberOfHistoric: {
+    type: Number,
+    required: true
+  },
   householdId: {
     required: true,
     type: Schema.Types.ObjectId,
@@ -22,7 +26,7 @@ let schema = new Schema({
 });
 
 schema.methods.transform = function () {
-  const fields = ['_id', 'brandName', 'numberOfProduct'];
+  const fields = ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"];
   const object = {};
   fields.forEach((field) => {
     object[field] = this[field];
