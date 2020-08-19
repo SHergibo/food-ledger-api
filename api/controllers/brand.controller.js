@@ -1,13 +1,14 @@
 const Brand = require('./../models/brand.model'),
+      Household = require('./../models/household.model'),
       Boom = require('@hapi/boom');
 
 /**
 * GET all brands
 */
 exports.findAll = async (req, res, next) => {
-  //TODO convertir householdCode en householdId (middleware)
   try {
-    const brands = await Brand.find({householdId : req.params.householdId});
+    const household = await Household.findOne({householdCode : req.params.householdCode})
+    const brands = await Brand.find({householdId : household._id});
     const fields = ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"];
         let arrayBrandTransformed = [];
         brands.forEach((item)=>{

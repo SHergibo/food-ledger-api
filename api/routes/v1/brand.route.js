@@ -9,13 +9,13 @@ const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.midd
 const router = Express.Router();
 
 router
-    .route('/:householdId')
-        .get(authorize([ADMIN, LOGGED_USER]), /*checkSameHousehold,*/ BrandController.findAll)
+    .route('/:householdCode')
+        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findAll)
   
 router
     .route('/:brandId')
-        .patch(authorize([ADMIN, LOGGED_USER]), addHousehold, /*checkSameHousehold,*/ BrandController.update)
-        .delete(authorize([ADMIN, LOGGED_USER]), /*checkSameHousehold,*/ BrandController.remove);
+        .patch(authorize([ADMIN, LOGGED_USER]), addHousehold, checkSameHousehold, BrandController.update)
+        .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.remove);
 
 
 module.exports = router;
