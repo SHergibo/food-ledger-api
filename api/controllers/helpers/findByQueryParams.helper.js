@@ -17,6 +17,8 @@ exports.finalObject = async (req, householdId, model) => {
     if (key !== "page" && key.split('-')[1] !== "sort") {
       if (key === "name" || key === "brand" || key === "type" || key === "location") {
         findObject[key] = { $regex: queryObject[key], $options: 'i' };
+      } else if(key === "expirationDate"){
+        findObject["expirationDate.expDate"] = queryObject[key];
       } else {
         findObject[key] = queryObject[key];
       }
