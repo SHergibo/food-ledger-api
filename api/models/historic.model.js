@@ -2,7 +2,8 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const types = ['Légume', 'Viande', 'Féculent', 'Poisson', 'Fruit', 'Boisson', 'Autre'];
+const types = ['Légume', 'Viande', 'Poisson', 'Fruit', 'Boisson', 'Produit Sucré', "Produit Laitier", "Farineux", "Céréale", "Légumineuse"];
+
 
 let expDateSchemaHistoric = new Schema({
   expDate: {
