@@ -3,7 +3,7 @@ const { min } = require('moment-timezone');
 
 let Schema = Mongoose.Schema;
 
-const types = ['Légume', 'Viande', 'Poisson', 'Fruit', 'Boisson', 'Produit Sucré', "Produit Laitier", "Farineux", "Céréale", "Légumineuse"];
+const types = ['Légume', 'Viande', 'Poisson', 'Fruit', 'Boisson', 'Produit sucré', "Produit laitier", "Farineux", "Céréale", "Légumineuse"];
 
 let expDateSchema = new Schema({
   expDate: {
