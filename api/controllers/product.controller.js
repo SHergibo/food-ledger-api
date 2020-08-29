@@ -69,7 +69,7 @@ exports.update = async (req, res, next) => {
 
       await Product.findByIdAndDelete(req.params.productId);
 
-      response = res.status(204).send();
+      response = res.json(historic.transform());
     } else {
 
       if (req.body.brand) {

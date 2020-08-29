@@ -3,7 +3,7 @@ exports.finalObject = async (req, householdId, model) => {
   let queryWithSort = false;
   let querySortObject = {};
   let page = req.query.page || 0;
-  let limit = 10;
+  let limit = 14;
 
 
   let findObject = { householdId: householdId };
