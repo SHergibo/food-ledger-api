@@ -19,6 +19,22 @@ let expDateSchema = new Schema({
   _id : false 
 });
 
+let minimumInStock = new Schema({
+  minInStock: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  updatedBy: {
+    type: String,
+    required: true,
+    default: 'globalOption'
+  }
+}, { 
+  _id : false 
+});
+
 let schema = new Schema({
   name: {
     type: String,
@@ -50,6 +66,10 @@ let schema = new Schema({
     type: Number,
     required: true,
   },
+  minimumInStock : {
+    type : minimumInStock,
+    default: () => ({}),
+  },
   householdId: {
     required: true,
     type: Schema.Types.ObjectId,
@@ -60,7 +80,7 @@ let schema = new Schema({
 });
 
 schema.methods.transform = function () {
-  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
+  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'];
   const object = {};
   fields.forEach((field) => {
     object[field] = this[field];
