@@ -46,7 +46,7 @@ exports.finalObject = async (req, householdId, model) => {
   }
 
 
-  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number'];
+  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'];
   let arrayProductsTransformed = [];
   products.forEach((item) => {
     const object = {};
