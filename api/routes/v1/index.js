@@ -1,5 +1,6 @@
 const Express = require('express'),
       UserRoutes = require('./user.route'),
+      OptionRoutes = require('./option.route'),
       HouseholdRoutes = require('./household.route'),
       NotificationRoutes = require('./notification.route'),
       RequestRoutes = require('./request.route'),
@@ -11,10 +12,9 @@ const Express = require('express'),
 
 const router = Express.Router();
 
-router.get('/status', (req, res) => res.send(200));
-
 router.use('/auth', AuthRoutes);
 router.use('/users', UserRoutes);
+router.use('/options', OptionRoutes);
 router.use('/households', HouseholdRoutes);
 router.use('/notifications', NotificationRoutes);
 router.use('/requests', RequestRoutes);
