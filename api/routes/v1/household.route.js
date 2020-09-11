@@ -13,7 +13,7 @@ router
 router
     .route('/:householdId')
         .get(authorize([ADMIN, LOGGED_USER]), HouseholdController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), HouseholdController.update)
-        .delete(authorize([ADMIN, LOGGED_USER]), HouseholdController.remove);
+        .patch(authorize([ADMIN]), HouseholdController.update)
+        .delete(authorize([ADMIN]), HouseholdController.remove);
 
 module.exports = router;

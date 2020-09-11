@@ -5,6 +5,7 @@ const Household = require('./../models/household.model'),
 /**
 * Post one household
 */
+//TODO revoir si cette route est utile
 exports.add = async (req, res, next) => {
     try {
         const household = await Helpers.addHousehold(req.body);
@@ -41,6 +42,7 @@ exports.update = async (req, res, next) => {
 /**
 * DELETE household
 */
+//TODO tester si cette route est utile
 exports.remove = async (req, res, next) => {
     try {
         const household = await Household.findByIdAndDelete(req.params.householdId);
