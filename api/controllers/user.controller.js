@@ -1,4 +1,5 @@
 const User = require('./../models/user.model'),
+      Option = require('./../models/option.model'),
       Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./helpers/household.helper'),
@@ -21,7 +22,6 @@ exports.add = async (req, res, next) => {
       household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
         return res.status(400).send(Boom.badRequest('No familly found with this household code'));
-        
       }
     }
 
@@ -48,6 +48,9 @@ exports.add = async (req, res, next) => {
       }
       user = new User(req.body);
       await user.save();
+      let option = new Option({userId : user._id});
+      await option.save();
+      user = await User.findByIdAndUpdate(user._id, { optionId: option._id }, { override: true, upsert: true, new: true });
     }
     //Si création d'un utilisateur en même temps qu'un ménage
     if (req.body.householdName) {
@@ -95,7 +98,6 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
-    console.log(error);
     next(User.checkDuplicateEmail(error));
   }
 };
@@ -177,9 +179,9 @@ exports.remove = async (req, res, next) => {
     }
 
     await User.findByIdAndDelete(paramsUserId);
+    await Option.findByIdAndDelete(user.optionId);
     return res.json(user.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

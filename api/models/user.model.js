@@ -47,6 +47,10 @@ let schema = new Schema({
     householdCode : {
         type : String,
         trim : true
+    },
+    optionId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Option',
     }
 });
 

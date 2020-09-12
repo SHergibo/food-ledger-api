@@ -39,7 +39,7 @@ let schema = new Schema({
     default: false
   },
   warningExpirationDate: {
-    type: Date,
+    type: String,
     required: true,
     default: "1 mois",
     enum : warningExpirationDate,
