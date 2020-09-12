@@ -6,7 +6,7 @@ const Option = require('./../models/option.model'),
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const option = await Option.find({userId : req.params.userId});
+    const option = await Option.findOne({userId : req.params.userId});
     return res.json(option.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));

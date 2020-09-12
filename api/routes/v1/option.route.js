@@ -5,10 +5,13 @@ const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middle
 
 
 const router = Express.Router();
+
+router
+  .route('/:userId')
+    .get(authorize([ADMIN, LOGGED_USER]), OptionController.findOne);
   
 router
   .route('/:optionId')
-      .get(authorize([ADMIN, LOGGED_USER]), OptionController.findOne)
-      .patch(authorize([ADMIN, LOGGED_USER]), OptionController.update)
+    .patch(authorize([ADMIN, LOGGED_USER]), OptionController.update);
 
 module.exports = router;
