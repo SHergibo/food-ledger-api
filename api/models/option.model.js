@@ -2,9 +2,57 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const dateMailGlobal = ['1 mois', '2 mois', '3 mois'];
-const dateMailShoppingList = ['1 semaine', '2 semaines', '3 semaines'];
-const warningExpirationDate = ['1 mois', '2 mois', '3 mois'];
+const dateMailGlobal = ['Tout les mois', 'Tout les deux mois', 'Tout les trois mois'];
+const dateMailShoppingList = ['Toutes les semaines', 'Toutes les deux semaines', 'Toutes les trois semaines', 'Une fois par mois'];
+const warningExpirationDate = ["Un mois à l'avance", "Deux mois à l'avance", "Trois mois à l'avance"];
+
+let objectDateMailGlobal = new Schema({
+  value: {
+    type: Number,
+    required: true,
+    default: 1
+  },
+  label: {
+    type: String,
+    required: true,
+    default : "Tout les mois",
+    enum: dateMailGlobal
+  }
+}, { 
+  _id : false 
+});
+
+let objectDateMailShoppingList = new Schema({
+  value: {
+    type: Number,
+    required: true,
+    default: 1
+  },
+  label: {
+    type: String,
+    required: true,
+    default : "Toutes les semaines",
+    enum: dateMailShoppingList
+  }
+}, { 
+  _id : false 
+});
+
+let objectWarningExpirationDate = new Schema({
+  value: {
+    type: Number,
+    required: true,
+    default: 1
+  },
+  label: {
+    type: String,
+    required: true,
+    default : "Un mois à l'avance",
+    enum: warningExpirationDate
+  }
+}, { 
+  _id : false 
+});
 
 let schema = new Schema({
   sendMailGlobal: {
@@ -13,10 +61,8 @@ let schema = new Schema({
     default: false
   },
   dateMailGlobal: {
-    type: String,
-    required: true,
-    default: "1 mois",
-    enum : dateMailGlobal,
+    type : objectDateMailGlobal,
+    default: () => ({}),
   },
   sendMailShoppingList: {
     type: Boolean,
@@ -24,10 +70,8 @@ let schema = new Schema({
     default: false
   },
   dateMailShoppingList: {
-    type: String,
-    required: true,
-    default: "1 semaine",
-    enum : dateMailShoppingList,
+    type : objectDateMailShoppingList,
+    default: () => ({}),
   },
   minimalProductStockGlobal: {
     type: Number,
@@ -39,10 +83,8 @@ let schema = new Schema({
     default: false
   },
   warningExpirationDate: {
-    type: String,
-    required: true,
-    default: "1 mois",
-    enum : warningExpirationDate,
+    type : objectWarningExpirationDate,
+    default: () => ({}),
   },
   colorCodeDate: {
     type: Boolean,
