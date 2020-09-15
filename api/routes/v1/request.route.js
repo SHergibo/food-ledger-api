@@ -8,14 +8,14 @@ const router = Express.Router();
 
 router
     .route('/switch-admin/:notificationId')
-        .get(/*authorize([ADMIN, LOGGED_USER]),*/ RequestController.switchAdminRequest);
+        .get(authorize([ADMIN, LOGGED_USER]), RequestController.switchAdminRequest);
 
 router
     .route('/add-user-request')
-        .post(/*authorize([ADMIN, LOGGED_USER]),*/ RequestController.addUserRequest);
+        .post(authorize([ADMIN, LOGGED_USER]), RequestController.addUserRequest);
 
 router
     .route('/add-user-respond/:notificationId')
-        .get(/*authorize([ADMIN, LOGGED_USER]),*/ RequestController.addUserRespond);
+        .get(authorize([ADMIN, LOGGED_USER]), RequestController.addUserRespond);
 
 module.exports = router;

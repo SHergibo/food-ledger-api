@@ -46,8 +46,6 @@ let schema = new Schema({
     }
 });
 
-module.exports = Mongoose.model('Notification', schema);
-
 schema.methods.transform = function() {
     const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
     const object = {};
@@ -56,3 +54,5 @@ schema.methods.transform = function() {
     });
     return object;
 };
+
+module.exports = Mongoose.model('Notification', schema);

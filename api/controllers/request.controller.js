@@ -152,7 +152,7 @@ exports.addUserRequest = async (req, res, next) => {
       message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
       notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }
-    
+
     let notification = await new Notification(notificationObject);
     await notification.save();
 
@@ -167,7 +167,6 @@ exports.addUserRequest = async (req, res, next) => {
 */
 exports.addUserRespond = async (req, res, next) => {
   try {
-
     if (!req.query.acceptedRequest) {
       return res.status(400).send(Boom.badRequest('Need a query'));
     }
@@ -273,7 +272,18 @@ exports.addUserRespond = async (req, res, next) => {
     //Delete la notification
     await Notification.findByIdAndDelete(notification._id);
 
-    return res.json(user.transform());
+    const notifications = await Notification.find({userId : user._id});
+    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+        let arrayNotificationsTransformed = [];
+        notifications.forEach((item)=>{
+            const object = {};
+            fields.forEach((field)=>{
+                object[field] = item[field];
+            });
+            arrayNotificationsTransformed.push(object);
+        });
+
+    return res.json(arrayNotificationsTransformed);
   } catch (error) {
     console.log(error);
     next(Boom.badImplementation(error.message));
