@@ -33,8 +33,6 @@ let schema = new Schema({
     },
 });
 
-module.exports = Mongoose.model('Household', schema);
-
 schema.methods.transform = function() {
     const fields = ['_id', 'member', 'householdName', 'householdCode', 'isWaiting', 'userId'];
     const object = {};
@@ -43,3 +41,5 @@ schema.methods.transform = function() {
     });
     return object;
 };
+
+module.exports = Mongoose.model('Household', schema);

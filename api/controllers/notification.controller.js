@@ -8,7 +8,7 @@ const Notification = require('./../models/notification.model'),
 exports.findAll = async (req, res, next) => {
     try {
         const notifications = await Notification.find({userId : req.params.userId});
-        const fields = ['_id', 'message', 'type', 'urlRequest', 'expirationDate'];
+        const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
         let arrayNotificationsTransformed = [];
         notifications.forEach((item)=>{
             const object = {};

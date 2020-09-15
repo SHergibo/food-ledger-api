@@ -131,7 +131,16 @@ exports.addUserRequest = async (req, res, next) => {
 
     //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
     if (otherHousehold.isWaiting === true) {
-      return res.status(400).send(Boom.badRequest("User can't switch familly at the moment because it's familly doesn't have an admin"));
+      return res.status(400).send(Boom.badRequest("L'utilisateur ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
+    }
+
+    let notificationObject = {
+      message: message,
+      householdId: household._id,
+      userId: userId,
+      otherUserId: otherUserId,
+      type: "request-addUser",
+      urlRequest: "add-user-respond"
     }
 
     if (req.body.type === "householdToUser") {
@@ -141,15 +150,10 @@ exports.addUserRequest = async (req, res, next) => {
       userId = household.userId;
       otherUserId = user._id
       message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
+      notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }
-    let notification = await new Notification({
-      message: message,
-      householdId: household._id,
-      userId: userId,
-      otherUserId: otherUserId,
-      type: "request-addUser",
-      urlRequest: "add-user-respond"
-    });
+    
+    let notification = await new Notification(notificationObject);
     await notification.save();
 
     return res.json(notification.transform());

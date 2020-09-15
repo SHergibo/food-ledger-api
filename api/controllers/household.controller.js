@@ -19,7 +19,7 @@ exports.add = async (req, res, next) => {
 */
 exports.findOne = async (req, res, next) => {
     try {
-        const household = await Household.findById(req.params.householdId);
+        const household = await Household.findOne({householdCode : req.params.householdCode});
         return res.json(household.transform());
     } catch (error) {
         next(Boom.badImplementation(error.message));

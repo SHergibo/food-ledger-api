@@ -29,7 +29,6 @@ let schema = new Schema({
 });
 
 schema.statics.generate = function(user) {
-    console.log(user)
     const tokenObject = new tokenAuth();
     tokenObject.token = `${user._id}.${Crypto.randomBytes(40).toString('hex')}`;
     tokenObject.userId = user._id;

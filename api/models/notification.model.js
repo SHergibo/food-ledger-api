@@ -11,6 +11,14 @@ let schema = new Schema({
         required: true,
         trim : true
     },
+    fullName: {
+        type: String,
+        trim: true,
+    },
+    senderUserCode : {
+        type: String,
+        trim: true,
+    },
     userId : {
         type : Schema.Types.ObjectId,
         ref : 'User',
@@ -41,7 +49,7 @@ let schema = new Schema({
 module.exports = Mongoose.model('Notification', schema);
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'message', 'type', 'urlRequest', 'expirationDate'];
+    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];

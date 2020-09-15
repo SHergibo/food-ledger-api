@@ -84,6 +84,8 @@ exports.add = async (req, res, next) => {
       //Envoie notif à l'admin de la famille en question
       let notification = await new Notification({
         message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
+        fullName: `${user.firstname} ${user.lastname}`,
+        senderUserCode: user.usercode,
         householdId: household._id,
         userId: household.userId,
         otherUserId: user._id,

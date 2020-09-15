@@ -12,8 +12,11 @@ router
         .post(HouseholdController.add);
 
 router
+    .route('/:householdCode')
+        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HouseholdController.findOne);
+
+router
     .route('/:householdId')
-        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HouseholdController.findOne)
         .patch(authorize([ADMIN]), checkSameHousehold, HouseholdController.update);
 
 module.exports = router;
