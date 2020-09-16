@@ -34,6 +34,11 @@ exports.checkSameHousehold = async (req, res, next) => {
       householdCode = req.params.householdCode;
     }
 
+    if(req.params.householdId){
+      household = await Household.findById(req.params.householdId);
+      householdCode = household.householdCode;
+    }
+
     if (householdCode === req.user.householdCode) {
       return next();
     } else {
