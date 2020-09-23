@@ -41,6 +41,11 @@ let schema = new Schema({
     required: true,
     trim: true
   },
+  slugName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   brand: {
     type: String,
     required: true,

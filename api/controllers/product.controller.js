@@ -3,6 +3,7 @@ const Product = require('./../models/product.model'),
   Historic = require('./../models/historic.model'),
   FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
   SortExpDateHelper = require('./helpers/sortExpDate.helper'),
+  slugify = require('slugify'),
   BrandLogic = require('./helpers/brandLogic.helper'),
   Boom = require('@hapi/boom');
 
@@ -13,6 +14,7 @@ exports.add = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenCreate(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
+    newBody.slugName = slugify(newBody.name);
     const product = new Product(newBody);
     await product.save();
     return res.json(product.transform());

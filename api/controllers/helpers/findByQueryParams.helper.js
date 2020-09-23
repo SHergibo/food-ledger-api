@@ -16,7 +16,11 @@ exports.finalObject = async (req, householdId, model) => {
     }
     if (key !== "page" && key.split('-')[1] !== "sort") {
       if (key === "name" || key === "brand" || key === "type" || key === "location") {
-        findObject[key] = { $regex: queryObject[key], $options: 'i' };
+        if(key === "name"){
+          findObject["slugName"] = { $regex: queryObject[key], $options: 'i' };
+        }else{
+          findObject[key] = { $regex: queryObject[key], $options: 'i' };
+        }
       } else if(key === "expirationDate"){
         findObject["expirationDate.expDate"] = queryObject[key];
       } else {
@@ -33,6 +37,7 @@ exports.finalObject = async (req, householdId, model) => {
       .limit(limit)
       .sort(querySortObject);
   } else {
+    console.log(findObject);
     products = await model.find(findObject)
       .skip(page * limit)
       .limit(limit);
