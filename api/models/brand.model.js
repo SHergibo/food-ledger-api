@@ -2,11 +2,24 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-let schema = new Schema({
-  brandName: {
+let brand = new Schema({
+  label: {
     type: String,
     required: true,
     trim: true
+  },
+  value: {
+    type: String,
+    required: true,
+    trim: true
+  }
+}, { 
+  _id : false 
+});
+
+let schema = new Schema({
+  brandName: {
+    type : brand,
   },
   numberOfProduct: {
     type: Number,

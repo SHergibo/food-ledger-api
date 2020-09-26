@@ -1,3 +1,5 @@
+const Brand = require('./../../models/brand.model');
+
 exports.finalObject = async (req, householdId, model) => {
   let queryObject = req.query;
   let queryWithSort = false;
@@ -18,6 +20,9 @@ exports.finalObject = async (req, householdId, model) => {
       if (key === "name" || key === "brand" || key === "type" || key === "location") {
         if(key === "name"){
           findObject["slugName"] = { $regex: queryObject[key], $options: 'i' };
+        }else if(key === "brand"){
+          let brand = await Brand.findOne({"brandName.value": queryObject[key]}); 
+          findObject[key] = brand._id;
         }else{
           findObject[key] = { $regex: queryObject[key], $options: 'i' };
         }
@@ -33,12 +38,13 @@ exports.finalObject = async (req, householdId, model) => {
   let products;
   if (queryWithSort) {
     products = await model.find(findObject)
+      .populate('brand', 'brandName')
       .skip(page * limit)
       .limit(limit)
       .sort(querySortObject);
   } else {
-    console.log(findObject);
     products = await model.find(findObject)
+      .populate('brand', 'brandName')
       .skip(page * limit)
       .limit(limit);
   }

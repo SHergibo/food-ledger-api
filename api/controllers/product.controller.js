@@ -12,9 +12,10 @@ const Product = require('./../models/product.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenCreate(req, "product");
+    let brand = await BrandLogic.brandLogicWhenCreate(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
-    newBody.slugName = slugify(newBody.name);
+    newBody.slugName = slugify(newBody.name, {lower: true});
+    newBody.brand = brand._id;
     const product = new Product(newBody);
     await product.save();
     return res.json(product.transform());
@@ -42,7 +43,7 @@ exports.findPaginate = async (req, res, next) => {
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.productId);
+    const product = await Product.findById(req.params.productId).populate('brand', "brandName");
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -55,17 +56,22 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     let response;
+    let brand;
+
+    let product = await Product.findById(req.params.productId).populate('brand', 'brandName');
 
     if (req.body.number == 0) {
       let oldProduct;
-      if(req.body.brand){
-        await BrandLogic.brandLogicWhenUpdate(req, "historic", true);
-      }else if (!req.body.brand){
+      if(req.body.brand !== product.brand.brandName.value){
+        brand = await BrandLogic.brandLogicWhenUpdate(req, "historic", true);
+        req.body.brand = brand._id;
+      }else if (req.body.brand === product.brand.brandName.value){
         await BrandLogic.brandLogicWhenSwitching(req, "historic");
         oldProduct = await Product.findById(req.params.productId);
         req.body.brand = oldProduct.brand;
       }
 
+      req.body.slugName = slugify(req.body.name, {lower: true});
       const historic = new Historic(req.body);
       await historic.save();
 
@@ -74,8 +80,9 @@ exports.update = async (req, res, next) => {
       response = res.json(historic.transform());
     } else {
 
-      if (req.body.brand) {
-        await BrandLogic.brandLogicWhenUpdate(req, "product", false);
+      if (req.body.brand !== product.brand.brandName.value) {
+        brand = await BrandLogic.brandLogicWhenUpdate(req, "product", false);
+        req.body.brand = brand._id;
       }
 
       let newBody = await SortExpDateHelper.sortExpDate(req.body);

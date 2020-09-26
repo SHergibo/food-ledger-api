@@ -1,5 +1,4 @@
 const Mongoose = require('mongoose');
-const { min } = require('moment-timezone');
 
 let Schema = Mongoose.Schema;
 
@@ -47,9 +46,9 @@ let schema = new Schema({
     trim: true
   },
   brand: {
-    type: String,
     required: true,
-    trim: true
+    type: Schema.Types.ObjectId,
+    ref: 'Brand',
   },
   type: {
     type: String,

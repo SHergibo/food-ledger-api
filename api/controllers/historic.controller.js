@@ -4,6 +4,7 @@ const Historic = require('./../models/historic.model'),
       FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
       SortExpDateHelper = require('./helpers/sortExpDate.helper'),
       BrandLogic = require('./helpers/brandLogic.helper'),
+      slugify = require('slugify'),
       Boom = require('@hapi/boom');
 
 /**
@@ -11,7 +12,9 @@ const Historic = require('./../models/historic.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenCreate(req, "historic");
+    let brand = await BrandLogic.brandLogicWhenCreate(req, "historic");
+    req.body.slugName = slugify(req.body.name, {lower: true});
+    req.body.brand = brand._id;
     const historic = new Historic(req.body);
     await historic.save();
     return res.json(historic.transform());
@@ -39,7 +42,7 @@ exports.findPaginate = async (req, res, next) => {
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const historic = await Historic.findById(req.params.historicId);
+    const historic = await Historic.findById(req.params.historicId).populate('brand', "brandName");
     return res.json(historic.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -52,10 +55,13 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     let response;
+    let brand;
+
     if (req.body.number >= 1) {
       let oldHistoric;
       if(req.body.brand){
-        await BrandLogic.brandLogicWhenUpdate(req, "product", true);
+        brand = await BrandLogic.brandLogicWhenUpdate(req, "product", true);
+        req.body.brand = brand._id;
       }else if (!req.body.brand){
         await BrandLogic.brandLogicWhenSwitching(req, "product");
         oldHistoric = await Historic.findById(req.params.historicId);
@@ -63,6 +69,7 @@ exports.update = async (req, res, next) => {
       }
 
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
+      newBody.slugName = slugify(newBody.name, {lower: true});
       
       const product = new Product(newBody);
       await product.save();
@@ -73,7 +80,8 @@ exports.update = async (req, res, next) => {
     }else{
 
       if (req.body.brand) {
-        await BrandLogic.brandLogicWhenUpdate(req, "historic", false);
+        brand = await BrandLogic.brandLogicWhenUpdate(req, "historic", false);
+        req.body.brand = brand._id;
       }
 
       const historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true });
@@ -82,7 +90,6 @@ exports.update = async (req, res, next) => {
     
     return response;
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

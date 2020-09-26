@@ -22,10 +22,15 @@ let schema = new Schema({
     required: true,
     trim: true
   },
-  brand: {
+  slugName: {
     type: String,
     required: true,
     trim: true
+  },
+  brand: {
+    required: true,
+    type: Schema.Types.ObjectId,
+    ref: 'Brand',
   },
   type: {
     type: String,
