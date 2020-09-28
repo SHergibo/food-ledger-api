@@ -2,7 +2,18 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const types = ['Légume', 'Viande', 'Poisson', 'Fruit', 'Boisson', 'Produit sucré', "Produit laitier", "Farineux", "Céréale", "Légumineuse"];
+const types = [
+  {label: 'Légume', value: 'legume'}, 
+  {label: 'Viande', value: 'viande'}, 
+  {label: 'Poisson', value: 'poisson'}, 
+  {label: 'Fruit', value: 'fruit'}, 
+  {label: 'Boisson', value: 'boisson'}, 
+  {label: 'Produit sucré', value: 'produit-sucre'}, 
+  {label: "Produit laitier", value: 'produit-laitier'}, 
+  {label: 'Farineux', value: 'farineux'}, 
+  {label: 'Céréale', value: 'cereale'}, 
+  {label: 'Légumineuse', value: 'legumineuse'}
+];
 
 let expDateSchema = new Schema({
   expDate: {
@@ -51,7 +62,7 @@ let schema = new Schema({
     ref: 'Brand',
   },
   type: {
-    type: String,
+    type: Object,
     enum: types
   },
   weight: {

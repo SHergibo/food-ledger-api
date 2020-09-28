@@ -57,12 +57,14 @@ exports.update = async (req, res, next) => {
     let response;
     let brand;
 
+    let historic = await Historic.findById(req.params.historicId).populate('brand', 'brandName');
+
     if (req.body.number >= 1) {
       let oldHistoric;
-      if(req.body.brand){
+      if(req.body.brand.value !== historic.brand.brandName.value){
         brand = await BrandLogic.brandLogicWhenUpdate(req, "product", true);
         req.body.brand = brand._id;
-      }else if (!req.body.brand){
+      }else if (req.body.brand.value === historic.brand.brandName.value){
         await BrandLogic.brandLogicWhenSwitching(req, "product");
         oldHistoric = await Historic.findById(req.params.historicId);
         req.body.brand = oldHistoric.brand;
@@ -79,12 +81,15 @@ exports.update = async (req, res, next) => {
       response = res.json(product.transform());
     }else{
 
-      if (req.body.brand) {
+      if (req.body.brand.value !== historic.brand.brandName.value) {
         brand = await BrandLogic.brandLogicWhenUpdate(req, "historic", false);
         req.body.brand = brand._id;
+      }else if(req.body.brand.value === historic.brand.brandName.value){
+        req.body.brand = historic.brand._id;
       }
 
-      const historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true });
+
+      historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
       response = res.json(historic.transform());
     }
     

@@ -1,11 +1,10 @@
 const Brand = require('./../../models/brand.model'),
   Household = require('./../../models/household.model'),
   Product = require('./../../models/product.model'),
-  Historic = require('./../../models/historic.model'),
-  slugify = require('slugify');
+  Historic = require('./../../models/historic.model');
 
 exports.brandLogicWhenCreate = async (req, type) => {
-  let brandDB = await Brand.findOne({"brandName.value": req.body.brand});
+  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value});
   if (brandDB) {
     if (type === "product") {
       await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
@@ -15,7 +14,7 @@ exports.brandLogicWhenCreate = async (req, type) => {
   } else {
     const household = await Household.findOne({ householdCode: req.user.householdCode });
     let brandObject = {
-      brandName: {label : req.body.brand, value: slugify(req.body.brand, {lower: true})},
+      brandName: req.body.brand,
       householdId: household._id
     }
 
@@ -70,16 +69,18 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
   }
 
 
-  let brandDB = await Brand.findOne({"brandName.value": req.body.brand});
+  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value});
+  let oldBrand = await Brand.findById(productBrand.brand);
   if (brandDB) {
     if (!switching) {
       if (type === "product") {
         await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
       } else if (type === "historic") {
         await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
       }
     } else {
-      let oldBrand = await Brand.findById(productBrand.brand);
       if (type === "product") {
         await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
         await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
@@ -90,18 +91,25 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
     }
   } else {
     const household = await Household.findOne({ householdCode: req.user.householdCode });
-    let oldBrand = await Brand.findById(productBrand.brand);
     let brandObject = {
-      brandName: {label: req.body.brand, value: slugify(req.body.brand, {lower: true})},
+      brandName: req.body.brand,
       householdId: household._id
     }
 
     if (type === "product") {
-      await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+      if(switching){
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+      }else if(!switching){
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+      }
       brandObject.numberOfProduct = 1;
       brandObject.numberOfHistoric = 0;
     } else if (type === "historic") {
-      await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+      if(switching){
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+      }else if(!switching){
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+      }
       brandObject.numberOfProduct = 0;
       brandObject.numberOfHistoric = 1;
     }
