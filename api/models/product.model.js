@@ -69,8 +69,7 @@ let schema = new Schema({
     type: Number,
   },
   kcal: {
-    type: String,
-    trim: true
+    type: Number,
   },
   expirationDate: [expDateSchema],
   location: {
