@@ -15,6 +15,7 @@ exports.add = async (req, res, next) => {
     let brand = await BrandLogic.brandLogicWhenCreate(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
     newBody.slugName = slugify(newBody.name, {lower: true});
+    newBody.slugLocation = slugify(newBody.location, {lower: true});
     newBody.brand = brand._id;
     const product = new Product(newBody);
     await product.save();
@@ -72,6 +73,7 @@ exports.update = async (req, res, next) => {
       }
 
       req.body.slugName = slugify(req.body.name, {lower: true});
+      req.body.slugLocation = slugify(req.body.location, {lower: true});
       const historic = new Historic(req.body);
       await historic.save();
 

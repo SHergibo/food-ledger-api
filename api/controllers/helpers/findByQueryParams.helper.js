@@ -20,6 +20,8 @@ exports.finalObject = async (req, householdId, model) => {
       if (key === "name" || key === "brand" || key === "type" || key === "location") {
         if(key === "name"){
           findObject["slugName"] = { $regex: queryObject[key], $options: 'i' };
+        }else if(key === "location"){
+          findObject["slugLocation"] = { $regex: queryObject[key], $options: 'i' };
         }else if(key === "brand"){
           let brand = await Brand.findOne({"brandName.value": queryObject[key]}); 
           findObject[key] = brand._id;

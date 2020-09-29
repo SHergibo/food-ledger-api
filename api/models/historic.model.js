@@ -58,6 +58,11 @@ let schema = new Schema({
     type: String,
     trim: true
   },
+  slugLocation: {
+    type: String,
+    required: true,
+    trim: true
+  },
   number: {
     type: Number,
     required: true,
