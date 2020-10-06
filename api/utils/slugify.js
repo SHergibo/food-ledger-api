@@ -8,6 +8,6 @@ slugify.extend({
 exports.slugUrl = (string) =>{
   return slugify(string, {
     lower: true,
-    remove: /[*+~()'"!\/]/g
+    remove: /[*+~()'"\\\\!/]/g
   })
 }
