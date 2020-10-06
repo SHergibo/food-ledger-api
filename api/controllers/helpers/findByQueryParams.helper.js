@@ -31,8 +31,9 @@ exports.finalObject = async (req, householdId, model) => {
           findObject[key] = { $regex: queryObject[key], $options: 'i' };
         }
       } else if(key === "expirationDate"){
-        let unSlugExpDate = queryObject[key].split('T')[1].replace(/-/g, ":").replace("_", ".");
-        let expDate = `${queryObject[key].split('T')[0]}T${unSlugExpDate}`;
+        let dateUpperCase = queryObject[key].toUpperCase()
+        let unSlugExpDate = dateUpperCase.split('T')[1].replace(/-/g, ":").replace("_", ".");
+        let expDate = `${dateUpperCase.split('T')[0]}T${unSlugExpDate}`;
         findObject["expirationDate.expDate"] = expDate;
       } else {
         findObject[key] = queryObject[key];

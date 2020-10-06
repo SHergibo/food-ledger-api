@@ -3,7 +3,7 @@ const Product = require('./../models/product.model'),
   Historic = require('./../models/historic.model'),
   FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
   SortExpDateHelper = require('./helpers/sortExpDate.helper'),
-  slugify = require('slugify'),
+  Slugify = require('./../utils/slugify'),
   BrandLogic = require('./helpers/brandLogic.helper'),
   Boom = require('@hapi/boom');
 
@@ -14,8 +14,8 @@ exports.add = async (req, res, next) => {
   try {
     let brand = await BrandLogic.brandLogicWhenCreate(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
-    newBody.slugName = slugify(newBody.name, {lower: true});
-    newBody.slugLocation = slugify(newBody.location, {lower: true});
+    newBody.slugName = Slugify.slugUrl(newBody.name);
+    newBody.slugLocation = Slugify.slugUrl(newBody.location);
     newBody.brand = brand._id;
     const product = new Product(newBody);
     await product.save();
@@ -72,8 +72,8 @@ exports.update = async (req, res, next) => {
         req.body.brand = oldProduct.brand;
       }
 
-      req.body.slugName = slugify(req.body.name, {lower: true});
-      req.body.slugLocation = slugify(req.body.location, {lower: true});
+      req.body.slugName = Slugify.slugUrl(req.body.name);
+      req.body.slugLocation = Slugify.slugUrl(req.body.location);
       const historic = new Historic(req.body);
       await historic.save();
 
