@@ -18,7 +18,6 @@ const { jwtExpirationInterval } = require('./../../config/environment.config');
 */
 
 const _generateTokenResponse = function (user, accessToken) {
-  console.log(accessToken)
   const tokenType = "Bearer";
   const refreshToken = RefreshToken.generate(user);
   const expiresIn = Moment().add(jwtExpirationInterval, 'minutes');
@@ -70,6 +69,7 @@ exports.login = async (req, res, next) => {
     }
     
   } catch (error) {
+    console.log("controller login", error);
     return next(error);
   }
 };
@@ -92,10 +92,12 @@ exports.refresh = async (req, res, next) => {
       userEmail: email,
       token: refreshToken
     });
+    // console.log(refreshObject);
     const { user, accessToken } = await User.findAndGenerateToken({ email, refreshObject });
     const response = _generateTokenResponse(user, accessToken);
     return res.json(response);
   } catch (error) {
+    console.log("refresh", error);
     return next(error);
   }
 };
@@ -113,12 +115,14 @@ exports.refresh = async (req, res, next) => {
  */
 exports.logout = async (req, res, next) =>{
   try {
-    const { email, token } = req.body;
-    let response = await RefreshToken.findOneAndDelete({
-      token : token,
+    const { email } = req.body;
+    let refreshTokens = await RefreshToken.find({
       userEmail : email
     });
-    return res.json(response);
+    refreshTokens.forEach(async (refreshToken) => {
+      await RefreshToken.findByIdAndDelete(refreshToken._id);
+    });
+    return res.json(refreshTokens);
   } catch (error) {
     return next(error);
   }

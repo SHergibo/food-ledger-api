@@ -14,16 +14,20 @@ const _handleJWT = (req, res, next, roles) => async(err, user, info) =>{
         if(error || !user) throw error;
         await logIn(user, {session : false});
     } catch (error) {
+        console.log("----------------------------------error tryCatch 1", error);
         return next(Boom.unauthorized(error.message));
     }
 
     if(roles === LOGGED_USER){
         if(user.role !=='admin' && req.params.userId !== user._id.toString()){
+            console.log("------------------------------un");
             return next(Boom.forbidden('Forbidden area'));
         }
     }else if(!roles.includes(user.role)){
+        console.log("----------------------------deux");
         return next(Boom.forbidden('Forbidden area'));
     }else if(err || !user){
+        console.log("-------------------------------trois");
         return next(Boom.badRequest(err.message))
     }
 

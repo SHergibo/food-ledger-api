@@ -24,6 +24,7 @@ const schema = new Mongoose.Schema({
 });
 
 schema.statics.generate = function (user) {
+  console.log(user);
   const tokenObject = new RefreshToken();
   tokenObject.token = `${user._id}.${Crypto.randomBytes(40).toString('hex')}`;
   tokenObject.userId = user._id;

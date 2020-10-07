@@ -1,6 +1,8 @@
 const Express = require('express'),
       AuthController = require(`${process.cwd()}/api/controllers/auth.controller`);
 
+const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
+
 const router = Express.Router();
 
 router
@@ -17,6 +19,6 @@ router
 
 router
     .route('/logout')
-        .post(AuthController.logout);
+        .post(authorize([ADMIN, LOGGED_USER]), AuthController.logout);
 
 module.exports = router;

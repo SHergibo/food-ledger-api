@@ -98,7 +98,6 @@ exports.switchAdminRequest = async (req, res, next) => {
             arrayLastChanceNotif.push(lastChanceNotif);
           }
         }
-        console.log(arrayLastChanceNotif);
 
         if(arrayLastChanceNotif.length === 0){
           await Helpers.noMoreAdmin(arrayMember, household._id);
@@ -111,7 +110,6 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     return res.json(user.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -285,7 +283,6 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.json(arrayNotificationsTransformed);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
