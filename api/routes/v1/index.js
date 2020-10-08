@@ -7,6 +7,7 @@ const Express = require('express'),
       ProductRoutes = require('./product.route'),
       HistoricRoutes = require('./historic.route'),
       BrandRoutes = require('./brand.route'),
+      ProductLogRoutes = require('./product-log.route'),
       AuthRoutes = require('./auth.route'),
       TokenAuthRoutes = require('./token-auth.route');
 
@@ -21,6 +22,7 @@ router.use('/requests', RequestRoutes);
 router.use('/products', ProductRoutes);
 router.use('/historics', HistoricRoutes);
 router.use('/brands', BrandRoutes);
+router.use('/product-logs', ProductLogRoutes);
 router.use('/tokens', TokenAuthRoutes);
 
 module.exports = router;
