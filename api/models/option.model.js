@@ -96,6 +96,11 @@ let schema = new Schema({
     required: true,
     default: true
   },
+  openMenu: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   userId: {
     required: true,
     type: Schema.Types.ObjectId,
@@ -115,6 +120,7 @@ schema.methods.transform = function () {
     "warningExpirationDate",
     "colorCodeDate",
     "colorCodeStock",
+    "openMenu",
     "userId",
   ];
   const object = {};
