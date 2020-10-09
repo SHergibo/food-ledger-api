@@ -2,7 +2,7 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const typeInfo = ['Mis à jour', 'Ajout', 'Suppression'];
+const typeInfo = ['Mise à jour', 'Ajout', 'Suppression'];
 
 let schema = new Schema({
   productName: {

@@ -3,6 +3,7 @@ const Product = require('./../models/product.model'),
   Historic = require('./../models/historic.model'),
   FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
   SortExpDateHelper = require('./helpers/sortExpDate.helper'),
+  ProductLogHelper = require('./helpers/product-log.helper'),
   Slugify = require('./../utils/slugify'),
   BrandLogic = require('./helpers/brandLogic.helper'),
   Boom = require('@hapi/boom');
@@ -19,6 +20,7 @@ exports.add = async (req, res, next) => {
     newBody.brand = brand._id;
     const product = new Product(newBody);
     await product.save();
+    await ProductLogHelper.productLogAdd(product, req.user);
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -89,9 +91,15 @@ exports.update = async (req, res, next) => {
       }
 
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
-      product = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
-      response = res.json(product.transform());
+      let updatedProduct = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
+
+      response = res.json(updatedProduct.transform());
     }
+
+    if(req.body.number !== product.number){
+      await ProductLogHelper.productLogUpdate(product.number, req.body, req.user);
+    }
+
     return response;
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -105,6 +113,7 @@ exports.remove = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndDelete(req.params.productId);
+    await ProductLogHelper.productLogDelete(product, req.user);
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -118,6 +127,7 @@ exports.removePagination = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndRemove(req.params.productId);
+    await ProductLogHelper.productLogDelete(product, req.user);
     const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
     return res.json(finalObject);
   } catch (error) {

@@ -1,6 +1,9 @@
 const Household = require('../../models/household.model'),
       User = require('../../models/user.model'),
       Notification = require('../../models/notification.model'),
+      ProductLog = require('../../models/product-log.model'),
+      Product = require('../../models/product.model'),
+      Historic = require('../../models/historic.model'),
       cryptoRandomString = require('crypto-random-string'),
       Moment = require('moment-timezone');
 
@@ -84,5 +87,11 @@ exports.noMoreAdmin = async (arrayMember, householdId) => {
         //Delete notification de type last-chance-request-admin
         await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-admin" });
     }
+
+    await Product.deleteMany({householdId : householdId});
+    await Historic.deleteMany({householdId : householdId});
+    await ProductLog.deleteMany({householdId : householdId});
     return await Household.findByIdAndDelete(householdId);
 };
+
+//TODO créer un helper pour supprimer la famille et tout ce qui est lié à la famille pour éviter des doublons dans le code.

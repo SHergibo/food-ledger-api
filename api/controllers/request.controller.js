@@ -1,9 +1,12 @@
 const Household = require('./../models/household.model'),
-  User = require('./../models/user.model'),
-  Notification = require('./../models/notification.model'),
-  Helpers = require('./helpers/household.helper'),
-  Boom = require('@hapi/boom'),
-  Moment = require('moment-timezone');
+      User = require('./../models/user.model'),
+      Notification = require('./../models/notification.model'),
+      ProductLog = require('./../models/product-log.model'),
+      Historic = require('./../models/historic.model'),
+      Product = require('./../models/product.model'),
+      Helpers = require('./helpers/household.helper'),
+      Boom = require('@hapi/boom'),
+      Moment = require('moment-timezone');
 
 /**
 * Switch admin request
@@ -29,6 +32,9 @@ exports.switchAdminRequest = async (req, res, next) => {
       let oldHousehold = await Household.findOne({ userId: notification.userId });
       if (oldHousehold) {
         await Household.findByIdAndDelete(oldHousehold._id);
+        await Product.deleteMany({householdId : oldHousehold._id});
+        await Historic.deleteMany({householdId : oldHousehold._id});
+        await ProductLog.deleteMany({householdId : oldHousehold._id});
       }
 
       //Reset isFlagged en false pour les membres de la famille

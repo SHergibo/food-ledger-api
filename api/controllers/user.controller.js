@@ -2,6 +2,9 @@ const User = require('./../models/user.model'),
       Option = require('./../models/option.model'),
       Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
+      ProductLog = require('./../models/product-log.model'),
+      Historic = require('./../models/historic.model'),
+      Product = require('./../models/product.model'),
       Helpers = require('./helpers/household.helper'),
       Boom = require('@hapi/boom'),
       TokenAuth = require('./../models/token-auth.model'),
@@ -168,6 +171,9 @@ exports.remove = async (req, res, next) => {
       let olderHousehold = await Household.findOne({ userId: user._id });
       if (olderHousehold) {
         await Household.findByIdAndDelete(olderHousehold._id);
+        await Product.deleteMany({householdId : olderHousehold._id});
+        await Historic.deleteMany({householdId : olderHousehold._id});
+        await ProductLog.deleteMany({householdId : olderHousehold._id});
       }
     }
 

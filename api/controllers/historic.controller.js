@@ -4,6 +4,7 @@ const Historic = require('./../models/historic.model'),
       FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
       SortExpDateHelper = require('./helpers/sortExpDate.helper'),
       BrandLogic = require('./helpers/brandLogic.helper'),
+      ProductLogHelper = require('./helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
       Boom = require('@hapi/boom');
 
@@ -91,8 +92,12 @@ exports.update = async (req, res, next) => {
       }
 
 
-      historic = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
-      response = res.json(historic.transform());
+      let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
+      response = res.json(updatedHistoric.transform());
+    }
+
+    if(req.body.number !== historic.number){
+      await ProductLogHelper.productLogUpdate(historic.number, req.body, req.user);
     }
     
     return response;
