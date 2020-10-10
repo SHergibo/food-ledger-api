@@ -10,7 +10,7 @@ exports.productLogAdd = async (product, user) => {
     infoProduct: "Ajout",
     numberProduct: product.number,
     householdId: product.householdId,
-    userId: user._id
+    user: user._id
   }
   const productLog = new ProductLog(objectProduct);
   await productLog.save();
@@ -32,7 +32,7 @@ exports.productLogUpdate = async (oldProductNumber, product, user) => {
     infoProduct: "Mise à jour",
     numberProduct: updatedNumber,
     householdId: product.householdId,
-    userId: user._id
+    user: user._id
   }
   const productLog = new ProductLog(objectProduct);
   await productLog.save();
@@ -48,7 +48,7 @@ exports.productLogDelete = async (product, user) => {
     infoProduct: "Suppression",
     numberProduct: product.number,
     householdId: product.householdId,
-    userId: user._id
+    user: user._id
   }
   const productLog = new ProductLog(objectProduct);
   await productLog.save();

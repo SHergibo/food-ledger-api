@@ -9,8 +9,8 @@ const ProductLog = require('./../models/product-log.model'),
 exports.findAll = async (req, res, next) => {
     try {
         const household = await Household.findOne({householdCode : req.params.householdCode});
-        const productLogs = await ProductLog.find({householdId : household._id});
-        const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'userId'];
+        const productLogs = await ProductLog.find({householdId : household._id}).populate('user', "firstname");
+        const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'];
         let arrayProductLogsTransformed = [];
         productLogs.forEach((item)=>{
             const object = {};

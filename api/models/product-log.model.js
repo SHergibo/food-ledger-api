@@ -34,17 +34,17 @@ let schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Household',
   },
-  userId: {
+  user: {
     required: true,
     type: Schema.Types.ObjectId,
-    ref: 'Household',
+    ref: 'User',
   }
 }, {
   timestamps: true
 });
 
 schema.methods.transform = function () {
-  const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'userId'];
+  const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'user', 'createdAt'];
   const object = {};
   fields.forEach((field) => {
     object[field] = this[field];
