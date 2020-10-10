@@ -31,10 +31,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       //Chercher si le nouvel admin à une ancienne famille et la supprimer
       let oldHousehold = await Household.findOne({ userId: notification.userId });
       if (oldHousehold) {
-        await Household.findByIdAndDelete(oldHousehold._id);
-        await Product.deleteMany({householdId : oldHousehold._id});
-        await Historic.deleteMany({householdId : oldHousehold._id});
-        await ProductLog.deleteMany({householdId : oldHousehold._id});
+        await Helpers.removeHousehold(oldHousehold._id);
       }
 
       //Reset isFlagged en false pour les membres de la famille

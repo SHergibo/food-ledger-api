@@ -170,10 +170,7 @@ exports.remove = async (req, res, next) => {
 
       let olderHousehold = await Household.findOne({ userId: user._id });
       if (olderHousehold) {
-        await Household.findByIdAndDelete(olderHousehold._id);
-        await Product.deleteMany({householdId : olderHousehold._id});
-        await Historic.deleteMany({householdId : olderHousehold._id});
-        await ProductLog.deleteMany({householdId : olderHousehold._id});
+        await Helpers.removeHousehold(olderHousehold._id);
       }
     }
 
