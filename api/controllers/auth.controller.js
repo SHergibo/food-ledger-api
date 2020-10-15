@@ -116,14 +116,12 @@ exports.refresh = async (req, res, next) => {
  */
 exports.logout = async (req, res, next) =>{
   try {
-    const { email } = req.body;
-    let refreshTokens = await RefreshToken.find({
+    const { email, token } = req.body;
+    let response = await RefreshToken.findOneAndDelete({
+      token : token,
       userEmail : email
     });
-    refreshTokens.forEach(async (refreshToken) => {
-      await RefreshToken.findByIdAndDelete(refreshToken._id);
-    });
-    return res.json(refreshTokens);
+    return res.json(response);
   } catch (error) {
     return next(error);
   }
