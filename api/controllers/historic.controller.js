@@ -91,6 +91,8 @@ exports.update = async (req, res, next) => {
         req.body.brand = historic.brand._id;
       }
 
+      req.body.slugName = Slugify.slugUrl(req.body.name);
+      req.body.slugLocation = Slugify.slugUrl(req.body.location);
 
       let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
       response = res.json(updatedHistoric.transform());

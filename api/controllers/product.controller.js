@@ -90,6 +90,9 @@ exports.update = async (req, res, next) => {
         req.body.brand = product.brand._id;
       }
 
+      req.body.slugName = Slugify.slugUrl(req.body.name);
+      req.body.slugLocation = Slugify.slugUrl(req.body.location);
+
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
       let updatedProduct = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
 
