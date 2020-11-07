@@ -2,6 +2,7 @@ const Product = require('./../models/product.model'),
   Historic = require('./../models/historic.model'),
   Household = require('./../models/household.model'),
   Brand = require('./../models/brand.model'),
+  ProductLog = require('./../models/product-log.model'),
   Boom = require('@hapi/boom');
 
 exports.checkSameHousehold = async (req, res, next) => {
@@ -16,6 +17,8 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await Historic.findById(req.params.historicId);
     }else if (req.params.brandId) {
       data = await Brand.findById(req.params.brandId);
+    }else if (req.params.productLogId) {
+      data = await ProductLog.findById(req.params.productLogId);
     }
 
     if(!req.params.householdCode){

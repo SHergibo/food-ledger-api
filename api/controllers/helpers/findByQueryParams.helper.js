@@ -76,3 +76,81 @@ exports.finalObject = async (req, householdId, model) => {
   let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct };
   return finalObject;
 };
+
+exports.finalObjectProductLog = async (req, householdId, model) => {
+  let queryObject = req.query;
+  let queryWithSort = false;
+  let querySortObject = {};
+  let page = req.query.page || 0;
+  let limit = 14;
+
+
+  let findObject = { householdId: householdId };
+  let totalProductLog = await model.estimatedDocumentCount();
+
+  for (const key in queryObject) {
+    if (key.split('-')[1] === "sort") {
+      queryWithSort = true;
+      querySortObject[key.split('-')[0]] = queryObject[key];
+    }
+    // if (key !== "page" && key.split('-')[1] !== "sort") {
+    //   if (key === "name" || key === "brand" || key === "type" || key === "location") {
+    //     if(key === "name"){
+    //       findObject["slugName"] = { $regex: queryObject[key], $options: 'i' };
+    //     }else if(key === "location"){
+    //       findObject["slugLocation"] = { $regex: queryObject[key], $options: 'i' };
+    //     }else if(key === "brand"){
+    //       let brand = await Brand.findOne({"brandName.value": queryObject[key]}); 
+    //       findObject[key] = brand._id;
+    //     }else if(key === "type"){
+    //       findObject["type.value"] = { $regex: queryObject[key], $options: 'i' };
+    //     }else{
+    //       findObject[key] = { $regex: queryObject[key], $options: 'i' };
+    //     }
+    //   } else if(key === "expirationDate"){
+    //     let dateUpperCase = queryObject[key].toUpperCase()
+    //     let unSlugExpDate = dateUpperCase.split('T')[1].replace(/-/g, ":").replace("_", ".");
+    //     let expDate = `${dateUpperCase.split('T')[0]}T${unSlugExpDate}`;
+    //     findObject["expirationDate.expDate"] = expDate;
+    //   } else {
+    //     findObject[key] = queryObject[key];
+    //   }
+    //   //TODO faire une regex?? pour rechercher par année ou mois/année ou jour/mois/année
+    // }
+  }
+
+  let productLog;
+  if (queryWithSort) {
+    productLog = await model.find(findObject)
+      .populate('user', "firstname")
+      .skip(page * limit)
+      .limit(limit)
+      .sort(querySortObject);
+  } else {
+    productLog = await model.find(findObject)
+      .populate('user', "firstname")
+      .skip(page * limit)
+      .limit(limit);
+  }
+
+
+
+  // if (Object.keys(findObject).length >= 2) {
+  //   const countProductSearch = await model.find(findObject);
+  //   totalProductLog = countProductSearch.length;
+  // }
+
+
+  const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'];
+  let arrayProductLogTransformed = [];
+  productLog.forEach((item) => {
+    const object = {};
+    fields.forEach((field) => {
+      object[field] = item[field];
+    });
+    arrayProductLogTransformed.push(object);
+  });
+  let finalObject = { arrayProductLog: arrayProductLogTransformed, totalProductLog };
+  return finalObject;
+};
+
