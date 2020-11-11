@@ -125,9 +125,9 @@ exports.update = async (req, res, next) => {
       }else{
         if(shopping){
           let numberShoppingList = req.body.number - product.number;
-          if(shopping.numberProduct > req.body.number){
+          if(req.body.number > product.number && shopping.numberProduct > req.body.number){
             await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)}, { override: true, upsert: true, new: true });
-          }else{
+          }else if (req.body.number > product.number && shopping.numberProduct <= req.body.number){
             await ShoppingList.findByIdAndDelete(shopping._id);
           }
         }
