@@ -3,6 +3,7 @@ const Product = require('./../models/product.model'),
   Household = require('./../models/household.model'),
   Brand = require('./../models/brand.model'),
   ProductLog = require('./../models/product-log.model'),
+  ShoppingList = require('./../models/shopping-list.model'),
   Boom = require('@hapi/boom');
 
 exports.checkSameHousehold = async (req, res, next) => {
@@ -19,6 +20,8 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await Brand.findById(req.params.brandId);
     }else if (req.params.productLogId) {
       data = await ProductLog.findById(req.params.productLogId);
+    }else if (req.params.shoppingId) {
+      data = await ShoppingList.findById(req.params.shoppingId);
     }
 
     if(!req.params.householdCode){

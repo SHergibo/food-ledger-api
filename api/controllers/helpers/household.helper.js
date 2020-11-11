@@ -2,6 +2,7 @@ const Household = require('../../models/household.model'),
       User = require('../../models/user.model'),
       Notification = require('../../models/notification.model'),
       ProductLog = require('../../models/product-log.model'),
+      ShoppingList = require('../../models/shopping-list.model'),
       Product = require('../../models/product.model'),
       Historic = require('../../models/historic.model'),
       Brand = require('../../models/brand.model'),
@@ -96,6 +97,7 @@ exports.removeHousehold = async (householdId) => {
     await Product.deleteMany({householdId : householdId});
     await Historic.deleteMany({householdId : householdId});
     await ProductLog.deleteMany({householdId : householdId});
+    await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
     return await Household.findByIdAndDelete(householdId);
 };

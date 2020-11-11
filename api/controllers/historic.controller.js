@@ -1,4 +1,5 @@
 const Historic = require('./../models/historic.model'),
+      ShoppingList = require('./../models/shopping-list.model'),
       Product = require('./../models/product.model'),
       Household = require('./../models/household.model'),
       FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
@@ -78,6 +79,15 @@ exports.update = async (req, res, next) => {
       
       const product = new Product(newBody);
       await product.save();
+
+      let shopping = await ShoppingList.findOne({historic : historic._id});
+      if(shopping){
+        if(req.body.number >= shopping.numberProduct){
+          await ShoppingList.findByIdAndDelete(shopping._id);
+        }else{
+          await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)}, { override: true, upsert: true, new: true });
+        }
+      }
 
       await Historic.findByIdAndDelete(req.params.historicId);
       

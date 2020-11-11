@@ -1,12 +1,13 @@
 const Product = require('./../models/product.model'),
-  Household = require('./../models/household.model'),
-  Historic = require('./../models/historic.model'),
-  FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
-  SortExpDateHelper = require('./helpers/sortExpDate.helper'),
-  ProductLogHelper = require('./helpers/product-log.helper'),
-  Slugify = require('./../utils/slugify'),
-  BrandLogic = require('./helpers/brandLogic.helper'),
-  Boom = require('@hapi/boom');
+      ShoppingList = require('./../models/shopping-list.model'),
+      Household = require('./../models/household.model'),
+      Historic = require('./../models/historic.model'),
+      FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
+      SortExpDateHelper = require('./helpers/sortExpDate.helper'),
+      ProductLogHelper = require('./helpers/product-log.helper'),
+      Slugify = require('./../utils/slugify'),
+      BrandLogic = require('./helpers/brandLogic.helper'),
+      Boom = require('@hapi/boom');
 
 /**
 * Post one product
@@ -62,6 +63,7 @@ exports.update = async (req, res, next) => {
     let brand;
 
     let product = await Product.findById(req.params.productId).populate('brand', 'brandName');
+    let shopping = await ShoppingList.findOne({product : product._id});
 
     if (req.body.number == 0) {
       let oldProduct;
@@ -78,6 +80,18 @@ exports.update = async (req, res, next) => {
       req.body.slugLocation = Slugify.slugUrl(req.body.location);
       const historic = new Historic(req.body);
       await historic.save();
+
+      if(!shopping){
+        const shoppingList = new ShoppingList({
+          numberProduct: product.number,
+          historic: historic._id,
+          householdId: historic.householdId
+        });
+        await shoppingList.save();
+      }else{
+        await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)}, { override: true, upsert: true, new: true });
+      }
+
 
       await Product.findByIdAndDelete(req.params.productId);
 
@@ -96,6 +110,29 @@ exports.update = async (req, res, next) => {
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
       let updatedProduct = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
 
+      if(product.number > req.body.number){
+        let numberShoppingList = product.number - req.body.number;
+        if(!shopping){
+          const shoppingList = new ShoppingList({
+            numberProduct: numberShoppingList,
+            product: product._id,
+            householdId: product.householdId
+          });
+          await shoppingList.save();
+        }else{
+          await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)}, { override: true, upsert: true, new: true });
+        }
+      }else{
+        if(shopping){
+          let numberShoppingList = req.body.number - product.number;
+          if(shopping.numberProduct > req.body.number){
+            await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)}, { override: true, upsert: true, new: true });
+          }else{
+            await ShoppingList.findByIdAndDelete(shopping._id);
+          }
+        }
+      }
+      
       response = res.json(updatedProduct.transform());
     }
 

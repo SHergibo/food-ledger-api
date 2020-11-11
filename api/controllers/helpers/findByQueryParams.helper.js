@@ -1,5 +1,18 @@
 const Brand = require('./../../models/brand.model');
 
+const transformedFinalObject = (arrayFields, data, totalProduct) => {
+  const fields = arrayFields;
+  let arrayTransformed = [];
+  data.forEach((item) => {
+    const object = {};
+    fields.forEach((field) => {
+      object[field] = item[field];
+    });
+    arrayTransformed.push(object);
+  });
+  return finalObject = { arrayData: arrayTransformed, totalProduct };
+}
+
 exports.finalObject = async (req, householdId, model) => {
   let queryObject = req.query;
   let queryWithSort = false;
@@ -56,25 +69,13 @@ exports.finalObject = async (req, householdId, model) => {
       .limit(limit);
   }
 
-
-
   if (Object.keys(findObject).length >= 2) {
     const countProductSearch = await model.find(findObject);
     totalProduct = countProductSearch.length;
   }
 
-
   const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'];
-  let arrayProductsTransformed = [];
-  products.forEach((item) => {
-    const object = {};
-    fields.forEach((field) => {
-      object[field] = item[field];
-    });
-    arrayProductsTransformed.push(object);
-  });
-  let finalObject = { arrayProduct: arrayProductsTransformed, totalProduct };
-  return finalObject;
+  return transformedFinalObject(fields, products, totalProduct);
 };
 
 exports.finalObjectProductLog = async (req, householdId, model) => {
@@ -91,15 +92,44 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
       .sort({createdAt : -1});
 
   const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'];
-  let arrayProductLogTransformed = [];
-  productLog.forEach((item) => {
-    const object = {};
-    fields.forEach((field) => {
-      object[field] = item[field];
-    });
-    arrayProductLogTransformed.push(object);
-  });
-  let finalObject = { arrayProductLog: arrayProductLogTransformed, totalProductLog };
-  return finalObject;
+  return transformedFinalObject(fields, productLog, totalProductLog);
+};
+
+exports.finalObjectShoppingList = async (req, householdId, model) => {
+  let page = req.query.page || 0;
+  let limit = 14;
+
+  let findObject = { householdId: householdId };
+  let totalShoppingList = await model.estimatedDocumentCount();
+
+  //TODO ajouter si c'est lié à un historic
+  let productLog = await model.find(findObject)
+      .populate({
+        path: 'product',
+        populate : {
+          path: 'brand',
+          select: {brandName: 1}
+        },
+        select: {
+          name: 1,
+          weight: 1,
+        }
+      })
+      .populate({
+        path: 'historic',
+        populate : {
+          path: 'brand',
+          select: {brandName: 1}
+        },
+        select: {
+          name: 1,
+          weight: 1,
+        }
+      })
+      .skip(page * limit)
+      .limit(limit);
+
+  const fields = ['_id', 'product', 'historic', 'numberProduct', 'createdAt'];
+  return transformedFinalObject(fields, productLog, totalShoppingList);
 };
 

@@ -1,16 +1,15 @@
-const ProductLog = require('./../models/product-log.model'),
+const ShoppingList = require('./../models/shopping-list.model'),
       Household = require('./../models/household.model'),
       FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
       Boom = require('@hapi/boom');
 
 /**
-* GET productLogs with pagination
+* GET shopping List with pagination
 */
-
 exports.findPaginate = async (req, res, next) => {
   try {
     const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, household._id, ProductLog);
+    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, household._id, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -18,12 +17,12 @@ exports.findPaginate = async (req, res, next) => {
 };
 
 /**
-* DELETE one productLog and send new productLog list using front-end pagination data
+* DELETE one shopping and send new shopping list using front-end pagination data
 */
 exports.removePagination = async (req, res, next) => {
   try {
-    const productLog = await ProductLog.findByIdAndRemove(req.params.productLogId);
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, productLog.householdId, ProductLog);
+    const shopping = await ShoppingList.findByIdAndRemove(req.params.shoppingId);
+    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, shopping.householdId, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -31,12 +30,12 @@ exports.removePagination = async (req, res, next) => {
 };
 
 /**
-* DELETE All productLogs
+* DELETE shopping list
 */
 exports.removeAll = async (req, res, next) => {
   try {
     const household = await Household.findOne({ householdCode: req.params.householdCode });
-    await ProductLog.deleteMany({householdId : household._id});
+    await ShoppingList.deleteMany({householdId : household._id});
     return res.status(200).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
