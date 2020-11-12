@@ -8,7 +8,8 @@ const Brand = require('./../models/brand.model'),
 exports.findAll = async (req, res, next) => {
   try {
     const household = await Household.findOne({householdCode : req.params.householdCode})
-    const brands = await Brand.find({householdId : household._id});
+    const brands = await Brand.find({householdId : household._id})
+    .sort({brandName : 1});
     const fields = ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"];
         let arrayBrandTransformed = [];
         brands.forEach((item)=>{

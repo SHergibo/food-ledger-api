@@ -17,5 +17,5 @@ module.exports = {
     api : process.env.API_VERSION,
     logs : process.env.NODE_ENV === 'production' ? 'combined' : 'development',
     HTTPLogs : process.env.NODE_ENV === 'production' ? 'production' : 'dev',
-    CorsOrigin : process.env.CORS_ORIGIN //TODO changer le cors origin quand l'environnement est en prod dans production.env
+    CorsOrigin : process.env.CORS_ORIGIN
 }
