@@ -60,7 +60,7 @@ exports.update = async (req, res, next) => {
     let response;
     let brand;
 
-    let historic = await Historic.findById(req.params.historicId).populate('brand', 'brandName');
+    const historic = await Historic.findById(req.params.historicId).populate('brand', 'brandName');
 
     if (req.body.number >= 1) {
       let oldHistoric;
@@ -138,6 +138,12 @@ exports.removePagination = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDelete(req, "historic");
     const historic = await Historic.findByIdAndRemove(req.params.historicId);
+
+    const shopping = await ShoppingList.findOne({historic : historic._id});
+    if(shopping){
+      await ShoppingList.findByIdAndDelete(shopping._id);
+    }
+
     const finalObject = await FindByQueryHelper.finalObject(req, historic.householdId, Historic);
 
     return res.json(finalObject);

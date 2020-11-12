@@ -62,8 +62,8 @@ exports.update = async (req, res, next) => {
     let response;
     let brand;
 
-    let product = await Product.findById(req.params.productId).populate('brand', 'brandName');
-    let shopping = await ShoppingList.findOne({product : product._id});
+    const product = await Product.findById(req.params.productId).populate('brand', 'brandName');
+    const shopping = await ShoppingList.findOne({product : product._id});
 
     if (req.body.number == 0) {
       let oldProduct;
@@ -167,9 +167,17 @@ exports.removePagination = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndRemove(req.params.productId);
+
     await ProductLogHelper.productLogDelete(product, req.user);
+
+    const shopping = await ShoppingList.findOne({product : product._id});
+    if(shopping){
+      await ShoppingList.findByIdAndDelete(shopping._id);
+    }
+
     const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
     return res.json(finalObject);
+    
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
