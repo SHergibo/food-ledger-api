@@ -1,6 +1,7 @@
 const Logger = require('./config/logger.config');
 const CronJob = require('cron').CronJob;
 const NotificationCronJob = require('./api/tasks/notification.cronjob.task');
+const EmailCronJob = require('./api/tasks/email.cronjob.task');
 
 const [major, minor] = process.versions.node.split('.').map(parseFloat);
 
@@ -18,7 +19,15 @@ Mongoose.connect();
 
 App.listen( port, () => Logger.info(`HTTP server is now running on port ${port} (${env})`));
 
-// const job = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
-// job.start();
+// const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
+// nofificationJob.start();
+
+//0 0 * * 0 (dernier jour de la semaine à 0h00)
+const shoppingListEmailJob = new CronJob('1 * * * * *', EmailCronJob.shoppingListEmail);
+//0 0 1 * * (premier jour de chaque mois à 0h00)
+// const globalEmailJob = new CronJob('1 * * * * *', EmailCronJob.globalEmail);
+
+shoppingListEmailJob.start();
+// globalEmailJob.start();
 
 module.exports = App;

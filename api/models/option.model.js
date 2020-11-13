@@ -3,14 +3,14 @@ const Mongoose = require('mongoose');
 let Schema = Mongoose.Schema;
 
 const dateMailGlobal = ['Tout les mois', 'Tout les deux mois', 'Tout les trois mois'];
-const dateMailShoppingList = ['Toutes les semaines', 'Toutes les deux semaines', 'Toutes les trois semaines', 'Une fois par mois'];
+const dateMailShoppingList = ['Toutes les semaines', 'Toutes les deux semaines', 'Toutes les trois semaines', 'Tous les mois'];
 const warningExpirationDate = ["Un mois à l'avance", "Deux mois à l'avance", "Trois mois à l'avance"];
 
 let objectDateMailGlobal = new Schema({
   value: {
     type: Number,
     required: true,
-    default: 1
+    default: 0
   },
   label: {
     type: String,
@@ -26,7 +26,7 @@ let objectDateMailShoppingList = new Schema({
   value: {
     type: Number,
     required: true,
-    default: 1
+    default: 0
   },
   label: {
     type: String,
@@ -42,7 +42,7 @@ let objectWarningExpirationDate = new Schema({
   value: {
     type: Number,
     required: true,
-    default: 1
+    default: 0
   },
   label: {
     type: String,
