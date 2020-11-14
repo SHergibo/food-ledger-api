@@ -1,5 +1,5 @@
 const Household = require('./../models/household.model'),
-      Helpers = require('./helpers/household.helper'),
+      Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom');
 
 /**

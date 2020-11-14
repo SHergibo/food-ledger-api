@@ -2,11 +2,11 @@ const Product = require('./../models/product.model'),
       ShoppingList = require('./../models/shopping-list.model'),
       Household = require('./../models/household.model'),
       Historic = require('./../models/historic.model'),
-      FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
-      SortExpDateHelper = require('./helpers/sortExpDate.helper'),
-      ProductLogHelper = require('./helpers/product-log.helper'),
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
+      SortExpDateHelper = require('./../helpers/sortExpDate.helper'),
+      ProductLogHelper = require('./../helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
-      BrandLogic = require('./helpers/brandLogic.helper'),
+      BrandLogic = require('./../helpers/brandLogic.helper'),
       Boom = require('@hapi/boom');
 
 /**

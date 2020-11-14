@@ -1,5 +1,5 @@
-const ProductLog = require('../../models/product-log.model'),
-      Brand = require('../../models/brand.model');
+const ProductLog = require('../models/product-log.model'),
+      Brand = require('../models/brand.model');
 
 exports.productLogAdd = async (product, user) => {
   let brand = await Brand.findById(product.brand);

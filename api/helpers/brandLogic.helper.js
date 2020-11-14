@@ -1,7 +1,7 @@
-const Brand = require('./../../models/brand.model'),
-  Household = require('./../../models/household.model'),
-  Product = require('./../../models/product.model'),
-  Historic = require('./../../models/historic.model');
+const Brand = require('./../models/brand.model'),
+      Household = require('./../models/household.model'),
+      Product = require('./../models/product.model'),
+      Historic = require('./../models/historic.model');
 
 exports.brandLogicWhenCreate = async (req, type) => {
   let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value});

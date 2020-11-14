@@ -1,6 +1,6 @@
 const ShoppingList = require('./../models/shopping-list.model'),
       Household = require('./../models/household.model'),
-      FindByQueryHelper = require('./helpers/findByQueryParams.helper'),
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       Boom = require('@hapi/boom');
 
 /**

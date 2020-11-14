@@ -1,10 +1,7 @@
 const Household = require('./../models/household.model'),
       User = require('./../models/user.model'),
-      Notification = require('./../models/notification.model'),
-      ProductLog = require('./../models/product-log.model'),
-      Historic = require('./../models/historic.model'),
-      Product = require('./../models/product.model'),
-      Helpers = require('./helpers/household.helper'),
+      Notification = require('./../models/notification.model')
+      Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone');
 

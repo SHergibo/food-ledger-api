@@ -1,4 +1,4 @@
-const Brand = require('./../../models/brand.model');
+const Brand = require('./../models/brand.model');
 
 const transformedFinalObject = (arrayFields, data, totalProduct) => {
   const fields = arrayFields;
@@ -103,7 +103,7 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
   let totalShoppingList = await model.estimatedDocumentCount();
 
   //TODO ajouter si c'est lié à un historic
-  let productLog = await model.find(findObject)
+  let shoppingList = await model.find(findObject)
       .populate({
         path: 'product',
         populate : {
@@ -130,6 +130,6 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
       .limit(limit);
 
   const fields = ['_id', 'product', 'historic', 'numberProduct', 'createdAt'];
-  return transformedFinalObject(fields, productLog, totalShoppingList);
+  return transformedFinalObject(fields, shoppingList, totalShoppingList);
 };
 
