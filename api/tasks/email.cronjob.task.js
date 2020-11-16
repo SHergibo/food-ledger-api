@@ -1,4 +1,3 @@
-const { data } = require('../../config/logger.config');
 const HouseHold = require('./../models/household.model'),
       Option = require('./../models/option.model'),
       ShoppingList = require('./../models/shopping-list.model'),
@@ -95,61 +94,92 @@ exports.shoppingListEmail = async () => {
 };
 
 const findProductAndMailIt = async (householdId, warningExpirationDate) => {
-  let month = new Date().getMonth() + 1;
-  let year = new Date().getFullYear();
-  let products = await Product.find({householdId : householdId}).populate('brand', "brandName");
-  let productExpirationDate = [];
-  let warningDate;
-  
-  switch (warningExpirationDate) {
-    case 0:
-      warningDate = new Date(`${month}/01/${year}`);
-      break;
-    case 1:
-      if(month === 11){
-        warningDate = new Date(`01/01/${year + 1}`);
-      }else{
-        warningDate = new Date(`${month + 1}/01/${year}`);
-      }
-      break;
-    case 2:
-      if(month === 11){
-        warningDate = new Date(`01/01/${year + 1}`);
-      }else if (month === 12){
-        warningDate = new Date(`02/01/${year + 1}`);
-      }else{
-        warningDate = new Date(`${month + 2}/01/${year}`);
-      }
-       
-      break;
-  
-    default:
-      break;
-  }
-
-  if(products.length >= 1){
-
-    products.forEach(product => {
-      product.expirationDate.forEach(date => {
-        // console.log(date.expDate.getYear());
-        if(date.expDate <= warningDate ){
-          // console.log(date);
-          //TODO !!!! problème avec la warningDate, il faut que la date soit le 01 du mois d'après
+  try {
+    let month = new Date().getMonth() + 1;
+    let year = new Date().getFullYear();
+    let products = await Product.find({householdId : householdId}).populate('brand', "brandName");
+    let productExpirationDate = [];
+    let warningDate;
+    
+    switch (warningExpirationDate) {
+      case 0:
+        if(month === 12){
+          warningDate = new Date(`01/01/${year + 1}`);
+        }else{
+          warningDate = new Date(`${month + 1}/01/${year}`);
         }
+        break;
+      case 1:
+        if(month === 11){
+          warningDate = new Date(`02/01/${year + 1}`);
+        }else if (month === 12){
+          warningDate = new Date(`03/01/${year + 1}`);
+        }else{
+          warningDate = new Date(`${month + 2}/01/${year}`);
+        }
+        break;
+      case 2:
+        if(month === 11){
+          warningDate = new Date(`03/01/${year + 1}`);
+        }else if (month === 12){
+          warningDate = new Date(`04/01/${year + 1}`);
+        }else{
+          warningDate = new Date(`${month + 3}/01/${year}`);
+        }
+        break;
+    
+      default:
+        break;
+    }
+
+    if(products.length >= 1){
+
+      await products.forEach(product => {
+        product.expirationDate.forEach(date => {
+          if(date.expDate < warningDate ){
+            let searchProduct = productExpirationDate.find(productInArray => productInArray.id === product._id)
+            if(searchProduct){
+              searchProduct.expirationDate.push({
+                expDate: date.expDate,
+                number: date.productLinkedToExpDate
+              });
+            }else{
+              let productObject = {
+                id: product._id,
+                name: product.name,
+                brand: product.brand.brandName.label,
+                expirationDate: [{
+                  expDate: date.expDate,
+                  number: date.productLinkedToExpDate
+                }]
+              };
+              productExpirationDate = [...productExpirationDate, productObject];
+            }
+          }
+        });
       });
-    });
 
-    // let list = shoppingList.map(shopping => {
-    //   return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
-    // }).join('');
+      if(productExpirationDate.length >= 1){
+    
+        let list = productExpirationDate.map(product => {
+        let listDate = product.expirationDate.map(expDateObject => {
+          return `<li>${Moment(expDateObject.expDate).format("DD-MM-YYYY")} - nombre ${expDateObject.number}</li>`;
+        }).join('');
+          return `<li>${product.name} - ${product.brand} - x ${product.expirationDate.length}</li> <ul>${listDate}</ul>`;
+        }).join('');
+    
+        let output = `<h2>Voici la liste des produits de votre stock bientôt périmés !<h2>
+          <ul>
+          ${list}
+          </ul>
+        `;
 
-    // let output = `<h2>Voici votre liste de course à faire pour votre stock<h2>
-    //   <ul>
-    //   ${list}
-    //   </ul>
-    // `;
-
-    //NodeMailer.send(output, 'Votre liste de course pour votre stock !');
+        //NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions !');
+        //console.log(output);
+      }
+    }
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -161,42 +191,45 @@ exports.globalEmail = async () => {
     let households = await HouseHold.find({});
     //Si le premier jour du mois est un dimanche (donc envoi de shoppingList et globalEmail dans le même mail).
     if(today.getDay() === 0){
-      //logique mail pour shoppingList et globalMail
-    }else{
-      
-      households.forEach(household => {
-        let members = household.member;
-        members.forEach(async (member) => {
-          try {
-            let option = await Option.findOne({userId : member.userId});
-            if(option.sendMailGlobal){
-              switch (option.dateMailShoppingList.value) {
-                case 0:
-                  findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                  break;
-                case 1:
-                  if(sendEveryTwoMonth.includes(today.getMonth())){
-                    findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                  }
-                  break;
-                case 2:
-                  if(sendEveryTreeMonth.includes(today.getMonth())){
-                    findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                  }
-                  break;
-              
-                default:
-                  break;
-              }
-            }
-          }catch(error){
-            console.log(error)
-          }
-        });
-      });
+      //logique shoppingList (rajouter les datas dans une variable)
 
-      //checker si shoppingList est à envoyer tous les mois et rajouter la logique ici
+      //Si le 1er est un dimanche refaire toutes la logiques de l'envoi du mail shoppingList selon l'interval (1/2/3/4) semaines
+      // plus rajout logique pour l'envoi tout les mois.
     }
+      
+    households.forEach(household => {
+      let members = household.member;
+      members.forEach(async (member) => {
+        try {
+          let option = await Option.findOne({userId : member.userId});
+          if(option.sendMailGlobal){
+            switch (option.dateMailShoppingList.value) {
+              case 0:
+                //Si variable shoppingList
+                //Envoyer les data dans la fonction findProductAndMailIt et gérer l'ajout là-bas
+                findProductAndMailIt(household._id, option.warningExpirationDate.value);
+                break;
+              case 1:
+                if(sendEveryTwoMonth.includes(today.getMonth())){
+                  findProductAndMailIt(household._id, option.warningExpirationDate.value);
+                }
+                break;
+              case 2:
+                if(sendEveryTreeMonth.includes(today.getMonth())){
+                  findProductAndMailIt(household._id, option.warningExpirationDate.value);
+                }
+                break;
+            
+              default:
+                break;
+            }
+          }
+        }catch(error){
+          console.log(error)
+        }
+      });
+    });
+    
   } catch (error) {
     console.log(error);
   }
