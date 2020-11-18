@@ -2,7 +2,7 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const dateMailGlobal = ['Tout les mois', 'Tout les deux mois', 'Tout les trois mois'];
+const dateMailGlobal = ['Tous les mois', 'Tous les deux mois', 'Tous les trois mois'];
 const dateMailShoppingList = ['Toutes les semaines', 'Toutes les deux semaines', 'Toutes les trois semaines', 'Tous les mois'];
 const warningExpirationDate = ["Un mois à l'avance", "Deux mois à l'avance", "Trois mois à l'avance"];
 
@@ -15,7 +15,7 @@ let objectDateMailGlobal = new Schema({
   label: {
     type: String,
     required: true,
-    default : "Tout les mois",
+    default : "Tous les mois",
     enum: dateMailGlobal
   }
 }, { 
