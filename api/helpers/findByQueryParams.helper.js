@@ -22,7 +22,7 @@ exports.finalObject = async (req, householdId, model) => {
 
 
   let findObject = { householdId: householdId };
-  let totalProduct = await model.estimatedDocumentCount();
+  let totalProduct = await model.countDocuments({householdId: householdId});
 
   for (const key in queryObject) {
     if (key.split('-')[1] === "sort") {
@@ -83,7 +83,7 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
   let limit = 14;
 
   let findObject = { householdId: householdId };
-  let totalProductLog = await model.estimatedDocumentCount();
+  let totalProductLog = await model.countDocuments({householdId: householdId});
 
   let productLog = await model.find(findObject)
       .populate('user', "firstname")
@@ -100,9 +100,8 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
   let limit = 14;
 
   let findObject = { householdId: householdId };
-  let totalShoppingList = await model.estimatedDocumentCount();
+  let totalShoppingList = await model.countDocuments({householdId: householdId});
 
-  //TODO ajouter si c'est lié à un historic
   let shoppingList = await model.find(findObject)
       .populate({
         path: 'product',
