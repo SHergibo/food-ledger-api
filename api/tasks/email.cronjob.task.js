@@ -41,53 +41,48 @@ const findShoppingListAndMailIt = async (householdId) => {
       </ul>
     `;
 
-    //NodeMailer.send(output, 'Votre liste de course pour votre stock !');
+    NodeMailer.send(output, 'Votre liste de course pour votre stock !');
   }
-}
+};
 
 exports.shoppingListEmail = async () => {
   try {
     let today = new Date();
-
-    if(today.getDate() !== 1){
-      let households = await HouseHold.find({});
-      households.forEach(household => {
-        let members = household.member;
-        members.forEach(async (member) => {
-          try {
-            let option = await Option.findOne({userId : member.userId});
-            if(option.sendMailShoppingList){
-              let numberWeek = Moment(today, "DDMMYYYY").isoWeek();
-              switch (option.dateMailShoppingList.value) {
-                case 0:
+    let households = await HouseHold.find({});
+    households.forEach(household => {
+      let members = household.member;
+      members.forEach(async (member) => {
+        try {
+          let option = await Option.findOne({userId : member.userId});
+          if(option.sendMailShoppingList){
+            let numberWeek = Moment(today, "DDMMYYYY").isoWeek();
+            switch (option.dateMailShoppingList.value) {
+              case 0:
+                findShoppingListAndMailIt(household._id);
+                break;
+              case 1:
+                if(numberWeek % 2 === 0){
                   findShoppingListAndMailIt(household._id);
-                  break;
-                case 1:
-                  if(numberWeek % 2 === 0){
-                    findShoppingListAndMailIt(household._id);
-                  }
-                  break;
-                case 2:
-                  if(numberWeek % 2 !== 0){
-                    findShoppingListAndMailIt(household._id);
-                  }
-                  break;
-              
-                default:
-                  break;
-              }
-            }else{
-              return;
+                }
+                break;
+              case 2:
+                if(numberWeek % 2 !== 0){
+                  findShoppingListAndMailIt(household._id);
+                }
+                break;
+            
+              default:
+                break;
             }
-          } catch (error) {
-            //TODO ajouter les erreurs dans un log.
-            console.log(error);
+          }else{
+            return;
           }
-        });
+        } catch (error) {
+          //TODO ajouter les erreurs dans un log.
+          console.log(error);
+        }
       });
-    }else{
-      return;
-    }
+    });
   } catch (error) {
     console.log(error);
   }
@@ -159,13 +154,14 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
         });
       });
 
-      if(productExpirationDate.length >= 1){
-    
+      if(productExpirationDate.length >= 1){    
         let list = productExpirationDate.map(product => {
+        let numberProduct = 0;
         let listDate = product.expirationDate.map(expDateObject => {
+          numberProduct += expDateObject.number;
           return `<li>${Moment(expDateObject.expDate).format("DD-MM-YYYY")} - nombre ${expDateObject.number}</li>`;
         }).join('');
-          return `<li>${product.name} - ${product.brand} - x ${product.expirationDate.length}</li> <ul>${listDate}</ul>`;
+          return `<li>${product.name} - ${product.brand} - x ${numberProduct}</li> <ul>${listDate}</ul>`;
         }).join('');
     
         let output = `<h2>Voici la liste des produits de votre stock bientôt périmés !<h2>
@@ -174,14 +170,13 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
           </ul>
         `;
 
-        //NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions !');
-        //console.log(output);
+        NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions !');
       }
     }
   } catch (error) {
     console.log(error);
   }
-}
+};
 
 exports.globalEmail = async () => {
   try {
@@ -189,24 +184,18 @@ exports.globalEmail = async () => {
     let sendEveryTwoMonth = [1, 3, 5, 7, 9, 11];
     let sendEveryTreeMonth = [0, 3, 6, 9];
     let households = await HouseHold.find({});
-    //Si le premier jour du mois est un dimanche (donc envoi de shoppingList et globalEmail dans le même mail).
-    if(today.getDay() === 0){
-      //logique shoppingList (rajouter les datas dans une variable)
-
-      //Si le 1er est un dimanche refaire toutes la logiques de l'envoi du mail shoppingList selon l'interval (1/2/3/4) semaines
-      // plus rajout logique pour l'envoi tout les mois.
-    }
-      
+  
     households.forEach(household => {
       let members = household.member;
       members.forEach(async (member) => {
         try {
           let option = await Option.findOne({userId : member.userId});
+
+          if(!option.sendMailGlobal && !option.sendMailShoppingList) return;
+
           if(option.sendMailGlobal){
-            switch (option.dateMailShoppingList.value) {
+            switch (option.dateMailGlobal.value) {
               case 0:
-                //Si variable shoppingList
-                //Envoyer les data dans la fonction findProductAndMailIt et gérer l'ajout là-bas
                 findProductAndMailIt(household._id, option.warningExpirationDate.value);
                 break;
               case 1:
@@ -224,6 +213,13 @@ exports.globalEmail = async () => {
                 break;
             }
           }
+
+          if(option.sendMailShoppingList){
+            if(option.dateMailShoppingList.value === 3){
+              findShoppingListAndMailIt(household._id);
+            }
+          }
+
         }catch(error){
           console.log(error)
         }

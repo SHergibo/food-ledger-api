@@ -22,12 +22,12 @@ App.listen( port, () => Logger.info(`HTTP server is now running on port ${port} 
 // const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
 // nofificationJob.start();
 
-//0 0 * * 0 (dernier jour de la semaine à 0h00)
-const shoppingListEmailJob = new CronJob('1 * * * * *', EmailCronJob.shoppingListEmail);
-//0 0 1 * * (premier jour de chaque mois à 0h00)
-const globalEmailJob = new CronJob('1 * * * * *', EmailCronJob.globalEmail);
+//* 0 0 * * 0 (dernier jour de la semaine à 0h00)
+const shoppingListEmailJob = new CronJob('* 0 0 * * 0', EmailCronJob.shoppingListEmail);
+//* 0 0 1 * * (premier jour de chaque mois à 0h00)
+const globalEmailJob = new CronJob('* 0 0 1 * *', EmailCronJob.globalEmail);
 
 //shoppingListEmailJob.start();
-globalEmailJob.start();
+//globalEmailJob.start();
 
 module.exports = App;
