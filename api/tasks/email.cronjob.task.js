@@ -3,45 +3,50 @@ const HouseHold = require('./../models/household.model'),
       ShoppingList = require('./../models/shopping-list.model'),
       Product = require('./../models/product.model'),
       Moment = require('moment'),
-      NodeMailer = require('./../../api/helpers/nodemailer.helper');
+      NodeMailer = require('./../../api/helpers/nodemailer.helper'),
+      { loggerError } = require('./../../config/logger.config');
 
 const findShoppingListAndMailIt = async (householdId) => {
-  let shoppingList = await ShoppingList.find({householdId : householdId})
-  .populate({
-    path: 'product',
-    populate : {
-      path: 'brand',
-      select: {brandName: 1}
-    },
-    select: {
-      name: 1,
-      weight: 1,
+  try {
+    let shoppingList = await ShoppingList.find({householdId : householdId})
+    .populate({
+      path: 'product',
+      populate : {
+        path: 'brand',
+        select: {brandName: 1}
+      },
+      select: {
+        name: 1,
+        weight: 1,
+      }
+    })
+    .populate({
+      path: 'historic',
+      populate : {
+        path: 'brand',
+        select: {brandName: 1}
+      },
+      select: {
+        name: 1,
+        weight: 1,
+      }
+    });
+    if(shoppingList.length >= 1){
+  
+      let list = shoppingList.map(shopping => {
+        return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
+      }).join('');
+  
+      let output = `<h2>Voici votre liste de course à faire pour votre stock<h2>
+        <ul>
+        ${list}
+        </ul>
+      `;
+  
+      NodeMailer.send(output, 'Votre liste de course pour votre stock !');
     }
-  })
-  .populate({
-    path: 'historic',
-    populate : {
-      path: 'brand',
-      select: {brandName: 1}
-    },
-    select: {
-      name: 1,
-      weight: 1,
-    }
-  });
-  if(shoppingList.length >= 1){
-
-    let list = shoppingList.map(shopping => {
-      return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
-    }).join('');
-
-    let output = `<h2>Voici votre liste de course à faire pour votre stock<h2>
-      <ul>
-      ${list}
-      </ul>
-    `;
-
-    NodeMailer.send(output, 'Votre liste de course pour votre stock !');
+  } catch (error) {
+    loggerError.error(error);
   }
 };
 
@@ -78,13 +83,12 @@ exports.shoppingListEmail = async () => {
             return;
           }
         } catch (error) {
-          //TODO ajouter les erreurs dans un log.
-          console.log(error);
+          loggerError.error(error);
         }
       });
     });
   } catch (error) {
-    console.log(error);
+    loggerError.error(error);
   }
 };
 
@@ -174,7 +178,7 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
       }
     }
   } catch (error) {
-    console.log(error);
+    loggerError.error(error);
   }
 };
 
@@ -221,12 +225,12 @@ exports.globalEmail = async () => {
           }
 
         }catch(error){
-          console.log(error)
+          loggerError.error(error);
         }
       });
     });
     
   } catch (error) {
-    console.log(error);
+    loggerError.error(error);
   }
 };

@@ -1,4 +1,4 @@
-const Logger = require('./config/logger.config');
+const {loggerInfo} = require('./config/logger.config');
 const CronJob = require('cron').CronJob;
 const NotificationCronJob = require('./api/tasks/notification.cronjob.task');
 const EmailCronJob = require('./api/tasks/email.cronjob.task');
@@ -6,7 +6,7 @@ const EmailCronJob = require('./api/tasks/email.cronjob.task');
 const [major, minor] = process.versions.node.split('.').map(parseFloat);
 
 if(major < 7 || major === 7 && minor <= 5){
-    Logger.error('Node version is too low');
+    loggerInfo.error('Node version is too low');
     process.exit(1);
 }
 
@@ -19,7 +19,7 @@ Mongoose.connect();
 
 App.listen( port, () => {
     if(env.toUpperCase() === environments.PRODUCTION){
-        Logger.info(`HTTP server is now running on port ${port} (${env})`)
+        loggerInfo.info(`HTTP server is now running on port ${port} (${env})`)
     }
 });
 

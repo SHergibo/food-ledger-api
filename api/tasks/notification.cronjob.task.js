@@ -2,7 +2,8 @@ const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper');
-      Moment = require('moment-timezone');
+      Moment = require('moment-timezone'),
+      { loggerError } = require('./../../config/logger.config');
 
 //TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
 exports.cronJob = async () => {
@@ -66,6 +67,6 @@ exports.cronJob = async () => {
       }
     }
   } catch (error) {
-    console.log(error);
+    loggerError.error(error)
   }
 };

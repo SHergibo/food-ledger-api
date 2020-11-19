@@ -1,5 +1,5 @@
 const Mongoose = require('mongoose');
-const Logger = require('./logger.config');
+const {loggerError, loggerInfo} = require('./logger.config');
 
 const { mongo, env, environments } = require('./environment.config');
 
@@ -10,7 +10,7 @@ Mongoose.set('useCreateIndex', true);
 
 Mongoose.connection.on('error', (err) =>{
     console.log(err)
-    Logger.error(`MongoDB connection error: ${err}`);
+    loggerError.error(`MongoDB connection error: ${err}`);
     process.exit(-1);
 })
 
@@ -25,7 +25,7 @@ exports.connect = () => {
         useUnifiedTopology: true,
     });
     if(env.toUpperCase() === environments.PRODUCTION){
-        Logger.info('MongoDB server is now running on port 27017');
+        loggerInfo.info('MongoDB server is now running on port 27017');
     }
     return Mongoose.connection;
 }
