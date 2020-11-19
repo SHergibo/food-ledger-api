@@ -10,14 +10,18 @@ if(major < 7 || major === 7 && minor <= 5){
     process.exit(1);
 }
 
-const { port, env } = require('./config/environment.config');
+const { port, env, environments } = require('./config/environment.config');
 
 const App = require ('./config/app.config');
 const Mongoose =require ('./config/mongoose.config');
 
 Mongoose.connect();
 
-App.listen( port, () => Logger.info(`HTTP server is now running on port ${port} (${env})`));
+App.listen( port, () => {
+    if(env.toUpperCase() === environments.PRODUCTION){
+        Logger.info(`HTTP server is now running on port ${port} (${env})`)
+    }
+});
 
 // const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
 // nofificationJob.start();

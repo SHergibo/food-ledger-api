@@ -1,16 +1,19 @@
-const Winston = require('winston');
+const {createLogger, format, transports} = require('winston');
 
-const logger = Winston.createLogger({
+const logger = createLogger({
     level : 'info',
-    format : Winston.format.json(),
+    format : format.combine(
+        format.timestamp(),
+        format.json()
+    ),
     transports : [
-        new Winston.transports.File({filename : 'logs/error.log', level : 'error'}),
-        new Winston.transports.File({filename : 'log.combined.log'})
+        new transports.File({filename : 'logs/error.log', level : 'error'}),
+        new transports.File({filename : 'logs/combined.log'})
     ]
 });
 
 if(process.env.NODE_ENV !== "production"){
-    logger.add(new Winston.transports.Console({format : Winston.format.simple()}));
+    logger.add(new transports.Console({format : format.simple()}));
 }
 
 logger.stream = {
