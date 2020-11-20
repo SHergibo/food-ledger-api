@@ -9,8 +9,11 @@ Mongoose.set('useFindAndModify', false);
 Mongoose.set('useCreateIndex', true);
 
 Mongoose.connection.on('error', (err) =>{
-    console.log(err)
-    loggerError.error(`MongoDB connection error: ${err}`);
+    if(env.toUpperCase() === environments.PRODUCTION){
+        loggerError.error(`MongoDB connection error: ${err}`);
+    }else{
+        console.log(err)
+    }
     process.exit(-1);
 })
 
