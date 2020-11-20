@@ -28,7 +28,7 @@ exports.checkSameHousehold = async (req, res, next) => {
       if (data) {
         household = await Household.findById(data.householdId);
       } else {
-        return res.status(404).send(Boom.notFound("Cette donnée n'existe pas !"));
+        return next(Boom.notFound("Cette donnée n'existe pas !"));
       }
     }
 
