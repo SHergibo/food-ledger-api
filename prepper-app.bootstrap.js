@@ -17,21 +17,25 @@ const Mongoose =require ('./config/mongoose.config');
 
 Mongoose.connect();
 
-App.listen( port, () => {
-    if(env.toUpperCase() === environments.PRODUCTION){
-        loggerInfo.info(`HTTP server is now running on port ${port} (${env})`)
-    }
-});
-
 // const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
-// nofificationJob.start();
 
 //* 0 0 * * 0 (dernier jour de la semaine à 0h00)
 const shoppingListEmailJob = new CronJob('* 0 0 * * 0', EmailCronJob.shoppingListEmail);
 //* 0 0 1 * * (premier jour de chaque mois à 0h00)
 const globalEmailJob = new CronJob('* 0 0 1 * *', EmailCronJob.globalEmail);
 
-//shoppingListEmailJob.start();
-//globalEmailJob.start();
+App.listen( port, () => {
+    if(env.toUpperCase() === environments.PRODUCTION){
+        loggerInfo.info(`HTTP server is now running on port ${port} (${env})`);
+        // nofificationJob.start();
+        shoppingListEmailJob.start();
+        globalEmailJob.start();
+    }else{
+        console.log(`HTTP server is now running on port ${port} (${env})`);
+    }
+}).on('error', (err) => {
+    loggerError.error(`Server connection error: ${err}`);
+});
+
 
 module.exports = App;
