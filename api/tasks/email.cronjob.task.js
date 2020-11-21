@@ -57,33 +57,29 @@ exports.shoppingListEmail = async () => {
     households.forEach(household => {
       let members = household.member;
       members.forEach(async (member) => {
-        try {
-          let option = await Option.findOne({userId : member.userId});
-          if(option.sendMailShoppingList){
-            let numberWeek = Moment(today, "DDMMYYYY").isoWeek();
-            switch (option.dateMailShoppingList.value) {
-              case 0:
+        let option = await Option.findOne({userId : member.userId});
+        if(option.sendMailShoppingList){
+          let numberWeek = Moment(today, "DDMMYYYY").isoWeek();
+          switch (option.dateMailShoppingList.value) {
+            case 0:
+              findShoppingListAndMailIt(household._id);
+              break;
+            case 1:
+              if(numberWeek % 2 === 0){
                 findShoppingListAndMailIt(household._id);
-                break;
-              case 1:
-                if(numberWeek % 2 === 0){
-                  findShoppingListAndMailIt(household._id);
-                }
-                break;
-              case 2:
-                if(numberWeek % 2 !== 0){
-                  findShoppingListAndMailIt(household._id);
-                }
-                break;
-            
-              default:
-                break;
-            }
-          }else{
-            return;
+              }
+              break;
+            case 2:
+              if(numberWeek % 2 !== 0){
+                findShoppingListAndMailIt(household._id);
+              }
+              break;
+          
+            default:
+              break;
           }
-        } catch (error) {
-          loggerError.error(error);
+        }else{
+          return;
         }
       });
     });
@@ -192,40 +188,35 @@ exports.globalEmail = async () => {
     households.forEach(household => {
       let members = household.member;
       members.forEach(async (member) => {
-        try {
-          let option = await Option.findOne({userId : member.userId});
+        let option = await Option.findOne({userId : member.userId});
 
-          if(!option.sendMailGlobal && !option.sendMailShoppingList) return;
+        if(!option.sendMailGlobal && !option.sendMailShoppingList) return;
 
-          if(option.sendMailGlobal){
-            switch (option.dateMailGlobal.value) {
-              case 0:
+        if(option.sendMailGlobal){
+          switch (option.dateMailGlobal.value) {
+            case 0:
+              findProductAndMailIt(household._id, option.warningExpirationDate.value);
+              break;
+            case 1:
+              if(sendEveryTwoMonth.includes(today.getMonth())){
                 findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                break;
-              case 1:
-                if(sendEveryTwoMonth.includes(today.getMonth())){
-                  findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                }
-                break;
-              case 2:
-                if(sendEveryTreeMonth.includes(today.getMonth())){
-                  findProductAndMailIt(household._id, option.warningExpirationDate.value);
-                }
-                break;
-            
-              default:
-                break;
-            }
+              }
+              break;
+            case 2:
+              if(sendEveryTreeMonth.includes(today.getMonth())){
+                findProductAndMailIt(household._id, option.warningExpirationDate.value);
+              }
+              break;
+          
+            default:
+              break;
           }
+        }
 
-          if(option.sendMailShoppingList){
-            if(option.dateMailShoppingList.value === 3){
-              findShoppingListAndMailIt(household._id);
-            }
+        if(option.sendMailShoppingList){
+          if(option.dateMailShoppingList.value === 3){
+            findShoppingListAndMailIt(household._id);
           }
-
-        }catch(error){
-          loggerError.error(error);
         }
       });
     });
