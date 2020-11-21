@@ -1,4 +1,4 @@
-const {loggerInfo} = require('./config/logger.config');
+const {loggerInfo, loggerError} = require('./config/logger.config');
 const CronJob = require('cron').CronJob;
 const NotificationCronJob = require('./api/tasks/notification.cronjob.task');
 const EmailCronJob = require('./api/tasks/email.cronjob.task');
