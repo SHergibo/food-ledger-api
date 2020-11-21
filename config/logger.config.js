@@ -1,7 +1,7 @@
 const {createLogger, format, transports} = require('winston');
 const {combine, timestamp, json} = format;
 
-const { env } = require('./../config/environment.config');
+const { env, environments } = require('./../config/environment.config');
 
 const enumerateErrorFormat = format(info => {
     if (info.message instanceof Error) {
@@ -43,7 +43,7 @@ const loggerInfo = createLogger({
     ]
 });
 
-if(env.toUpperCase() !== "PRODUCTION"){
+if(env.toUpperCase() !== environments.PRODUCTION){
     loggerInfo.add(new transports.Console({format : format.simple()}));
 }
 
