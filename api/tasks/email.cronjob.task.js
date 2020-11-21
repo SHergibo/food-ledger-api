@@ -47,6 +47,7 @@ const findShoppingListAndMailIt = async (householdId) => {
     }
   } catch (error) {
     loggerError.error(error);
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findShoppingListAndMailIt !');
   }
 };
 
@@ -85,6 +86,7 @@ exports.shoppingListEmail = async () => {
     });
   } catch (error) {
     loggerError.error(error);
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction shoppingListEmail !');
   }
 };
 
@@ -175,6 +177,7 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
     }
   } catch (error) {
     loggerError.error(error);
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findProductAndMailIt !');
   }
 };
 
@@ -223,5 +226,6 @@ exports.globalEmail = async () => {
     
   } catch (error) {
     loggerError.error(error);
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction globalEmail !');
   }
 };

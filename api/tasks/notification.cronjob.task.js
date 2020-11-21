@@ -3,6 +3,7 @@ const Notification = require('./../models/notification.model'),
       Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper');
       Moment = require('moment-timezone'),
+      NodeMailer = require('./../../api/helpers/nodemailer.helper'),
       { loggerError } = require('./../../config/logger.config');
 
 //TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
@@ -67,6 +68,7 @@ exports.cronJob = async () => {
       }
     }
   } catch (error) {
-    loggerError.error(error)
+    loggerError.error(error);
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction cronJob !');
   }
 };
