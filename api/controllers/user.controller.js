@@ -21,7 +21,7 @@ exports.add = async (req, res, next) => {
     if (req.query.householdCode) {
       household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
-        return res.status(400).send(Boom.badRequest('No familly found with this household code'));
+        return next(Boom.badRequest('No familly found with this household code'));
       }
     }
 
@@ -37,7 +37,7 @@ exports.add = async (req, res, next) => {
       }
       if(wrongUserCode.length >= 1){
         searchUserArray = [];
-        return res.status(404).send(Boom.notFound(`There is one or more invalid usercode.`, wrongUserCode));
+        return next(Boom.notFound(`There is one or more invalid usercode.`, wrongUserCode));
       }
     }
 
@@ -94,7 +94,7 @@ exports.add = async (req, res, next) => {
       });
       await notification.save();
     } else {
-      return res.status(400).send(Boom.badRequest('Need a household name or a household code'));
+      return next(Boom.badRequest('Need a household name or a household code'));
     }
 
     await TokenAuth.generate(user);
@@ -159,7 +159,7 @@ exports.remove = async (req, res, next) => {
       } else if (queryUserCode) {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserCode);
         if (requestSwitchAdmin.status) {
-          return res.status(400).send(Boom.badRequest(requestSwitchAdmin.message));
+          return next(Boom.badRequest(requestSwitchAdmin.message));
         }
       }
     } else if (user.role === "user") {

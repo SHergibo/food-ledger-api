@@ -25,7 +25,7 @@ exports.updateUsedToken = async (req, res, next) => {
   try {
     let findTokenAuth = await TokenAuth.findOne({ token: req.params.tokenId });
     if (findTokenAuth.expires < Moment().toDate()) {
-      return res.status(401).send({ error: 'Verification token expired' });
+      return next(Boom.unauthorized('Verification token expired'));
     } else {
       let token = await TokenAuth.findOneAndUpdate({ token: req.params.tokenId }, { used: true }, { new: true });
       let user = await User.findByIdAndUpdate(token.userId, { role: "user" });

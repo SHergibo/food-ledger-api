@@ -12,13 +12,13 @@ exports.switchAdminRequest = async (req, res, next) => {
   try {
 
     if (!req.query.acceptedRequest) {
-      return res.status(400).send(Boom.badRequest('invalid query'));
+      return next(Boom.badRequest('invalid query'));
     }
 
     const notification = await Notification.findById(req.params.notificationId);
     
     if (!notification) {
-      return res.status(404).send(Boom.badRequest('Notification not found!'));
+      return next(Boom.notFound('Notification not found!'));
     }
 
     let user;
@@ -61,7 +61,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           let otherMember = await User.findOne({ usercode: req.query.otherMember });
 
           if (!otherMember) {
-            return res.status(404).send(Boom.badRequest('User not found!'));
+            return next(Boom.badRequest('User not found!'));
           }
 
           //Créer la notification pour que le membre désigné comme nouvel admin, accepte ou non la requête.
@@ -82,7 +82,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           let indexMember = arrayMember.findIndex(obj => obj.isFlagged === false);
 
           if (indexMember >= 0) {
-            return res.status(400).send(Boom.badRequest('One or more members are still eligible for admin'));
+            return next(Boom.badRequest('One or more members are still eligible for admin'));
           } else if (indexMember === -1) {
             await Helpers.noMoreAdmin(arrayMember, household._id);
           }
@@ -129,7 +129,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
     if (otherHousehold.isWaiting === true) {
-      return res.status(400).send(Boom.badRequest("L'utilisateur ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
+      return next(Boom.badRequest("L'utilisateur ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
     }
 
     let notificationObject = {
@@ -166,18 +166,18 @@ exports.addUserRequest = async (req, res, next) => {
 exports.addUserRespond = async (req, res, next) => {
   try {
     if (!req.query.acceptedRequest) {
-      return res.status(400).send(Boom.badRequest('Need a query'));
+      return next(Boom.badRequest('Need a query'));
     }
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return res.status(400).send(Boom.badRequest('Invalid query'));
+      return next(Boom.badRequest('Invalid query'));
     }
 
     if (req.query.otherMember) {
       let otherMember = await User.findById(req.query.otherMember);
 
       if (!otherMember) {
-        return res.status(400).send(Boom.badRequest('Delegate user not found!'));
+        return next(Boom.badRequest('Delegate user not found!'));
       }
     }
 
@@ -218,7 +218,7 @@ exports.addUserRespond = async (req, res, next) => {
       let indexMember = oldMemberArray.findIndex(obj => obj.usercode === user.usercode);
 
       if (user.role === "admin" && oldMemberArray.length > 1 && !req.query.otherMember) {
-        return res.status(400).send(Boom.badRequest('Need a query'));
+        return next(Boom.badRequest('Need a query'));
       }
 
       if (oldHousehold) {
@@ -262,7 +262,7 @@ exports.addUserRespond = async (req, res, next) => {
         //Supprimer le membre de son ancienne famille et créée et envoie une notification au délégué(e)
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin.status) {
-          return res.status(400).send(Boom.badRequest(requestSwitchAdmin.message));
+          return next(Boom.badRequest(requestSwitchAdmin.message));
         }
       }
     }

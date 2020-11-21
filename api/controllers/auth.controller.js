@@ -65,11 +65,11 @@ exports.login = async (req, res, next) => {
       const token = _generateTokenResponse(user, accessToken);
       return res.json({ token, user: user.transform() });
     }else{
-      return res.status(403).send({error : "Please, verify your account first"});
+      return next(Boom.forbidden('Please, verify your account first'));
     }
     
   } catch (error) {
-    console.log("controller login", error);
+    console.log("controller login------------", error);
     return next(error);
   }
 };
@@ -117,12 +117,13 @@ exports.refresh = async (req, res, next) => {
 exports.logout = async (req, res, next) =>{
   try {
     const { email, token } = req.body;
+    if(!email || !token) return next(Boom.badRequest('An email or a token is required to logout !'));
     let response = await RefreshToken.findOneAndDelete({
       token : token,
       userEmail : email
     });
     return res.json(response);
   } catch (error) {
-    return next(error);
+    return next(Boom.badImplementation(error.message));
   }
 }
