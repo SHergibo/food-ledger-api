@@ -20,9 +20,9 @@ Mongoose.connect();
 // const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
 
 //0 0 0 * * 0 (dernier jour de la semaine à 0h00m00s)
-const shoppingListEmailJob = new CronJob('* 0 0 * * 0', EmailCronJob.shoppingListEmail);
+const shoppingListEmailJob = new CronJob('0 0 0 * * 0', EmailCronJob.shoppingListEmail);
 //0 0 0 1 * * (premier jour de chaque mois à 0h00m00s)
-const globalEmailJob = new CronJob('* 0 0 1 * *', EmailCronJob.globalEmail);
+const globalEmailJob = new CronJob('0 0 0 1 * *', EmailCronJob.globalEmail);
 
 App.listen( port, () => {
     if(env.toUpperCase() === environments.PRODUCTION){
