@@ -12,7 +12,7 @@ Mongoose.set('useCreateIndex', true);
 Mongoose.connection.on('error', (err) =>{
     if(env.toUpperCase() === environments.PRODUCTION){
         loggerError.error(`MongoDB connection error: ${err}`);
-        NodeMailer.send(error, 'Une erreur est survenue lors de la connection à MongoDB !');
+        NodeMailer.send(err, 'Une erreur est survenue lors de la connection à MongoDB !');
     }else{
         console.log(err)
     }
