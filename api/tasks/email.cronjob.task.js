@@ -37,7 +37,7 @@ const findShoppingListAndMailIt = async (householdId) => {
         return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
       }).join('');
   
-      let output = `<h2>Voici votre liste de course à faire pour votre stock<h2>
+      let output = `<h2>Voici votre liste de course à faire pour votre stock</h2>
         <ul>
         ${list}
         </ul>
@@ -163,10 +163,10 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
           numberProduct += expDateObject.number;
           return `<li>${Moment(expDateObject.expDate).format("DD-MM-YYYY")} - nombre ${expDateObject.number}</li>`;
         }).join('');
-          return `<li>${product.name} - ${product.brand} - x ${numberProduct}</li> <ul>${listDate}</ul>`;
+          return `<li>${product.name} - ${product.brand} - ${product.location} - x ${numberProduct}</li> <ul>${listDate}</ul>`;
         }).join('');
     
-        let output = `<h2>Voici la liste des produits de votre stock bientôt périmés !<h2>
+        let output = `<h2>Voici la liste des produits de votre stock bientôt périmés !</h2>
           <ul>
           ${list}
           </ul>
