@@ -27,7 +27,11 @@ exports.finalObject = async (req, householdId, model) => {
   for (const key in queryObject) {
     if (key.split('-')[1] === "sort") {
       queryWithSort = true;
-      querySortObject[key.split('-')[0]] = queryObject[key];
+      if(key === "expirationDate-sort"){
+        querySortObject["expirationDate.0"] = queryObject[key];
+      }else{
+        querySortObject[key.split('-')[0]] = queryObject[key];
+      }
     }
     if (key !== "page" && key.split('-')[1] !== "sort") {
       if (key === "name" || key === "brand" || key === "type" || key === "location") {
