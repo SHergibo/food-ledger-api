@@ -34,7 +34,11 @@ const findShoppingListAndMailIt = async (householdId) => {
     if(shoppingList.length >= 1){
   
       let list = shoppingList.map(shopping => {
-        return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
+        if(shopping.product){
+          return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
+        }else if (shopping.historic){
+          return `<li>${shopping.historic.name} - ${shopping.historic.brand.brandName.label} - ${shopping.historic.weight}gr - ${shopping.numberProduct}</li>`;
+        }
       }).join('');
   
       let output = `<h2>Voici votre liste de course à faire pour votre stock</h2>
