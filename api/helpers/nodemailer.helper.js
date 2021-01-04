@@ -39,7 +39,7 @@ exports.send = async (output, subject) => {
       from: `"Gestion de stock" <${MAIL}>`,
       to: MAIL,
       subject: subject,
-      html: output
+      html: `${output}`
     };
 
     transporter.sendMail(mailOptions, (error) => {
