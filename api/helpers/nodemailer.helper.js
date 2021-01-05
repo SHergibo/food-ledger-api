@@ -1,4 +1,5 @@
 const NodeMailer = require('nodemailer'),
+      hbs = require('nodemailer-express-handlebars'),
       config = require('./../../config/secrets'),
       { google } = require('googleapis'),
       { OAuth2 } = google.auth,
@@ -34,12 +35,23 @@ exports.send = async (output, subject) => {
       }
     });
 
+    const options = {
+      viewEngine: {
+        defaultLayout: false
+      },
+      viewPath: `${process.cwd()}/api/views/`,
+    };
 
+    transporter.use('compile', hbs(options));
+    
     let mailOptions = {
       from: `"Gestion de stock" <${MAIL}>`,
       to: MAIL,
       subject: subject,
-      html: `${output}`
+      template: 'email',
+      context: {
+        output: `${output}`
+      }
     };
 
     transporter.sendMail(mailOptions, (error) => {
