@@ -75,18 +75,38 @@ exports.sendMail = async (req, res, next) => {
 
     if(shoppingList.length >= 1){
   
-      let list = shoppingList.map(shopping => {
+      let tr = shoppingList.map(shopping => {
         if(shopping.product){
-          return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
+          return `<tr>
+                    <td>${shopping.product.name}</td>
+                    <td>${shopping.product.brand.brandName.label}</td>
+                    <td>${shopping.product.weight}gr</td>
+                    <td>${shopping.numberProduct}</td>
+                  </tr>`;
         }else if (shopping.historic){
-          return `<li>${shopping.historic.name} - ${shopping.historic.brand.brandName.label} - ${shopping.historic.weight}gr - ${shopping.numberProduct}</li>`;
+          return `<tr>
+                    <td>${shopping.historic.name}</td>
+                    <td>${shopping.historic.brand.brandName.label}</td>
+                    <td>${shopping.historic.weight}gr</td>
+                    <td>${shopping.numberProduct}</td>
+                  </tr>`;
         }
       }).join('');
   
-      let output = `<h2>Voici votre liste de course à faire pour votre stock</h2>
-        <ul>
-        ${list}
-        </ul>
+      let output = `<h2>Voici votre liste de course à faire pour votre stock :</h2>
+        <table>
+          <thead>
+              <tr>
+                  <th>Nom du produit</th>
+                  <th>Marque du produit</th>
+                  <th>Poids du produit</th>
+                  <th>Nombre de produit</th>
+              </tr>
+          </thead>
+          <tbody>
+              ${tr}
+          </tbody>
+      </table>
       `;
   
       NodeMailer.send(output, 'Votre liste de course pour votre stock !');

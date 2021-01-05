@@ -33,18 +33,38 @@ const findShoppingListAndMailIt = async (householdId) => {
     });
     if(shoppingList.length >= 1){
   
-      let list = shoppingList.map(shopping => {
+      let tr = shoppingList.map(shopping => {
         if(shopping.product){
-          return `<li>${shopping.product.name} - ${shopping.product.brand.brandName.label} - ${shopping.product.weight}gr - ${shopping.numberProduct}</li>`;
+          return `<tr>
+                    <td>${shopping.product.name}</td>
+                    <td>${shopping.product.brand.brandName.label}</td>
+                    <td>${shopping.product.weight}gr</td>
+                    <td>${shopping.numberProduct}</td>
+                  </tr>`;
         }else if (shopping.historic){
-          return `<li>${shopping.historic.name} - ${shopping.historic.brand.brandName.label} - ${shopping.historic.weight}gr - ${shopping.numberProduct}</li>`;
+          return `<tr>
+                    <td>${shopping.historic.name}</td>
+                    <td>${shopping.historic.brand.brandName.label}</td>
+                    <td>${shopping.historic.weight}gr</td>
+                    <td>${shopping.numberProduct}</td>
+                  </tr>`;
         }
       }).join('');
   
-      let output = `<h2>Voici votre liste de course à faire pour votre stock</h2>
-        <ul>
-        ${list}
-        </ul>
+      let output = `<h2>Voici votre liste de course à faire pour votre stock :</h2>
+        <table>
+          <thead>
+              <tr>
+                  <th>Nom du produit</th>
+                  <th>Marque du produit</th>
+                  <th>Poids du produit</th>
+                  <th>Nombre de produit</th>
+              </tr>
+          </thead>
+          <tbody>
+              ${tr}
+          </tbody>
+      </table>
       `;
   
       NodeMailer.send(output, 'Votre liste de course pour votre stock !');
@@ -149,6 +169,7 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
                 id: product._id,
                 name: product.name,
                 brand: product.brand.brandName.label,
+                location: product.location,
                 expirationDate: [{
                   expDate: date.expDate,
                   number: date.productLinkedToExpDate
@@ -161,19 +182,36 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
       });
 
       if(productExpirationDate.length >= 1){    
-        let list = productExpirationDate.map(product => {
+        let tr = productExpirationDate.map(product => {
         let numberProduct = 0;
         let listDate = product.expirationDate.map(expDateObject => {
           numberProduct += expDateObject.number;
           return `<li>${Moment(expDateObject.expDate).format("DD-MM-YYYY")} - nombre ${expDateObject.number}</li>`;
         }).join('');
-          return `<li>${product.name} - ${product.brand} - ${product.location} - x ${numberProduct}</li> <ul>${listDate}</ul>`;
+          return `<tr>
+                    <td>${product.name}</td>
+                    <td>${product.brand}</td>
+                    <td>${product.location}</td>
+                    <td>x ${numberProduct}</td>
+                    <td><ul>${listDate}</ul></td>
+                  </tr>`;
         }).join('');
     
-        let output = `<h2>Voici la liste des produits de votre stock bientôt périmés !</h2>
-          <ul>
-          ${list}
-          </ul>
+        let output = `<h2>Voici la liste des produits de votre stock bientôt périmés :</h2>
+          <table>
+            <thead>
+                <tr>
+                    <th>Nom du produit</th>
+                    <th>Marque du produit</th>
+                    <th>Emplacement du produit</th>
+                    <th>Nombre de produit</th>
+                    <th>Date de péremption</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tr}
+            </tbody>
+        </table>
         `;
 
         NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions !');
