@@ -151,3 +151,31 @@ exports.removePagination = async (req, res, next) => {
     next(Boom.badImplementation(error.message));
   }
 };
+
+/**
+* Download Historic list
+*/
+exports.download = async (req, res, next) => {
+  try {
+    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const historicList = await Historic.find({householdId : household._id}).populate('brand', 'brandName');
+    let finaleHistoricList = [];
+    historicList.forEach(histList => {
+      let historicObject = {
+          "Nom" : histList.name,
+          "Marque" : histList.brand.brandName.value,
+          "Type" : histList.type.label,
+          "Poids" : histList.weight,
+          "Kcal" : histList.kcal,
+          "Emplacement" : histList.location
+        }
+
+      finaleHistoricList.push(historicObject)
+    });
+
+    return res.json(finaleHistoricList);
+  } catch (error) {
+    console.log(error);
+    next(Boom.badImplementation(error.message));
+  }
+};

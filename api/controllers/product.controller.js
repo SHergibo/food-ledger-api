@@ -5,6 +5,7 @@ const Product = require('./../models/product.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       SortExpDateHelper = require('./../helpers/sortExpDate.helper'),
       ProductLogHelper = require('./../helpers/product-log.helper'),
+      { transformDate } = require('./../helpers/transformDate.helper'),
       Slugify = require('./../utils/slugify'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
       Boom = require('@hapi/boom');
@@ -178,6 +179,44 @@ exports.removePagination = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
     return res.json(finalObject);
     
+  } catch (error) {
+    next(Boom.badImplementation(error.message));
+  }
+};
+
+/**
+* Download Product list
+*/
+exports.download = async (req, res, next) => {
+  try {
+    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const productList = await Product.find({householdId : household._id}).populate('brand', 'brandName');
+    let finalProductList = [];
+    productList.forEach(prodList => {
+      let arrayExpDate = [];
+      prodList.expirationDate.forEach(date => {
+        let objectExpDate = {
+          "date" : transformDate(date.expDate),
+          "nombre" : date.productLinkedToExpDate
+        }
+        arrayExpDate.push(objectExpDate);
+      });
+      let productObject = {
+          "Nom" : prodList.name,
+          "Marque" : prodList.brand.brandName.value,
+          "Type" : prodList.type.label,
+          "Poids" : prodList.weight,
+          "Kcal" : prodList.kcal,
+          "Date d'expiration": arrayExpDate,
+          "Emplacement" : prodList.location,
+          "Nombre" : prodList.number,
+          "Min. Stock" : prodList.minimumInStock.minInStock,
+        }
+
+      finalProductList.push(productObject)
+    });
+
+    return res.json(finalProductList);
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }

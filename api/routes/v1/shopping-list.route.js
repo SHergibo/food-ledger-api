@@ -18,6 +18,10 @@ router
 router
   .route('/:householdCode')
       .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.removeAll);
+
+router
+  .route('/download/:householdCode')
+      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.download);
   
 router
     .route('/send-mail/:householdCode')

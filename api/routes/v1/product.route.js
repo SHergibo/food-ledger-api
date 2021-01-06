@@ -26,4 +26,8 @@ router
     .route('/delete-pagination/:productId')
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.removePagination);
 
+router
+    .route('/download/:householdCode')
+        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.download);
+
 module.exports = router;

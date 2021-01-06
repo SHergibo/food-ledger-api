@@ -43,6 +43,64 @@ exports.removeAll = async (req, res, next) => {
   }
 };
 
+
+/**
+* Download shopping list
+*/
+exports.download = async (req, res, next) => {
+  try {
+    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const shoppingList = await ShoppingList.find({householdId : household._id})      
+    .populate({
+      path: 'product',
+      populate : {
+        path: 'brand',
+        select: {brandName: 1}
+      },
+      select: {
+        name: 1,
+        weight: 1,
+      }
+    })
+    .populate({
+      path: 'historic',
+      populate : {
+        path: 'brand',
+        select: {brandName: 1}
+      },
+      select: {
+        name: 1,
+        weight: 1,
+      }
+    });
+
+    const finalShoppingList = [];
+    shoppingList.forEach(shopList => {
+      let shoppingObject;
+      if(shopList.product){
+        shoppingObject = {
+          "Nom" : shopList.product.name,
+          "Marque" : shopList.product.brand.brandName.value,
+          "Poids" : shopList.product.weight,
+          "Nombre" : shopList.numberProduct
+        }
+      }else if (shopList.historic){
+        shoppingObject = {
+          "Nom" : shopList.historic.name,
+          "Marque" : shopList.historic.brand.brandName.value,
+          "Poids" : shopList.historic.weight,
+          "Nombre" : shopList.numberProduct
+        }
+      }
+      finalShoppingList.push(shoppingObject)
+    });
+
+    return res.json(finalShoppingList);
+  } catch (error) {
+    next(Boom.badImplementation(error.message));
+  }
+};
+
 /**
 * Send mail shopping list
 */

@@ -26,4 +26,8 @@ router
     .route('/delete-pagination/:historicId')
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.removePagination);
 
+router
+    .route('/download/:householdCode')
+        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.download);
+
 module.exports = router;
