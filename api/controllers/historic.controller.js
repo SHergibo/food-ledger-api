@@ -125,6 +125,10 @@ exports.remove = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDelete(req, "historic");
     const historic = await Historic.findByIdAndDelete(req.params.historicId);
+    const shopping = await ShoppingList.findOne({historic : historic._id});
+    if(shopping){
+      await ShoppingList.findByIdAndDelete(shopping._id);
+    }
     return res.json(historic.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -175,7 +179,6 @@ exports.download = async (req, res, next) => {
 
     return res.json(finaleHistoricList);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

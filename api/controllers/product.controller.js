@@ -155,6 +155,10 @@ exports.remove = async (req, res, next) => {
     await BrandLogic.brandLogicWhenDelete(req, "product");
     const product = await Product.findByIdAndDelete(req.params.productId);
     await ProductLogHelper.productLogDelete(product, req.user);
+    const shopping = await ShoppingList.findOne({product : product._id});
+    if(shopping){
+      await ShoppingList.findByIdAndDelete(shopping._id);
+    }
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
