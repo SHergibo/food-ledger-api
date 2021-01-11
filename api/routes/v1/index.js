@@ -9,6 +9,7 @@ const Express = require('express'),
       BrandRoutes = require('./brand.route'),
       ProductLogRoutes = require('./product-log.route'),
       ShoppingListRoutes = require('./shopping-list.route'),
+      StatisticRoutes = require('./statistic.route'),
       AuthRoutes = require('./auth.route'),
       TokenAuthRoutes = require('./token-auth.route');
 
@@ -25,6 +26,7 @@ router.use('/historics', HistoricRoutes);
 router.use('/brands', BrandRoutes);
 router.use('/product-logs', ProductLogRoutes);
 router.use('/shopping-lists', ShoppingListRoutes);
+router.use('/statistics', StatisticRoutes);
 router.use('/tokens', TokenAuthRoutes);
 
 module.exports = router;
