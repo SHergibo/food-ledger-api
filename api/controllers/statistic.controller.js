@@ -3,28 +3,47 @@ const Product = require('./../models/product.model'),
       Boom = require('@hapi/boom');
 
 /**
-* GET Chart one data
+* GET Chart data
 */
-exports.chartOne = async (req, res, next) => {
+exports.chartData = async (req, res, next) => {
   try {
     const household = await Household.findOne({ householdCode: req.params.householdCode });
     const Products = await Product.find({ householdId: household._id });
 
-    let data = {};
+    let dataFinal = {};
+    let dataChartOne = {};
+    let productType = ['legume', 'viande', 'poisson', 'fruit', 'boisson', 'produit-sucre', 'produit-laitier', 'farineux', 'cereale', 'legumineuse'];
+    let dataChartTwo = [0,0,0,0,0,0,0,0,0,0];
+    let dataChartThree = [0,0,0,0,0,0,0,0,0,0];
 
     Products.forEach(product => {
+      //data for chart one
       product.expirationDate.forEach(date => {
-        if(data[date.expDate.getFullYear()]){
-          data[date.expDate.getFullYear()][date.expDate.getMonth()] = data[date.expDate.getFullYear()][date.expDate.getMonth()] + date.productLinkedToExpDate;
+        if(dataChartOne[date.expDate.getFullYear()]){
+          dataChartOne[date.expDate.getFullYear()][date.expDate.getMonth()] = dataChartOne[date.expDate.getFullYear()][date.expDate.getMonth()] + date.productLinkedToExpDate;
         }else{
-          data[date.expDate.getFullYear()] = [0,0,0,0,0,0,0,0,0,0,0,0];
-          data[date.expDate.getFullYear()][date.expDate.getMonth()] = date.productLinkedToExpDate;
+          dataChartOne[date.expDate.getFullYear()] = [0,0,0,0,0,0,0,0,0,0,0,0];
+          dataChartOne[date.expDate.getFullYear()][date.expDate.getMonth()] = date.productLinkedToExpDate;
         }
       });
+
+      let indexProductType = productType.indexOf(product.type.value);
+      //data for chart two
+      dataChartTwo[indexProductType] = dataChartTwo[indexProductType] + product.number;
+
+      //data for chart three
+      dataChartThree[indexProductType] = dataChartThree[indexProductType] + (product.number * product.kcal);
+
     });
-    
-    return res.json(data);
+
+
+    dataFinal["chartOne"] = dataChartOne;
+    dataFinal["chartTwo"] = dataChartTwo;
+    dataFinal["chartThree"] = dataChartThree;
+    console.log(dataFinal);
+    return res.json(dataFinal);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

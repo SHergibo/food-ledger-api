@@ -8,8 +8,8 @@ const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.midd
 const router = Express.Router();
 
 router
-  .route('/chart-one/:householdCode')
-      .get(authorize([ADMIN, LOGGED_USER]), StatisticController.chartOne);
+  .route('/chart-data/:householdCode')
+      .get(authorize([ADMIN, LOGGED_USER]), StatisticController.chartData);
 
 
 module.exports = router;
