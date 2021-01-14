@@ -4,6 +4,7 @@ const Express = require('express'),
 const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
 const { addHousehold } = require('../../middlewares/addHousehold.middleware');
 const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
+const { outdatedStatistics } = require('../../middlewares/statisticOutdated.middleware');
 
 
 const router = Express.Router();
@@ -19,7 +20,7 @@ router
 router
     .route('/:historicId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.findOne)
-        .patch(authorize([ADMIN, LOGGED_USER]), addHousehold, checkSameHousehold, HistoricController.update)
+        .patch(authorize([ADMIN, LOGGED_USER]), addHousehold, checkSameHousehold, outdatedStatistics, HistoricController.update)
         .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HistoricController.remove);
 
 router
