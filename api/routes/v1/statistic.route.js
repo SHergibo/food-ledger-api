@@ -9,7 +9,7 @@ const router = Express.Router();
 
 router
   .route('/chart-data/:householdCode')
-      .get(authorize([ADMIN, LOGGED_USER]), StatisticController.chartData);
+      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, StatisticController.chartData);
 
 
 module.exports = router;
