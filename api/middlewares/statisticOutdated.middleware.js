@@ -1,7 +1,5 @@
 const Statistic = require('../models/statistic.model'),
       Product = require('../models/product.model'),
-      Historic = require('../models/historic.model'),
-      Household = require('../models/household.model'),
       Boom = require('@hapi/boom');
 
 exports.outdatedStatistics = async (req, res, next) => {
@@ -15,7 +13,7 @@ exports.outdatedStatistics = async (req, res, next) => {
     }
     
     if(statistic && !statistic.isOutdated){
-      if(req.baseUrl === "/api/v1/products"){
+      if(req.baseUrl.includes('products')){
         if(req.method === "POST" || req.method === "DELETE"){
           statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true}, { override: true, upsert: true, new: true });
         }
@@ -25,7 +23,7 @@ exports.outdatedStatistics = async (req, res, next) => {
           }
         }
       }
-      if(req.baseUrl === "/api/v1/historics"){
+      if(req.baseUrl.includes('historics')){
         if(req.method === "PATCH"){
           if(req.body.number >= 1){
             statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true}, { override: true, upsert: true, new: true });
