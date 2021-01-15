@@ -1,7 +1,8 @@
 const {loggerInfo, loggerError} = require('./config/logger.config');
 const CronJob = require('cron').CronJob;
-const NotificationCronJob = require('./api/tasks/notification.cronjob.task');
-const EmailCronJob = require('./api/tasks/email.cronjob.task');
+const { notification } = require('./api/tasks/notification.cronjob.task');
+const { shoppingListEmail, globalEmail } = require('./api/tasks/email.cronjob.task');
+const { statisticChartFour } = require('./api/tasks/statistic.cronjob.task');
 
 const [major, minor] = process.versions.node.split('.').map(parseFloat);
 
@@ -17,19 +18,22 @@ const Mongoose =require ('./config/mongoose.config');
 
 Mongoose.connect();
 
-// const nofificationJob = new CronJob('1 * * * * *', NotificationCronJob.cronJob);
+// const notificationJob = new CronJob('1 * * * * *', notification);
 
 //0 0 0 * * 0 (dernier jour de la semaine à 0h00m00s)
-const shoppingListEmailJob = new CronJob('0 0 0 * * 0', EmailCronJob.shoppingListEmail);
+const weeklyCronJob = new CronJob('0 0 0 * * 0', ()=> {
+    shoppingListEmail();
+    statisticChartFour();
+});
 //0 0 0 1 * * (premier jour de chaque mois à 0h00m00s)
-const globalEmailJob = new CronJob('0 0 0 1 * *', EmailCronJob.globalEmail);
+const monthlyCronJob = new CronJob('0 0 0 1 * *', globalEmail);
 
 App.listen( port, () => {
     if(env.toUpperCase() === environments.PRODUCTION){
         loggerInfo.info(`HTTP server is now running on port ${port} (${env})`);
-        // nofificationJob.start();
-        shoppingListEmailJob.start();
-        globalEmailJob.start();
+        // notificationJob.start();
+        weeklyCronJob.start();
+        monthlyCronJob.start();
     }else{
         console.log(`HTTP server is now running on port ${port} (${env})`);
     }
