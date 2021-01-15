@@ -7,7 +7,7 @@ const Notification = require('./../models/notification.model'),
       { loggerError } = require('./../../config/logger.config');
 
 //TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
-exports.cronJob = async () => {
+exports.notification = async () => {
   try {
     let notificationArray = await Notification.find({ type: "request-admin" });
     let householdLastChanceArray = await Household.find({ "lastChance" : { $exists : true } });
