@@ -26,8 +26,8 @@ exports.chartData = async (req, res, next) => {
     
         products.forEach(product => {
           //data for chart one
+          totalProduct = totalProduct + product.number;
           product.expirationDate.forEach(date => {
-            totalProduct = totalProduct + date.productLinkedToExpDate;
             if(dataChartOne[date.expDate.getFullYear()]){
               dataChartOne[date.expDate.getFullYear()][date.expDate.getMonth()] = dataChartOne[date.expDate.getFullYear()][date.expDate.getMonth()] + date.productLinkedToExpDate;
             }else{
@@ -85,9 +85,7 @@ exports.chartData = async (req, res, next) => {
       if(statistic && !statistic.isOutdated && !statistic.statistics.chartFour[new Date().getFullYear()]){
         let totalProduct = 0;
         products.forEach(product => {
-          product.expirationDate.forEach(date => {
-            totalProduct = totalProduct + date.productLinkedToExpDate;
-          });
+          totalProduct = totalProduct + product.number;
         });
   
         let dataChartFour = statistic.statistics.chartFour;

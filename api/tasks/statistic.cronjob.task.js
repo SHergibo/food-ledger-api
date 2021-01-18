@@ -15,9 +15,7 @@ exports.statisticChartFour = async () => {
       if(products.length >= 1){
         let totalProduct = 0;
         products.forEach(product => {
-          product.expirationDate.forEach(date => {
-            totalProduct = totalProduct + date.productLinkedToExpDate;
-          });
+          totalProduct = totalProduct + product.number;
         });
 
         let getYear = new Date().getFullYear();
