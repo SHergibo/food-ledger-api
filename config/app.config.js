@@ -41,4 +41,21 @@ if (env.toUpperCase() === environments.DEVELOPMENT) {
   app.use(ServiceErrorHandler.notFound);
 }
 
-module.exports = app;
+const server = require('http').Server(app);
+const io = require('socket.io')(server, {
+  cors:{
+    origin: CorsOrigin
+  }
+});
+
+io.on('connection', function(socket){
+  io.emit("hello", "Bonjour");
+  socket.on('disconnect', function(){
+    console.log('User Disconnected');
+  });
+  socket.on('example_message', function(msg){
+    console.log('message: ' + msg);
+  });
+});
+
+module.exports = server;
