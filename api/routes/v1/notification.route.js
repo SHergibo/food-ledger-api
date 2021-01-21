@@ -7,7 +7,11 @@ const router = Express.Router();
 
 router
     .route('/:userId')
-        .get( NotificationController.findAll)
+        .get( NotificationController.findAll);
+
+router
+    .route('/test-notif/:userId')
+        .get(NotificationController.testSocket);
 
 
 module.exports = router;

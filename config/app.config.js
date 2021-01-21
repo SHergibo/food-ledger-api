@@ -42,20 +42,6 @@ if (env.toUpperCase() === environments.DEVELOPMENT) {
 }
 
 const server = require('http').Server(app);
-const io = require('socket.io')(server, {
-  cors:{
-    origin: CorsOrigin
-  }
-});
-
-io.on('connection', function(socket){
-  io.emit("hello", "Bonjour");
-  socket.on('disconnect', function(){
-    console.log('User Disconnected');
-  });
-  socket.on('example_message', function(msg){
-    console.log('message: ' + msg);
-  });
-});
+require('./socket-io.config').initializeSocketIo(server, CorsOrigin);
 
 module.exports = server;
