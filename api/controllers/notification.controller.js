@@ -29,8 +29,20 @@ exports.testSocket = async (req, res, next) => {
   try {
     let socketIoDb = await SocketIoModel.findOne({ userId: req.params.userId });
     if(socketIoDb){
+      let notification = await new Notification({
+        message: `Notification TEST!!!!`,
+        fullName: `Jules Hergibo`,
+        senderUserCode: "K-GVtq~ihf",
+        householdId: "5f62238ca97d5a1003a7f0ec",
+        userId: '5f62238ca97d5a1003a7f0ea',
+        otherUserId: "5fb525fc8b8dba24965a6d94",
+        type: "request-addUser",
+        urlRequest: "add-user-respond"
+      });
+      await notification.save();
       const io = socketIo.getSocketIoInstance();
-      io.to(socketIoDb.socketId).emit("notification", "Nouvelle notif!!!");
+      //Nettoyer l'object notification comme à la ligne 14
+      io.to(socketIoDb.socketId).emit("notifSocketIo", [notification]);
     }
 
     return res.send().status(200);
