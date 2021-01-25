@@ -42,7 +42,7 @@ exports.testSocket = async (req, res, next) => {
       await notification.save();
       const io = socketIo.getSocketIoInstance();
       //Nettoyer l'object notification comme à la ligne 14
-      io.to(socketIoDb.socketId).emit("notifSocketIo", [notification]);
+      io.to(socketIoDb.socketId).emit("notifSocketIo", notification);
     }
 
     return res.send().status(200);

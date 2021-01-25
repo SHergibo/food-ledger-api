@@ -177,20 +177,22 @@ exports.addUserRespond = async (req, res, next) => {
       let otherMember = await User.findById(req.query.otherMember);
 
       if (!otherMember) {
-        return next(Boom.badRequest('Delegate user not found!'));
+        return next(Boom.notFound('Delegate user not found!'));
       }
     }
 
     let notification = await Notification.findById(req.params.notificationId);
-    let user;
-    if (req.query.acceptedRequest === "yes") {
+    if(!notification){
+      return next(Boom.notFound('Notification not found!'));
+    }
 
+    if (req.query.acceptedRequest === "yes") {
+      let user;
       if (notification.otherUserId) {
         user = await User.findById(notification.otherUserId);
       } else {
         user = await User.findById(notification.userId);
       }
-
 
       let oldHousehold = await Household.findOne({ householdCode: user.householdCode });
       let oldMemberArray = [];
@@ -270,16 +272,16 @@ exports.addUserRespond = async (req, res, next) => {
     //Delete la notification
     await Notification.findByIdAndDelete(notification._id);
 
-    const notifications = await Notification.find({userId : user._id});
+    const notifications = await Notification.find({userId : notification.userId});
     const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-        let arrayNotificationsTransformed = [];
-        notifications.forEach((item)=>{
-            const object = {};
-            fields.forEach((field)=>{
-                object[field] = item[field];
-            });
-            arrayNotificationsTransformed.push(object);
+    let arrayNotificationsTransformed = [];
+    notifications.forEach((item)=>{
+        const object = {};
+        fields.forEach((field)=>{
+            object[field] = item[field];
         });
+        arrayNotificationsTransformed.push(object);
+    });
 
     return res.json(arrayNotificationsTransformed);
   } catch (error) {
