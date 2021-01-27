@@ -24,7 +24,7 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await ShoppingList.findById(req.params.shoppingId);
     }
 
-    if(!req.params.householdCode){
+    if(!req.params.householdCode && !req.params.householdId){
       if (data) {
         household = await Household.findById(data.householdId);
       } else {
