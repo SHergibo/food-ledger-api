@@ -3,7 +3,9 @@ const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model')
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      Moment = require('moment-timezone');
+      Moment = require('moment-timezone'),
+      socketIo = require('./../../config/socket-io.config'),
+      SocketIoModel = require('./../models/socketIo.model');
 
 /**
 * Switch admin request
@@ -120,12 +122,13 @@ exports.switchAdminRequest = async (req, res, next) => {
 */
 exports.addUserRequest = async (req, res, next) => {
   try {
-    let household = await Household.findOne({ householdCode: req.body.householdCode })
-    let userId;
-    let message;
+    let household = await Household.findOne({ householdCode: req.body.householdCode });
     let user = await User.findOne({ usercode: req.body.usercode });
     let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
-    let otherUserId;
+
+    if(user.householdCode === req.body.householdCode){
+      return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
+    }
 
     //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
     if (otherHousehold.isWaiting === true) {
@@ -133,29 +136,33 @@ exports.addUserRequest = async (req, res, next) => {
     }
 
     let notificationObject = {
-      message: message,
       householdId: household._id,
-      userId: userId,
-      otherUserId: otherUserId,
       type: "request-addUser",
       urlRequest: "add-user-respond"
     }
 
     if (req.body.type === "householdToUser") {
-      userId = user._id;
-      message = `L'administrateur de la famille ${household.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`;
+      notificationObject.userId = user._id;
+      notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`;
     } else if (req.body.type === "userToHousehold") {
-      userId = household.userId;
-      otherUserId = user._id
-      message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
+      notificationObject.userId = household.userId;
+      notificationObject.otherUserId = user._id
+      notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
       notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }
 
     let notification = await new Notification(notificationObject);
     await notification.save();
 
-    return res.json(notification.transform());
+    let socketIoDb = await SocketIoModel.findOne({ userId: notificationObject.userId });
+    if(socketIoDb){
+      const io = socketIo.getSocketIoInstance();
+      io.to(socketIoDb.socketId).emit("notifSocketIo", notification);
+    }
+
+    return res.send().status(200);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -200,6 +207,11 @@ exports.addUserRespond = async (req, res, next) => {
         oldMemberArray = oldHousehold.member;
       }
       let newHousehold = await Household.findById(notification.householdId);
+
+      if(oldHousehold.householdCode === newHousehold.householdCode){
+        return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
+      }
+
       let newMemberArray = newHousehold.member;
 
       //Envoie une notification au membre admin ayant d'autre membre dans sa famille si cette admin veut rentrer dans une nouvelle famille en tant que simple user
@@ -212,7 +224,14 @@ exports.addUserRespond = async (req, res, next) => {
           type: "need-switch-admin",
           urlRequest: "add-user-respond"
         });
-        await notification.save();
+        await newNotification.save();
+
+        let socketIoDb = await SocketIoModel.findOne({ userId: user._id });
+        if(socketIoDb){
+          const io = socketIo.getSocketIoInstance();
+          io.to(socketIoDb.socketId).emit("notifSocketIo", newNotification);
+        }
+
         return res.json(newNotification);
       }
 
@@ -267,6 +286,24 @@ exports.addUserRespond = async (req, res, next) => {
           return next(Boom.badRequest(requestSwitchAdmin.message));
         }
       }
+
+      let socketIoUser = await SocketIoModel.findOne({ userId: user._id });
+      if(socketIoUser){
+        const io = socketIo.getSocketIoInstance();
+        io.to(socketIoUser.socketId).emit("switchFamilly", {userData : user, householdData : newHousehold});
+      }
+
+      let socketIoAdmin = await SocketIoModel.findOne({ userId: newHousehold.userId });
+      if(socketIoAdmin){
+        const io = socketIo.getSocketIoInstance();
+        io.to(socketIoAdmin.socketId).emit("updateFamilly", newHousehold);
+      }
+
+      let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldHousehold.userId });
+      if(socketIoOldAdmin){
+        const io = socketIo.getSocketIoInstance();
+        io.to(socketIoOldAdmin.socketId).emit("updateFamilly", oldHousehold);
+      }
     }
 
     //Delete la notification
@@ -285,6 +322,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.json(arrayNotificationsTransformed);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
