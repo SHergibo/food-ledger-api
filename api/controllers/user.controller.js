@@ -5,7 +5,8 @@ const User = require('./../models/user.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       TokenAuth = require('./../models/token-auth.model'),
-      cryptoRandomString = require('crypto-random-string');
+      cryptoRandomString = require('crypto-random-string'),
+      { socketIoNotification } = require('./../helpers/socketIo.helper');
 
 /**
 * Post one user
@@ -73,6 +74,7 @@ exports.add = async (req, res, next) => {
             urlRequest: "add-user-respond"
           });
           await notification.save();
+          socketIoNotification(otherUser._id, "notifSocketIo", notification);
         }
         searchUserArray = [];
       }
@@ -93,6 +95,7 @@ exports.add = async (req, res, next) => {
         urlRequest: "add-user-respond"
       });
       await notification.save();
+      socketIoNotification(household.userId, "notifSocketIo", notification);
     } else {
       return next(Boom.badRequest('Need a household name or a household code'));
     }
