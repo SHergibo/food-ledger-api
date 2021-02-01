@@ -40,9 +40,17 @@ exports.testSocket = async (req, res, next) => {
         urlRequest: "add-user-respond"
       });
       await notification.save();
+
+      const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+      const notificationTransform = {};
+      fields.forEach((field)=>{
+        notificationTransform[field] = notification[field];
+      });
+
+
       const io = socketIo.getSocketIoInstance();
       //Nettoyer l'object notification comme à la ligne 14
-      io.to(socketIoDb.socketId).emit("notifSocketIo", notification);
+      io.to(socketIoDb.socketId).emit("notifSocketIo", notificationTransform);
     }
 
     return res.send().status(200);

@@ -5,7 +5,8 @@ const Household = require('./../models/household.model'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
       socketIo = require('./../../config/socket-io.config'),
-      SocketIoModel = require('./../models/socketIo.model');
+      SocketIoModel = require('./../models/socketIo.model'),
+      { socketIoNotification } = require('./../helpers/socketIo.helper');
 
 /**
 * Switch admin request
@@ -154,11 +155,7 @@ exports.addUserRequest = async (req, res, next) => {
     let notification = await new Notification(notificationObject);
     await notification.save();
 
-    let socketIoDb = await SocketIoModel.findOne({ userId: notificationObject.userId });
-    if(socketIoDb){
-      const io = socketIo.getSocketIoInstance();
-      io.to(socketIoDb.socketId).emit("notifSocketIo", notification);
-    }
+    socketIoNotification(notificationObject.userId, "notifSocketIo", notification);
 
     return res.send().status(200);
   } catch (error) {
@@ -208,7 +205,7 @@ exports.addUserRespond = async (req, res, next) => {
       }
       let newHousehold = await Household.findById(notification.householdId);
 
-      if(oldHousehold.householdCode === newHousehold.householdCode){
+      if(oldHousehold && (oldHousehold.householdCode === newHousehold.householdCode)){
         return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
       }
 
@@ -226,11 +223,7 @@ exports.addUserRespond = async (req, res, next) => {
         });
         await newNotification.save();
 
-        let socketIoDb = await SocketIoModel.findOne({ userId: user._id });
-        if(socketIoDb){
-          const io = socketIo.getSocketIoInstance();
-          io.to(socketIoDb.socketId).emit("notifSocketIo", newNotification);
-        }
+        socketIoNotification(user._id, "notifSocketIo", newNotification);
 
         return res.json(newNotification);
       }
@@ -299,10 +292,12 @@ exports.addUserRespond = async (req, res, next) => {
         io.to(socketIoAdmin.socketId).emit("updateFamilly", newHousehold);
       }
 
-      let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldHousehold.userId });
-      if(socketIoOldAdmin){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoOldAdmin.socketId).emit("updateFamilly", oldHousehold);
+      if(oldHousehold){
+        let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldHousehold.userId });
+        if(socketIoOldAdmin){
+          const io = socketIo.getSocketIoInstance();
+          io.to(socketIoOldAdmin.socketId).emit("updateFamilly", oldHousehold);
+        }
       }
     }
 
