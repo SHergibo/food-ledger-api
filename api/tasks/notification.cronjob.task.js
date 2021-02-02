@@ -36,7 +36,7 @@ exports.notification = async () => {
               householdId: notif.householdId,
               userId: newArrayMember[0].userId,
               type: "request-admin",
-              urlRequest: "switch-admin",
+              urlRequest: "delegate-admin",
               expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
             });
             await newNotification.save();
@@ -50,7 +50,7 @@ exports.notification = async () => {
                   householdId: notif.householdId,
                   userId: member.userId,
                   type: "last-chance-request-admin",
-                  urlRequest: "switch-admin",
+                  urlRequest: "delegate-admin",
                 });
                 await lastChanceNotification.save();
               }
