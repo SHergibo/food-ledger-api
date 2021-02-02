@@ -7,8 +7,16 @@ const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middle
 const router = Express.Router();
 
 router
-    .route('/switch-admin/:notificationId')
+    .route('/delegate-admin/:notificationId')
         .get(authorize([ADMIN, LOGGED_USER]), RequestController.switchAdminRequest);
+
+router
+    .route('/switch-admin-rights')
+        .post(authorize([ADMIN, LOGGED_USER]), RequestController.switchAdminRights);
+
+router
+    .route('/switch-admin-rights-respond/:notificationId')
+        .get(authorize([ADMIN, LOGGED_USER]), RequestController.switchAdminRightsRespond);
 
 router
     .route('/add-user-request')

@@ -9,7 +9,7 @@ const Household = require('./../models/household.model'),
       { socketIoNotification } = require('./../helpers/socketIo.helper');
 
 /**
-* Switch admin request
+* Switch familly an delegate admin request
 */
 exports.switchAdminRequest = async (req, res, next) => {
   try {
@@ -73,10 +73,12 @@ exports.switchAdminRequest = async (req, res, next) => {
             householdId: notification.householdId,
             userId: otherMember._id,
             type: "request-admin",
-            urlRequest: "switch-admin",
+            urlRequest: "delegate-admin",
             expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
           });
           await newNotification.save();
+
+          socketIoNotification(otherMember._id, "notifSocketIo", newNotification);
 
         } else if (!req.query.otherMember) {
           //check si il n'y réellement plus d'autre membre éligible
@@ -117,6 +119,93 @@ exports.switchAdminRequest = async (req, res, next) => {
   }
 };
 
+/**
+* Switch Admin rights
+*/
+exports.switchAdminRights = async (req, res, next) => {
+  try {
+    let notification = await new Notification({
+      message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'administrateur actuel, acceptez-vous cette requête ?",
+      householdId: req.body.householdId,
+      userId: req.body.userId,
+      type: "request-admin",
+      urlRequest: "switch-admin-rights-respond",
+    });
+    await notification.save();
+    socketIoNotification(req.body.userId, "notifSocketIo", notification);
+
+    return res.send().status(200);
+  } catch (error) {
+    next(Boom.badImplementation(error.message));
+  }
+};
+
+/**
+* Switch Admin rights Respond
+*/
+exports.switchAdminRightsRespond = async (req, res, next) => {
+  try {
+    let notification = await Notification.findById(req.params.notificationId);
+    if(!notification){
+      return next(Boom.notFound('Notification not found!'));
+    }
+
+    if (!req.query.acceptedRequest) {
+      return next(Boom.badRequest('Need a query'));
+    }
+
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
+      return next(Boom.badRequest('Invalid query'));
+    }
+
+    if (req.query.acceptedRequest === "yes") {
+      let household = await Household.findById(notification.householdId);
+      let oldAdmin = await User.findById(household.userId);
+      oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"}, { override: true, upsert: true, new: true });
+      let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"}, { override: true, upsert: true, new: true });
+
+      let arrayMember = household.member;
+      let indexUserToChange = arrayMember.findIndex(obj => obj.usercode === newAdmin.usercode);
+      let AdminInfoMember = arrayMember[indexUserToChange];
+      arrayMember.splice(indexUserToChange, 1);
+      arrayMember.unshift(AdminInfoMember);
+
+      household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, member : arrayMember}, { override: true, upsert: true, new: true });
+
+
+      let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldAdmin._id });
+      if(socketIoOldAdmin){
+        const io = socketIo.getSocketIoInstance();
+        io.to(socketIoOldAdmin.socketId).emit("updateUserAndFamillyData", {userData : oldAdmin, householdData : household});
+      }
+
+      let socketIoNewAdmin = await SocketIoModel.findOne({ userId: newAdmin._id });
+      if(socketIoNewAdmin){
+        const io = socketIo.getSocketIoInstance();
+        io.to(socketIoNewAdmin.socketId).emit("updateUserAndFamillyData", {userData : newAdmin, householdData : household});
+      }
+    }
+
+    await Notification.findByIdAndDelete(notification._id);
+
+    const notifications = await Notification.find({userId : notification.userId});
+    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+    let arrayNotificationsTransformed = [];
+    notifications.forEach((item)=>{
+        const object = {};
+        fields.forEach((field)=>{
+            object[field] = item[field];
+        });
+        arrayNotificationsTransformed.push(object);
+    });
+
+    return res.json(arrayNotificationsTransformed);
+
+  } catch (error) {
+    console.log(error);
+    next(Boom.badImplementation(error.message));
+  }
+};
 
 /**
 * Add User request
@@ -159,7 +248,6 @@ exports.addUserRequest = async (req, res, next) => {
 
     return res.send().status(200);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -283,7 +371,7 @@ exports.addUserRespond = async (req, res, next) => {
       let socketIoUser = await SocketIoModel.findOne({ userId: user._id });
       if(socketIoUser){
         const io = socketIo.getSocketIoInstance();
-        io.to(socketIoUser.socketId).emit("switchFamilly", {userData : user, householdData : newHousehold});
+        io.to(socketIoUser.socketId).emit("updateUserAndFamillyData", {userData : user, householdData : newHousehold});
       }
 
       let socketIoAdmin = await SocketIoModel.findOne({ userId: newHousehold.userId });
