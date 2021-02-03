@@ -124,17 +124,21 @@ exports.switchAdminRequest = async (req, res, next) => {
 */
 exports.switchAdminRights = async (req, res, next) => {
   try {
-    let notification = await new Notification({
-      message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'administrateur actuel, acceptez-vous cette requête ?",
-      householdId: req.body.householdId,
-      userId: req.body.userId,
-      type: "request-admin",
-      urlRequest: "switch-admin-rights-respond",
-    });
-    await notification.save();
-    socketIoNotification(req.body.userId, "notifSocketIo", notification);
-
-    return res.send().status(200);
+    let searchNotification = await Notification.findOne({householdId : req.body.householdId, urlRequest: "switch-admin-rights-respond"});
+    if(searchNotification){
+      return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente ! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
+    }else{
+      let notification = await new Notification({
+        message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'administrateur actuel, acceptez-vous cette requête ?",
+        householdId: req.body.householdId,
+        userId: req.body.userId,
+        type: "request-admin",
+        urlRequest: "switch-admin-rights-respond",
+      });
+      await notification.save();
+      socketIoNotification(req.body.userId, "notifSocketIo", notification);
+      return res.send().status(200);
+    }
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
