@@ -19,4 +19,8 @@ router
     .route('/:householdId')
         .patch(authorize([ADMIN]), checkSameHousehold, HouseholdController.update);
 
+router
+    .route('/kick-user/:householdId')
+        .patch(authorize([ADMIN]), checkSameHousehold, HouseholdController.kickUser);
+
 module.exports = router;
