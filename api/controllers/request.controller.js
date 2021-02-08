@@ -9,7 +9,7 @@ const Household = require('./../models/household.model'),
       { socketIoNotification } = require('./../helpers/socketIo.helper');
 
 /**
-* Switch familly an delegate admin request
+* Switch familly and delegate admin request
 */
 exports.switchAdminRequest = async (req, res, next) => {
   try {
@@ -132,6 +132,7 @@ exports.switchAdminRights = async (req, res, next) => {
         message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'administrateur actuel, acceptez-vous cette requête ?",
         householdId: req.body.householdId,
         userId: req.body.userId,
+        senderUserId: req.user._id,
         type: "request-admin",
         urlRequest: "switch-admin-rights-respond",
       });
@@ -232,7 +233,8 @@ exports.addUserRequest = async (req, res, next) => {
     let notificationObject = {
       householdId: household._id,
       type: "request-addUser",
-      urlRequest: "add-user-respond"
+      urlRequest: "add-user-respond",
+      senderUserId: req.user._id,
     }
 
     if (req.body.type === "householdToUser") {

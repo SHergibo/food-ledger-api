@@ -27,6 +27,10 @@ let schema = new Schema({
         type : Schema.Types.ObjectId,
         ref : 'User',
     },
+    senderUserId : {
+        type : Schema.Types.ObjectId,
+        ref : 'User',
+    },
     householdId : {
         type : Schema.Types.ObjectId,
         ref : 'Household',

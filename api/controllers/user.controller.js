@@ -70,6 +70,7 @@ exports.add = async (req, res, next) => {
             message: `L'administrateur de la famille ${newHousehold.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
+            senderUserId : user._id,
             type: "request-addUser",
             urlRequest: "add-user-respond"
           });
@@ -88,6 +89,7 @@ exports.add = async (req, res, next) => {
         message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
         fullName: `${user.firstname} ${user.lastname}`,
         senderUserCode: user.usercode,
+        senderUserId : user._id,
         householdId: household._id,
         userId: household.userId,
         otherUserId: user._id,
