@@ -138,7 +138,7 @@ exports.switchAdminRights = async (req, res, next) => {
       });
       await notification.save();
       socketIoNotification(req.body.userId, "notifSocketIo", notification);
-      return res.send().status(200);
+      return res.json(notification);
     }
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -252,7 +252,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     socketIoNotification(notificationObject.userId, "notifSocketIo", notification);
 
-    return res.send().status(200);
+    return res.json(notification);
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -396,7 +396,13 @@ exports.addUserRespond = async (req, res, next) => {
     }
 
     //Delete la notification
-    await Notification.findByIdAndDelete(notification._id);
+    let oldNotification = await Notification.findByIdAndDelete(notification._id);
+
+    let socketIoSender = await SocketIoModel.findOne({ userId: oldNotification.senderUserId });
+    if(socketIoSender){
+      const io = socketIo.getSocketIoInstance();
+      io.to(socketIoSender.socketId).emit("updateNotificationSended", oldNotification._id);
+    }
 
     const notifications = await Notification.find({userId : notification.userId});
     const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
