@@ -239,7 +239,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     if (req.body.type === "householdToUser") {
       notificationObject.userId = user._id;
-      notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`;
+      notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
     } else if (req.body.type === "userToHousehold") {
       notificationObject.userId = household.userId;
       notificationObject.otherUserId = user._id
@@ -309,7 +309,7 @@ exports.addUserRespond = async (req, res, next) => {
       if (notification.otherUserId && user.role === "admin" && oldMemberArray.length > 1) {
         //Créée nouvelle notification pour obliger l'user à déléguer ses droit admin à une autre personne avant de pouvoir switch de famille
         let newNotification = await new Notification({
-          message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droit d'administration à un autre membre de votre famille.",
+          message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un autre membre de votre famille.",
           householdId: newHousehold._id,
           userId: user._id,
           type: "need-switch-admin",

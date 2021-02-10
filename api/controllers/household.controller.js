@@ -51,7 +51,6 @@ exports.kickUser = async (req, res, next) => {
     let updatedArrayMember = household.member.filter(member => member.userId.toString() !== req.body.userId);
     household = await Household.findByIdAndUpdate(household._id, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
 
-    //pas de famille => householdCode : none
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let socketIoKickUser = await SocketIoModel.findOne({ userId: req.body.userId });
     if(oldHousehold){
@@ -82,7 +81,6 @@ exports.kickUser = async (req, res, next) => {
 
     return res.json(household.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

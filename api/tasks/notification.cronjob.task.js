@@ -46,7 +46,7 @@ exports.notification = async () => {
               for (const member of memberArray) {
                 //Création dernière notification pour changement d'admin pour chaque membre de la famille
                 let lastChanceNotification = await new Notification({
-                  message: "Ceci est le dernier message pour accepter les droits administrateur de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endeans les 7 jours, votre famille sera supprimer.",
+                  message: "Ceci est le dernier message pour accepter les droits administrateurs de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endéans les 7 jours, votre famille sera supprimée.",
                   householdId: notif.householdId,
                   userId: member.userId,
                   type: "last-chance-request-admin",

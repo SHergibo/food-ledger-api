@@ -67,7 +67,7 @@ exports.add = async (req, res, next) => {
         for (const otherUser of searchUserArray) {
           //New notif pour otherMember
           let notification = await new Notification({
-            message: `L'administrateur de la famille ${newHousehold.householdName} vous invite a rejoindre sa famille. Acceptez-vous l'invitation?`,
+            message: `L'administrateur de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
             senderUserId : user._id,
