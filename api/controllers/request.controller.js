@@ -138,7 +138,14 @@ exports.switchAdminRights = async (req, res, next) => {
       });
       await notification.save();
       socketIoNotification(req.body.userId, "notifSocketIo", notification);
-      return res.json(notification);
+
+      let notifWithPopulate = await Notification.findById(notification._id)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+
+      return res.json(notifWithPopulate);
     }
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -207,7 +214,6 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     return res.json(arrayNotificationsTransformed);
 
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -252,7 +258,13 @@ exports.addUserRequest = async (req, res, next) => {
 
     socketIoNotification(notificationObject.userId, "notifSocketIo", notification);
 
-    return res.json(notification);
+    let notifWithPopulate = await Notification.findById(notification._id)
+    .populate({
+      path: 'userId',
+      select: 'firstname lastname -_id'
+    });
+
+    return res.json(notifWithPopulate);
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -401,7 +413,7 @@ exports.addUserRespond = async (req, res, next) => {
     let socketIoSender = await SocketIoModel.findOne({ userId: oldNotification.senderUserId });
     if(socketIoSender){
       const io = socketIo.getSocketIoInstance();
-      io.to(socketIoSender.socketId).emit("updateNotificationSended", oldNotification._id);
+      io.to(socketIoSender.socketId).emit("deleteNotificationSended", oldNotification._id);
     }
 
     const notifications = await Notification.find({userId : notification.userId});

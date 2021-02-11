@@ -3,8 +3,7 @@ const Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       socketIo = require('./../../config/socket-io.config'),
-      SocketIoModel = require('./../models/socketIo.model'),
-      { socketIoNotification } = require('./../helpers/socketIo.helper');
+      SocketIoModel = require('./../models/socketIo.model');
 
 /**
 * Post one household
