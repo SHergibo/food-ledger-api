@@ -71,7 +71,7 @@ exports.add = async (req, res, next) => {
             householdId: newHousehold._id,
             userId: otherUser._id,
             senderUserId : user._id,
-            type: "request-addUser",
+            type: "invitation-household-to-user",
             urlRequest: "add-user-respond"
           });
           await notification.save();
@@ -93,7 +93,7 @@ exports.add = async (req, res, next) => {
         householdId: household._id,
         userId: household.userId,
         otherUserId: user._id,
-        type: "request-addUser",
+        type: "invitation-user-to-household",
         urlRequest: "add-user-respond"
       });
       await notification.save();

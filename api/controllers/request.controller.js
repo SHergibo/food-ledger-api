@@ -238,16 +238,17 @@ exports.addUserRequest = async (req, res, next) => {
 
     let notificationObject = {
       householdId: household._id,
-      type: "request-addUser",
       urlRequest: "add-user-respond",
       senderUserId: req.user._id,
     }
 
     if (req.body.type === "householdToUser") {
       notificationObject.userId = user._id;
+      notificationObject.type = "invitation-household-to-user"
       notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
     } else if (req.body.type === "userToHousehold") {
       notificationObject.userId = household.userId;
+      notificationObject.type = "invitation-user-to-household"
       notificationObject.otherUserId = user._id
       notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
       notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
