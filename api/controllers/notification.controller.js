@@ -1,4 +1,6 @@
 const Notification = require('./../models/notification.model'),
+      User = require('./../models/user.model'),
+      Household = require('./../models/household.model'),
       Boom = require('@hapi/boom'),
       socketIo = require('./../../config/socket-io.config'),
       SocketIoModel = require('./../models/socketIo.model');
@@ -26,12 +28,24 @@ const Notification = require('./../models/notification.model'),
 */
 exports.findAll = async (req, res, next) => {
   try {
+    const user = await User.findById(req.params.userId);
+    const household = await Household.findOne({householdCode : user.householdCode});
     const notificationsReceived = await Notification.find({ userId: req.params.userId });
-    const notificationsSended = await Notification.find({ senderUserId: req.params.userId })
-    .populate({
-      path: 'userId',
-      select: 'firstname lastname -_id'
-    })
+    let notificationsSended = [];
+
+    if(user.role === "admin"){
+      notificationsSended = await Notification.find({$or : [{senderUserId: req.params.userId},{householdId : household._id, type: "invitation-household-to-user"}]})
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });  
+    }else if(user.role === "user"){
+      notificationsSended= await Notification.find({senderUserId: req.params.userId})
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+    } 
     
     let objectNotification ={
       notificationsReceived : transformNotificationArray(notificationsReceived),
