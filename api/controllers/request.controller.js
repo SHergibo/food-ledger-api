@@ -170,6 +170,10 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       return next(Boom.badRequest('Invalid query'));
     }
 
+    let objectReturn = {};
+
+    await Notification.findByIdAndDelete(notification._id);
+
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
       let oldAdmin = await User.findById(household.userId);
@@ -183,35 +187,57 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       arrayMember.unshift(AdminInfoMember);
 
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, member : arrayMember}, { override: true, upsert: true, new: true });
-
+      
+      
+      const notificationsReceived = await Notification.find({userId : oldAdmin._id});
+      const notificationsSended= await Notification.find({senderUserId: oldAdmin._id})
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
 
       let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldAdmin._id });
       if(socketIoOldAdmin){
         const io = socketIo.getSocketIoInstance();
         io.to(socketIoOldAdmin.socketId).emit("updateUserAndFamillyData", {userData : oldAdmin, householdData : household});
+        io.to(socketIoOldAdmin.socketId).emit("updateAllNotifications", {notificationsReceived : notificationsReceived, notificationsSended : notificationsSended});
       }
 
-      let socketIoNewAdmin = await SocketIoModel.findOne({ userId: newAdmin._id });
-      if(socketIoNewAdmin){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoNewAdmin.socketId).emit("updateUserAndFamillyData", {userData : newAdmin, householdData : household});
-      }
+      objectReturn.userData = newAdmin;
+      objectReturn.householdData = household;
     }
 
-    await Notification.findByIdAndDelete(notification._id);
-
-    const notifications = await Notification.find({userId : notification.userId});
-    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-    let arrayNotificationsTransformed = [];
-    notifications.forEach((item)=>{
+    const transformNotificationArray = (notificationArray, withUserId = false) => {
+      let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+  
+      if(withUserId){
+        fields.push('userId')
+      }
+      
+      let arrayNotificationsTransformed = [];
+      notificationArray.forEach((item) => {
         const object = {};
-        fields.forEach((field)=>{
-            object[field] = item[field];
+        fields.forEach((field) => {
+          object[field] = item[field];
         });
         arrayNotificationsTransformed.push(object);
-    });
+      });
+      return arrayNotificationsTransformed;
+    }
+    
+    const notificationsReceived = await Notification.find({userId : notification.userId});
+    objectReturn.notificationsReceived = transformNotificationArray(notificationsReceived);
 
-    return res.json(arrayNotificationsTransformed);
+    if (req.query.acceptedRequest === "yes"){
+      const notificationsSended = await Notification.find({$or : [{senderUserId: notification.userId},{householdId : notification.householdId, type: "invitation-household-to-user"}]})
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      }); 
+      objectReturn.notificationsSended = transformNotificationArray(notificationsSended, true);
+    }
+
+    return res.json(objectReturn);
 
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -239,7 +265,7 @@ exports.addUserRequest = async (req, res, next) => {
     let notificationObject = {
       householdId: household._id,
       urlRequest: "add-user-respond",
-      senderUserId: req.user._id,
+      // senderUserId: req.user._id,
     }
 
     if (req.body.type === "householdToUser") {
@@ -250,6 +276,7 @@ exports.addUserRequest = async (req, res, next) => {
       notificationObject.userId = household.userId;
       notificationObject.type = "invitation-user-to-household"
       notificationObject.otherUserId = user._id
+      notificationObject.senderUserId = req.user._id,
       notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
       notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }
