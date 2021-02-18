@@ -265,7 +265,6 @@ exports.addUserRequest = async (req, res, next) => {
     let notificationObject = {
       householdId: household._id,
       urlRequest: "add-user-respond",
-      // senderUserId: req.user._id,
     }
 
     if (req.body.type === "householdToUser") {
@@ -324,6 +323,25 @@ exports.addUserRespond = async (req, res, next) => {
       return next(Boom.notFound('Notification not found!'));
     }
 
+    let oldNotification = await Notification.findByIdAndDelete(notification._id);
+
+    let socketIoSender = await SocketIoModel.findOne({ userId: oldNotification.senderUserId });
+    if(socketIoSender){
+      const io = socketIo.getSocketIoInstance();
+      io.to(socketIoSender.socketId).emit("deleteNotificationSended", oldNotification._id);
+    }
+
+    const notifications = await Notification.find({userId : notification.userId});
+    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+    let arrayNotificationsTransformed = [];
+    notifications.forEach((item)=>{
+        const object = {};
+        fields.forEach((field)=>{
+            object[field] = item[field];
+        });
+        arrayNotificationsTransformed.push(object);
+    });
+
     if (req.query.acceptedRequest === "yes") {
       let user;
       if (notification.otherUserId) {
@@ -359,7 +377,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         socketIoNotification(user._id, "notifSocketIo", newNotification);
 
-        return res.json(newNotification);
+        return res.json({notificationsReceived : arrayNotificationsTransformed});
       }
 
       //Chercher le user dans l'array member de son ancienne famille
@@ -435,29 +453,8 @@ exports.addUserRespond = async (req, res, next) => {
       }
     }
 
-    //Delete la notification
-    let oldNotification = await Notification.findByIdAndDelete(notification._id);
-
-    let socketIoSender = await SocketIoModel.findOne({ userId: oldNotification.senderUserId });
-    if(socketIoSender){
-      const io = socketIo.getSocketIoInstance();
-      io.to(socketIoSender.socketId).emit("deleteNotificationSended", oldNotification._id);
-    }
-
-    const notifications = await Notification.find({userId : notification.userId});
-    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-    let arrayNotificationsTransformed = [];
-    notifications.forEach((item)=>{
-        const object = {};
-        fields.forEach((field)=>{
-            object[field] = item[field];
-        });
-        arrayNotificationsTransformed.push(object);
-    });
-
-    return res.json(arrayNotificationsTransformed);
+    return res.json({notificationsReceived : arrayNotificationsTransformed});
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
