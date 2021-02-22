@@ -142,7 +142,7 @@ exports.remove = async (req, res, next) => {
     //TODO check l'id de l'utilisateur à supprimer avec l'id livrer par l'accessToken pour bloquer une personne ayant l'id d'une autre personne
 
     let paramsUserId = req.params.userId;
-    let queryUserCode = req.query.delegateUserCode;
+    let queryUserId = req.query.delegateUserId;
     const user = await User.findById(paramsUserId);
     let household;
 
@@ -159,10 +159,10 @@ exports.remove = async (req, res, next) => {
 
     //Delete si pas de délégation de famille à un autre membre de la même famille
     if (user.role === "admin") {
-      if (!queryUserCode) {
+      if (!queryUserId) {
         await Helpers.noMoreAdmin(arrayMember, household._id);
-      } else if (queryUserCode) {
-        let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserCode);
+      } else if (queryUserId) {
+        let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserId);
         if (requestSwitchAdmin.status) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
         }
