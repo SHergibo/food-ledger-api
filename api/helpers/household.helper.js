@@ -38,7 +38,7 @@ exports.addHousehold = async (body) => {
 };
 
 exports.requestSwitchAdmin = async (userId, query) => {
-    let delegate = await User.findbyId(query);
+    let delegate = await User.findById(query);
     let oldAdmin = await User.findById(userId);
     let household = await Household.findOne({ userId });
     if (!delegate) {
