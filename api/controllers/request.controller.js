@@ -4,9 +4,7 @@ const Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
-      socketIo = require('./../../config/socket-io.config'),
-      SocketIoModel = require('./../models/socketIo.model'),
-      { socketIoNotification } = require('./../helpers/socketIo.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -27,6 +25,7 @@ exports.switchAdminRequest = async (req, res, next) => {
     let user;
     let household = await Household.findById(notification.householdId);
     let arrayMember = household.member;
+    let objectReturn = {};
     if (req.query.acceptedRequest === "yes") {
       //Chercher si le nouvel admin à une ancienne famille et la supprimer
       let oldHousehold = await Household.findOne({ userId: notification.userId });
@@ -45,22 +44,31 @@ exports.switchAdminRequest = async (req, res, next) => {
       }
 
       //Change userId de l'ancien admin par l'userId du nouvel admin, remet isWaiting en false dans household et reset isFlagged en false pour les membres
-      await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
+      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
 
       //Met le role du nouvel admin en admin
       user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
 
+      objectReturn.userData = user;
+      objectReturn.householdData = updatedHousehold;
+
+      for (const otherUser of arrayMember){
+        if(otherUser.userId !== user._id){
+          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedHousehold}]);
+        }
+      }
     }
     if (req.query.acceptedRequest === "no") {
       user = await User.findById(notification.userId);
       if (notification.type === "request-admin") {
-        //flague le membre qui n'a pas accepté la requête de changement d'admin
-        let updatedArrayMember = household.member;
-        let indexMember = updatedArrayMember.findIndex(obj => obj.usercode === user.usercode);
-        updatedArrayMember[indexMember].isFlagged = true;
-        await Household.findByIdAndUpdate(notification.householdId, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
-
         if (req.query.otherMember) {
+          //flague le membre qui n'a pas accepté la requête de changement d'admin
+          let updatedArrayMember = household.member;
+          let indexMember = updatedArrayMember.findIndex(obj => obj.usercode === user.usercode);
+          updatedArrayMember[indexMember].isFlagged = true;
+          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
+          objectReturn.householdData = updatedHousehold;
+
           let otherMember = await User.findOne({ usercode: req.query.otherMember });
 
           if (!otherMember) {
@@ -78,7 +86,12 @@ exports.switchAdminRequest = async (req, res, next) => {
           });
           await newNotification.save();
 
-          socketIoNotification(otherMember._id, "notifSocketIo", newNotification);
+          socketIoEmit(otherMember._id, 
+            [
+              {name : "notifSocketIo", data: newNotification},
+              {name : "updateFamilly", data: updatedHousehold},
+            ]
+          );
 
         } else if (!req.query.otherMember) {
           //check si il n'y réellement plus d'autre membre éligible
@@ -113,7 +126,20 @@ exports.switchAdminRequest = async (req, res, next) => {
     //Delete la notification
     await Notification.findByIdAndDelete(req.params.notificationId);
 
-    return res.json(user.transform());
+    const notificationsReceived = await Notification.find({userId : notification.userId});
+    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+    let arrayNotificationsReceivedTransformed = [];
+    notificationsReceived.forEach((item)=>{
+        const object = {};
+        fields.forEach((field)=>{
+            object[field] = item[field];
+        });
+        arrayNotificationsReceivedTransformed.push(object);
+    });
+
+    objectReturn.notificationsReceived = arrayNotificationsReceivedTransformed;
+
+    return res.json(objectReturn);
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -137,7 +163,7 @@ exports.switchAdminRights = async (req, res, next) => {
         urlRequest: "switch-admin-rights-respond",
       });
       await notification.save();
-      socketIoNotification(req.body.userId, "notifSocketIo", notification);
+      socketIoEmit(req.body.userId, [{name : "notifSocketIo", data: notification}]);
 
       let notifWithPopulate = await Notification.findById(notification._id)
       .populate({
@@ -196,12 +222,12 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         select: 'firstname lastname -_id'
       });
 
-      let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldAdmin._id });
-      if(socketIoOldAdmin){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoOldAdmin.socketId).emit("updateUserAndFamillyData", {userData : oldAdmin, householdData : household});
-        io.to(socketIoOldAdmin.socketId).emit("updateAllNotifications", {notificationsReceived : notificationsReceived, notificationsSended : notificationsSended});
-      }
+      socketIoEmit(oldAdmin._id, 
+        [
+          {name : "updateUserAndFamillyData", data: {userData : oldAdmin, householdData : household}},
+          {name : "updateAllNotifications", data: {notificationsReceived : notificationsReceived, notificationsSended : notificationsSended}},
+        ]
+      );
 
       objectReturn.userData = newAdmin;
       objectReturn.householdData = household;
@@ -252,6 +278,7 @@ exports.addUserRequest = async (req, res, next) => {
     let household = await Household.findOne({ householdCode: req.body.householdCode });
     let user = await User.findOne({ usercode: req.body.usercode });
     let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
+    //TODO checker si une notification existe déjà pour ne pas spammer une famille ou un utilisateur de requête. Bloquer l'envoyer de changement de famille si une notif de ce type existe déjà.
 
     if(user.householdCode === req.body.householdCode){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
@@ -283,7 +310,7 @@ exports.addUserRequest = async (req, res, next) => {
     let notification = await new Notification(notificationObject);
     await notification.save();
 
-    socketIoNotification(notificationObject.userId, "notifSocketIo", notification);
+    socketIoEmit(notificationObject.userId, [{name : "notifSocketIo", data: notification}]);
 
     let notifWithPopulate = await Notification.findById(notification._id)
     .populate({
@@ -303,11 +330,11 @@ exports.addUserRequest = async (req, res, next) => {
 exports.addUserRespond = async (req, res, next) => {
   try {
     if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest('Need a query'));
+      return next(Boom.badRequest('Need a query!'));
     }
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Invalid query'));
+      return next(Boom.badRequest('Invalid query!'));
     }
 
     if (req.query.otherMember) {
@@ -322,14 +349,13 @@ exports.addUserRespond = async (req, res, next) => {
     if(!notification){
       return next(Boom.notFound('Notification not found!'));
     }
+    if(notification.urlRequest !== 'add-user-respond'){
+      return next(Boom.badRequest('Wrong notification!'));
+    }
 
     let oldNotification = await Notification.findByIdAndDelete(notification._id);
 
-    let socketIoSender = await SocketIoModel.findOne({ userId: oldNotification.senderUserId });
-    if(socketIoSender){
-      const io = socketIo.getSocketIoInstance();
-      io.to(socketIoSender.socketId).emit("deleteNotificationSended", oldNotification._id);
-    }
+    socketIoEmit(oldNotification.senderUserId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
 
     const notifications = await Notification.find({userId : notification.userId});
     const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
@@ -375,8 +401,8 @@ exports.addUserRespond = async (req, res, next) => {
         });
         await newNotification.save();
 
-        socketIoNotification(user._id, "notifSocketIo", newNotification);
-
+        socketIoEmit(user._id, [{name : "notifSocketIo", data: newNotification}]);
+        
         return res.json({notificationsReceived : arrayNotificationsTransformed});
       }
 
@@ -432,25 +458,11 @@ exports.addUserRespond = async (req, res, next) => {
         }
       }
 
-      let socketIoUser = await SocketIoModel.findOne({ userId: user._id });
-      if(socketIoUser){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoUser.socketId).emit("updateUserAndFamillyData", {userData : user, householdData : newHousehold});
-      }
+      socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : newHousehold}}]);
 
-      let socketIoAdmin = await SocketIoModel.findOne({ userId: newHousehold.userId });
-      if(socketIoAdmin){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoAdmin.socketId).emit("updateFamilly", newHousehold);
-      }
+      socketIoEmit(newHousehold.userId, [{name : "updateFamilly", data: newHousehold}]);
 
-      if(oldHousehold){
-        let socketIoOldAdmin = await SocketIoModel.findOne({ userId: oldHousehold.userId });
-        if(socketIoOldAdmin){
-          const io = socketIo.getSocketIoInstance();
-          io.to(socketIoOldAdmin.socketId).emit("updateFamilly", oldHousehold);
-        }
-      }
+      socketIoEmit(oldHousehold.userId, [{name : "updateFamilly", data: oldHousehold}]);
     }
 
     return res.json({notificationsReceived : arrayNotificationsTransformed});
