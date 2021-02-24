@@ -2,8 +2,7 @@ const Household = require('./../models/household.model'),
       User = require('./../models/user.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      socketIo = require('./../../config/socket-io.config'),
-      SocketIoModel = require('./../models/socketIo.model');
+      { socketIoEmit } = require('./../helpers/socketIo.helper');
 
 /**
 * Post one household
@@ -51,9 +50,9 @@ exports.kickUser = async (req, res, next) => {
     household = await Household.findByIdAndUpdate(household._id, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
 
     let oldHousehold = await Household.findOne({userId : req.body.userId});
-    let socketIoKickUser = await SocketIoModel.findOne({ userId: req.body.userId });
+    let user;
     if(oldHousehold){
-      let user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdCode : oldHousehold.householdCode}, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdCode : oldHousehold.householdCode}, { override: true, upsert: true, new: true });
       let oldArrayMember = oldHousehold.member;
       let newMemberObject = {
         userId : user._id,
@@ -64,19 +63,12 @@ exports.kickUser = async (req, res, next) => {
       }
       oldArrayMember.push(newMemberObject);
       oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldArrayMember }, { override: true, upsert: true, new: true });
-
-      if(socketIoKickUser){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoKickUser.socketId).emit("updateUserAndFamillyData", {userData : user, householdData : oldHousehold});
-      }
-
     }else{
-      let user = await User.findByIdAndUpdate(req.body.userId, {householdCode : "none"}, { override: true, upsert: true, new: true });
-      if(socketIoKickUser){
-        const io = socketIo.getSocketIoInstance();
-        io.to(socketIoKickUser.socketId).emit("updateUserAndFamillyData", {userData : user, householdData : {}});
-      }
+      user = await User.findByIdAndUpdate(req.body.userId, {householdCode : "none"}, { override: true, upsert: true, new: true });
+      oldHousehold = {};
     }
+
+    socketIoEmit(req.body.userId, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : oldHousehold}}]);
 
     return res.json(household.transform());
   } catch (error) {

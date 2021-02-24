@@ -2,8 +2,7 @@ const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
       Boom = require('@hapi/boom'),
-      socketIo = require('./../../config/socket-io.config'),
-      SocketIoModel = require('./../models/socketIo.model');
+      { socketIoEmit } = require('./../helpers/socketIo.helper');
 
   const transformNotificationArray = (notificationArray, withUserId = false) => {
     let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
@@ -63,13 +62,8 @@ exports.findAll = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const notification = await Notification.findByIdAndRemove(req.params.notificationId);
-    console.log(notification);
 
-    let socketIoNotifUser = await SocketIoModel.findOne({ userId: notification.userId });
-    if(socketIoNotifUser){
-      const io = socketIo.getSocketIoInstance();
-      io.to(socketIoNotifUser.socketId).emit("deleteNotificationReceived", notification._id);
-    }
+    socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: notification._id}]);
 
     return res.json(notification);
   } catch (error) {
