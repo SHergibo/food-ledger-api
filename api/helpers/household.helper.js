@@ -7,7 +7,8 @@ const Household = require('./../models/household.model'),
       Historic = require('./../models/historic.model'),
       Brand = require('./../models/brand.model'),
       cryptoRandomString = require('crypto-random-string'),
-      Moment = require('moment-timezone');
+      Moment = require('moment-timezone'),
+      { socketIoEmit } = require('./../helpers/socketIo.helper');
 
 createObjectMemberNoExport = async (body) => {
     let objectMember = {
@@ -62,6 +63,8 @@ exports.requestSwitchAdmin = async (userId, query) => {
             expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
         });
         await notification.save();
+        socketIoEmit(delegate._id, [{name : "notifSocketIo", data: notification}]);
+
         return household;
     }
 };
