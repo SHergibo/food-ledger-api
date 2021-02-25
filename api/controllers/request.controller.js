@@ -53,7 +53,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       objectReturn.householdData = updatedHousehold;
 
       for (const otherUser of arrayMember){
-        if(otherUser.userId !== user._id){
+        if(otherUser.userId.toString() !== user._id.toString()){
           socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedHousehold}]);
         }
       }
@@ -228,6 +228,12 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           {name : "updateAllNotifications", data: {notificationsReceived : notificationsReceived, notificationsSended : notificationsSended}},
         ]
       );
+
+      for (const otherUser of household.member){
+        if(otherUser.userId.toString() !== oldAdmin._id.toString() && otherUser.userId.toString() !== notification.userId.toString()){
+          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: household}]);
+        }
+      }
 
       objectReturn.userData = newAdmin;
       objectReturn.householdData = household;
@@ -455,19 +461,21 @@ exports.addUserRespond = async (req, res, next) => {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin.status) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
+        }else{
+          updatedOldHousehold = requestSwitchAdmin;
         }
       }
 
-      socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : newHousehold}}]);
+      socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : updatedNewHousehold}}]);
 
       for (const otherUser of updatedNewHousehold.member){
-        if(otherUser.userId !== user._id){
-          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: newHousehold}]);
+        if(otherUser.userId.toString() !== user._id.toString()){
+          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedNewHousehold}]);
         }
       }
 
       for (const otherUser of updatedOldHousehold.member){
-        socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: oldHousehold}]);
+        socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedOldHousehold}]);
       }
     }
 
