@@ -38,8 +38,8 @@ exports.switchAdminRequest = async (req, res, next) => {
         if (otherUser.isFlagged === true) {
           otherUser.isFlagged = false;
         }
-        if (notification.type === "last-chance-request-admin") {
-          await Notification.findOneAndDelete({ userId: otherUser.userId, householdId: notification.householdId, type: "last-chance-request-admin" });
+        if (notification.type === "last-chance-request-delegate-admin") {
+          await Notification.findOneAndDelete({ userId: otherUser.userId, householdId: notification.householdId, type: "last-chance-request-delegate-admin" });
         }
       }
 
@@ -60,7 +60,7 @@ exports.switchAdminRequest = async (req, res, next) => {
     }
     if (req.query.acceptedRequest === "no") {
       user = await User.findById(notification.userId);
-      if (notification.type === "request-admin") {
+      if (notification.type === "request-delegate-admin") {
         if (req.query.otherMember) {
           //flague le membre qui n'a pas accepté la requête de changement d'admin
           let updatedArrayMember = household.member;
@@ -80,7 +80,7 @@ exports.switchAdminRequest = async (req, res, next) => {
             message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
             householdId: notification.householdId,
             userId: otherMember._id,
-            type: "request-admin",
+            type: "request-delegate-admin",
             urlRequest: "delegate-admin",
             expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
           });
@@ -106,12 +106,12 @@ exports.switchAdminRequest = async (req, res, next) => {
           }
         }
       }
-      if(notification.type === "last-chance-request-admin"){
+      if(notification.type === "last-chance-request-delegate-admin"){
         await Notification.findByIdAndDelete(req.params.notificationId);
         let arrayLastChanceNotif = [];
 
         for (const member of arrayMember) {
-          let lastChanceNotif = await Notification.findOne({userId : member.userId, householdId : household._id, type : "last-chance-request-admin"});
+          let lastChanceNotif = await Notification.findOne({userId : member.userId, householdId : household._id, type : "last-chance-request-delegate-admin"});
           if(lastChanceNotif){
             arrayLastChanceNotif.push(lastChanceNotif);
           }

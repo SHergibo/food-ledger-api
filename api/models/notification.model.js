@@ -2,7 +2,7 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
-const types = ['information', 'need-switch-admin', 'request-admin', 'last-chance-request-admin', 'invitation-household-to-user', 'invitation-user-to-household'];
+const types = ['information', 'need-switch-admin', 'request-admin', 'request-delegate-admin', 'last-chance-request-delegate-admin', 'invitation-household-to-user', 'invitation-user-to-household'];
 const url = ['delegate-admin', 'switch-admin-rights-respond', 'add-user-respond'];
 
 let schema = new Schema({

@@ -63,7 +63,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
             message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
             householdId: household._id,
             userId: delegate._id,
-            type: "request-admin",
+            type: "request-delegate-admin",
             urlRequest : "delegate-admin",
             expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
         });
@@ -98,8 +98,8 @@ exports.noMoreAdmin = async (arrayMember, householdId) => {
           await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
       }
 
-      //Delete notification de type last-chance-request-admin
-      await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-admin" });
+      //Delete notification de type last-chance-request-delegate-admin
+      await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-delegate-admin" });
     }
     return await removeHousehold(householdId);
   } catch (error) {

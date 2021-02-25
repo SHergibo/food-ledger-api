@@ -9,7 +9,7 @@ const Notification = require('./../models/notification.model'),
 //TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
 exports.notification = async () => {
   try {
-    let notificationArray = await Notification.find({ type: "request-admin" });
+    let notificationArray = await Notification.find({ type: "request-delegate-admin" });
     let householdLastChanceArray = await Household.find({ "lastChance" : { $exists : true } });
     for (const notif of notificationArray) {
       if (notif.expirationDate < Moment().toDate()) {
@@ -35,7 +35,7 @@ exports.notification = async () => {
               message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
               householdId: notif.householdId,
               userId: newArrayMember[0].userId,
-              type: "request-admin",
+              type: "request-delegate-admin",
               urlRequest: "delegate-admin",
               expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
             });
@@ -49,7 +49,7 @@ exports.notification = async () => {
                   message: "Ceci est le dernier message pour accepter les droits administrateurs de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endéans les 7 jours, votre famille sera supprimée.",
                   householdId: notif.householdId,
                   userId: member.userId,
-                  type: "last-chance-request-admin",
+                  type: "last-chance-request-delegate-admin",
                   urlRequest: "delegate-admin",
                 });
                 await lastChanceNotification.save();
