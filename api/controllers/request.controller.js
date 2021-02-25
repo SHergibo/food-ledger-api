@@ -420,9 +420,9 @@ exports.addUserRespond = async (req, res, next) => {
         newMemberArray.push(objectMember);
       }
       //Ajoute le membre dans sa nouvelle famille
-      await Household.findByIdAndUpdate(newHousehold._id, { member: newMemberArray }, { override: true, upsert: true, new: true });
+      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { member: newMemberArray }, { override: true, upsert: true, new: true });
 
-
+      let updatedOldHousehold;
       //check si le membre est user
       if (user.role === "user") {
         //Change le householdCode dans user
@@ -431,7 +431,7 @@ exports.addUserRespond = async (req, res, next) => {
         if (oldHousehold) {
           //Supprime le membre de son ancienne famille
           oldMemberArray.splice(indexMember, 1);
-          await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
+          updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
         }
 
       }
@@ -443,7 +443,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         //Supprime le membre de son ancienne famille
         oldMemberArray = [];
-        await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
+        updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
       }
 
       //check si le membre est admin et qu'il y a d'autre membre dans sa famille et utiliser query otherMember
@@ -460,9 +460,15 @@ exports.addUserRespond = async (req, res, next) => {
 
       socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : newHousehold}}]);
 
-      socketIoEmit(newHousehold.userId, [{name : "updateFamilly", data: newHousehold}]);
+      for (const otherUser of updatedNewHousehold.member){
+        if(otherUser.userId !== user._id){
+          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: newHousehold}]);
+        }
+      }
 
-      socketIoEmit(oldHousehold.userId, [{name : "updateFamilly", data: oldHousehold}]);
+      for (const otherUser of updatedOldHousehold.member){
+        socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: oldHousehold}]);
+      }
     }
 
     return res.json({notificationsReceived : arrayNotificationsTransformed});
