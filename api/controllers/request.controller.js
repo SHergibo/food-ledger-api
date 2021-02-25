@@ -470,7 +470,14 @@ exports.addUserRespond = async (req, res, next) => {
 
       for (const otherUser of updatedNewHousehold.member){
         if(otherUser.userId.toString() !== user._id.toString()){
-          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedNewHousehold}]);
+          if(otherUser.userId.toString() !== updatedNewHousehold.userId.toString()){
+            socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: updatedNewHousehold}]);
+          }else{
+            socketIoEmit(otherUser.userId, [
+              {name : "updateFamilly", data: updatedNewHousehold},
+              {name : "deleteNotificationSended", data: req.params.notificationId},
+            ]);
+          }
         }
       }
 
