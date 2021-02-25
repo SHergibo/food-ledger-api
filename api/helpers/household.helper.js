@@ -26,6 +26,7 @@ exports.createObjectMember = async (body) => {
 };
 
 exports.addHousehold = async (body) => {
+  try {
     const householdCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let objectMember = await createObjectMemberNoExport(body.user);
     const household = new Household({
@@ -36,9 +37,13 @@ exports.addHousehold = async (body) => {
     });
     await household.save();
     return household;
+  } catch (error) {
+    return error;
+  }
 };
 
 exports.requestSwitchAdmin = async (userId, query) => {
+  try {
     let delegate = await User.findById(query);
     let oldAdmin = await User.findById(userId);
     let household = await Household.findOne({ userId });
@@ -67,40 +72,50 @@ exports.requestSwitchAdmin = async (userId, query) => {
 
         return household;
     }
+  } catch (error) {
+    return error;
+  }
 };
 
 exports.noMoreAdmin = async (arrayMember, householdId) => {
+  try {
     for (const otherUser of arrayMember) {
-        let olderHousehold = await Household.findOne({ userId: otherUser.userId });
-        //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
-        if (olderHousehold) {
+      let olderHousehold = await Household.findOne({ userId: otherUser.userId });
+      //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
+      if (olderHousehold) {
 
-            if(otherUser.isFlagged === true){
-                otherUser.isFlagged = false;
-            }
-            
-            await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdCode: olderHousehold.householdCode }, { override: true, upsert: true, new: true });
-            let addMember = olderHousehold.member;
-            addMember.push(otherUser);
-            await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
-        }
-        //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdCode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
-        else {
-            await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
-        }
+          if(otherUser.isFlagged === true){
+              otherUser.isFlagged = false;
+          }
+          
+          await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdCode: olderHousehold.householdCode }, { override: true, upsert: true, new: true });
+          let addMember = olderHousehold.member;
+          addMember.push(otherUser);
+          await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
+      }
+      //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdCode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
+      else {
+          await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
+      }
 
-        //Delete notification de type last-chance-request-admin
-        await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-admin" });
+      //Delete notification de type last-chance-request-admin
+      await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-admin" });
     }
-
     return await removeHousehold(householdId);
+  } catch (error) {
+    return error;
+  }
 };
 
 exports.removeHousehold = async (householdId) => {
+  try {
     await Product.deleteMany({householdId : householdId});
     await Historic.deleteMany({householdId : householdId});
     await ProductLog.deleteMany({householdId : householdId});
     await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
     return await Household.findByIdAndDelete(householdId);
+  } catch (error) {
+    return error;
+  }
 };
