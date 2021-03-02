@@ -60,7 +60,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
 
         //Créer la notification pour que le membre désigné comme nouvel admin, accepte ou non la requête.
         let notification = await new Notification({
-            message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
+            message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée !",
             householdId: household._id,
             userId: delegate._id,
             type: "request-delegate-admin",

@@ -43,6 +43,11 @@ exports.switchAdminRequest = async (req, res, next) => {
         }
       }
 
+      let indexUserToChange = arrayMember.findIndex(member => member.userId.toString() === notification.userId.toString());
+      let AdminInfoMember = arrayMember[indexUserToChange];
+      arrayMember.splice(indexUserToChange, 1);
+      arrayMember.unshift(AdminInfoMember);
+
       //Change userId de l'ancien admin par l'userId du nouvel admin, remet isWaiting en false dans household et reset isFlagged en false pour les membres
       let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
 
