@@ -68,9 +68,8 @@ exports.requestSwitchAdmin = async (userId, query) => {
             expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
         });
         await notification.save();
-        socketIoEmit(delegate._id, [{name : "notifSocketIo", data: notification}]);
 
-        return household;
+        return { household : household, notification: notification };
     }
   } catch (error) {
     return error;
