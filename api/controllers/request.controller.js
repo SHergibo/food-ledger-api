@@ -102,7 +102,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           //check si il n'y réellement plus d'autre membre éligible
 
           arrayMember = household.member;
-          let indexMember = arrayMember.findIndex(member => member.isFlagged === false);
+          let indexMember = arrayMember.findIndex(member => member.isFlagged === false && member.userId.toString() !== notification.userId.toString());
 
           if (indexMember >= 0) {
             return next(Boom.badRequest('One or more members are still eligible for admin'));
@@ -112,7 +112,6 @@ exports.switchAdminRequest = async (req, res, next) => {
         }
       }
       if(notification.type === "last-chance-request-delegate-admin"){
-        await Notification.findByIdAndDelete(req.params.notificationId);
         let arrayLastChanceNotif = [];
 
         for (const member of arrayMember) {
@@ -129,7 +128,9 @@ exports.switchAdminRequest = async (req, res, next) => {
     }
 
     //Delete la notification
-    await Notification.findByIdAndDelete(req.params.notificationId);
+    if(notification.type !== "last-chance-request-delegate-admin"){
+      await Notification.findByIdAndDelete(req.params.notificationId);
+    }
 
     const notificationsReceived = await Notification.find({userId : notification.userId});
     const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
