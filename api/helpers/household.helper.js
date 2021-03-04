@@ -79,42 +79,56 @@ exports.requestSwitchAdmin = async (userId, query) => {
 exports.noMoreAdmin = async (arrayMember, householdId) => {
   try {
     for (const otherUser of arrayMember) {
-      let olderHousehold = await Household.findOne({ userId: otherUser.userId });
+      let householdData = {};
+      let userData;
+      let oldHousehold = await Household.findOne({ userId: otherUser.userId });
       //Check si le membre était admin d'une ancienne famille et le replace dans cette famille
-      if (olderHousehold) {
+      if (oldHousehold) {
 
           if(otherUser.isFlagged === true){
               otherUser.isFlagged = false;
           }
           
-          await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdCode: olderHousehold.householdCode }, { override: true, upsert: true, new: true });
-          let addMember = olderHousehold.member;
+          userData = await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdCode: oldHousehold.householdCode }, { override: true, upsert: true, new: true });
+          let addMember = oldHousehold.member;
           addMember.push(otherUser);
-          await Household.findByIdAndUpdate(olderHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
+          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
       }
       //Si le membre n'avait pas d'ancienn famille, ajout de "none" dans householdCode, cette personne devra obligatoirement créer une famille lors de sa prochaine connection"
       else {
-          await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
+        userData = await User.findByIdAndUpdate(otherUser.userId, { householdCode: "none" }, { override: true, upsert: true, new: true });
       }
 
       //Delete notification de type last-chance-request-delegate-admin
-      await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-delegate-admin" });
+      let deletedNotification = await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-delegate-admin" });
+
+      let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData, householdData : householdData } }];
+
+      if(deletedNotification){
+        arraySocketIo.push({ name : "deleteNotificationReceived", data: deletedNotification._id })
+      }
+
+      socketIoEmit(otherUser.userId, arraySocketIo);
     }
-    return await removeHousehold(householdId);
+    await removeHousehold(householdId);
+    return;
   } catch (error) {
     return error;
   }
 };
 
-exports.removeHousehold = async (householdId) => {
+let removeHousehold = async (householdId) => {
   try {
     await Product.deleteMany({householdId : householdId});
     await Historic.deleteMany({householdId : householdId});
     await ProductLog.deleteMany({householdId : householdId});
     await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
-    return await Household.findByIdAndDelete(householdId);
+    await Household.findByIdAndDelete(householdId);
+    return;
   } catch (error) {
     return error;
   }
 };
+
+exports.removeHousehold = removeHousehold;
