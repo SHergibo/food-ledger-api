@@ -4,6 +4,7 @@ const Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper');
       Moment = require('moment-timezone'),
       NodeMailer = require('./../../api/helpers/nodemailer.helper'),
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { loggerError } = require('./../../config/logger.config');
 
 //TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
@@ -41,6 +42,8 @@ exports.notification = async () => {
             });
             await newNotification.save();
 
+            socketIoEmit(newArrayMember[0].userId, [{ name : "notifSocketIo", data: newNotification }]);
+
           } else {
             if(!household.lastChance){
               for (const member of memberArray) {
@@ -53,6 +56,7 @@ exports.notification = async () => {
                   urlRequest: "delegate-admin",
                 });
                 await lastChanceNotification.save();
+                socketIoEmit(member.userId, [{ name : "notifSocketIo", data: lastChanceNotification }]);
               }
               await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() }, { override: true, upsert: true, new: true });
             }
