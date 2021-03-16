@@ -5,6 +5,7 @@ const User = require('./../models/user.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       TokenAuth = require('./../models/token-auth.model'),
+      RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
       { socketIoEmit } = require('./../helpers/socketIo.helper');
 
@@ -138,9 +139,6 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-
-    //TODO check l'id de l'utilisateur à supprimer avec l'id livrer par l'accessToken pour bloquer une personne ayant l'id d'une autre personne
-
     let paramsUserId = req.params.userId;
     let queryUserId = req.query.delegateUserId;
     const user = await User.findById(paramsUserId);
@@ -163,7 +161,7 @@ exports.remove = async (req, res, next) => {
         await Helpers.noMoreAdmin(arrayMember, household._id);
       } else if (queryUserId) {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserId);
-        if (requestSwitchAdmin.status) {
+        if (requestSwitchAdmin) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
         }
       }
@@ -184,6 +182,11 @@ exports.remove = async (req, res, next) => {
         await Notification.findByIdAndDelete(notif._id);
       }
     }
+
+    await RefreshToken.findOneAndDelete({
+      userId: user._id,
+      userEmail : user.email
+    });
 
     await User.findByIdAndDelete(paramsUserId);
     await Option.findByIdAndDelete(user.optionId);
