@@ -428,10 +428,6 @@ exports.addUserRespond = async (req, res, next) => {
       //Chercher le user dans l'array member de son ancienne famille
       let indexMember = oldMemberArray.findIndex(obj => obj.usercode === user.usercode);
 
-      // if (user.role === "admin" && oldMemberArray.length > 1 && !req.query.otherMember) {
-      //   return next(Boom.badRequest('Need a query'));
-      // }
-
       if (oldHousehold) {
         newMemberArray.push(oldMemberArray[indexMember]);
       } else {
@@ -462,7 +458,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         //Supprime le membre de son ancienne famille
         oldMemberArray = [];
-        updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
+        await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
       }
 
       //check si le membre est admin et qu'il y a d'autre membre dans sa famille et utiliser query otherMember
@@ -473,10 +469,8 @@ exports.addUserRespond = async (req, res, next) => {
 
         //Supprimer le membre de son ancienne famille et créée et envoie une notification au délégué(e)
         requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
-        if (requestSwitchAdmin.status) {
+        if (requestSwitchAdmin) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
-        }else{
-          updatedOldHousehold = requestSwitchAdmin.household;
         }
       }
       
@@ -510,9 +504,6 @@ exports.addUserRespond = async (req, res, next) => {
         }
       }
       
-      if(requestSwitchAdmin.notification){
-        socketIoEmit(req.query.otherMember, [{name : "notifSocketIo", data: requestSwitchAdmin.notification}]);
-      }
     }
 
     return res.json({notificationsReceived : arrayNotificationsTransformed});
