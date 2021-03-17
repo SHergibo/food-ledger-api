@@ -209,17 +209,40 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
       let oldAdmin = await User.findById(household.userId);
-      oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"}, { override: true, upsert: true, new: true });
+      // oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"}, { override: true, upsert: true, new: true });
       let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"}, { override: true, upsert: true, new: true });
 
       let arrayMember = household.member;
-      let indexUserToChange = arrayMember.findIndex(obj => obj.usercode === newAdmin.usercode);
+      let indexUserToChange = arrayMember.findIndex(member => member.userId.toString() === newAdmin._id.toString());
       let AdminInfoMember = arrayMember[indexUserToChange];
       arrayMember.splice(indexUserToChange, 1);
       arrayMember.unshift(AdminInfoMember);
 
+      const needSwitctAdminNotif = await Notification.findOne({userId : oldAdmin._id, type: "need-switch-admin"});
+
+      if(!needSwitctAdminNotif){
+        oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"}, { override: true, upsert: true, new: true });
+      }else{
+        let newHousehold = await Household.findById(needSwitctAdminNotif.householdId);
+        oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user", householdCode: newHousehold.householdCode}, { override: true, upsert: true, new: true });
+        let indexMemberToDelete = arrayMember.findIndex(member => member.userId.toString() === oldAdmin._id.toString());
+        let infoMemberDeleted = [];
+        if (indexMemberToDelete > -1) {
+          infoMemberDeleted = arrayMember.splice(indexMemberToDelete, 1);
+        }
+        let newHouseholdMember = newHousehold.member;
+        newHouseholdMember.push(infoMemberDeleted[0]);
+        newHousehold = await Household.findByIdAndUpdate(newHousehold._id, { member: newHouseholdMember }, { override: true, upsert: true, new: true });
+        await Notification.findByIdAndDelete(needSwitctAdminNotif._id);
+
+        for (const otherUser of newHousehold.member){
+          if(otherUser.userId.toString() !== oldAdmin._id.toString()){
+            socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: newHousehold}]);
+          }
+        }
+      }
+
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, member : arrayMember}, { override: true, upsert: true, new: true });
-      
       
       const notificationsReceived = await Notification.find({userId : oldAdmin._id});
       const notificationsSended= await Notification.find({senderUserId: oldAdmin._id})
@@ -280,6 +303,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     return res.json(objectReturn);
 
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
