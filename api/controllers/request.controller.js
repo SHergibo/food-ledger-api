@@ -390,6 +390,14 @@ exports.addUserRespond = async (req, res, next) => {
     if(notification.urlRequest !== 'add-user-respond'){
       return next(Boom.badRequest('Wrong notification!'));
     }
+    
+    if(notification.type === "need-switch-admin"){
+      let notificationRequestAdmin = await Notification.findOne({type: "request-admin", senderUserId : req.user._id});
+      if(notificationRequestAdmin){
+        return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour !"));
+      }
+    }
+
 
     let oldNotification = await Notification.findByIdAndDelete(notification._id);
 
