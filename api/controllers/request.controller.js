@@ -315,8 +315,24 @@ exports.addUserRequest = async (req, res, next) => {
   try {
     let household = await Household.findOne({ householdCode: req.body.householdCode });
     let user = await User.findOne({ usercode: req.body.usercode });
+
+    if(!user){
+      return next(Boom.badRequest('Code utilisateur non valide !'));
+    }
+
     let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
-    //TODO checker si une notification existe déjà pour ne pas spammer une famille ou un utilisateur de requête. Bloquer l'envoyer de changement de famille si une notif de ce type existe déjà.
+
+    let notificationExist = await Notification.findOne({$or : [{type: "invitation-household-to-user", userId: user._id},{type: "invitation-user-to-household", userId: household.userId}]});
+
+    if(notificationExist){
+      let errorMessage = "";
+      if(req.body.type === "userToHousehold"){
+        errorMessage = "Vous avez déjà envoyé une invitation à cette famille !"
+      }else{
+        errorMessage = "Vous avez déjà envoyé une invitation à cette personne !"
+      }
+      return next(Boom.badRequest(errorMessage));
+    }
 
     if(user.householdCode === req.body.householdCode){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
