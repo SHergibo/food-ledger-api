@@ -320,6 +320,10 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest('Code utilisateur non valide !'));
     }
 
+    if(!household){
+      return next(Boom.badRequest('Code famille non valide !'));
+    }
+
     let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
 
     let notificationExist = await Notification.findOne({$or : [{type: "invitation-household-to-user", userId: user._id},{type: "invitation-user-to-household", userId: household.userId}]});
@@ -349,9 +353,15 @@ exports.addUserRequest = async (req, res, next) => {
     }
 
     if (req.body.type === "householdToUser") {
+      let householdSender = await Household.findOne({ householdCode: user.householdCode });
+      if(user.role === "user" || (user.role === "admin" && householdSender.member.length === 1)){
+        notificationObject.type = "invitation-household-to-user"
+        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
+      }else{
+        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`
+        notificationObject.type = "need-switch-admin"
+      }
       notificationObject.userId = user._id;
-      notificationObject.type = "invitation-household-to-user"
-      notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
     } else if (req.body.type === "userToHousehold") {
       notificationObject.userId = household.userId;
       notificationObject.type = "invitation-user-to-household"
