@@ -350,7 +350,14 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     objectReturn.notificationsReceived = transformNotificationArray(notificationsReceived);
 
     if (req.query.acceptedRequest === "yes"){
-      const notificationsSended = await Notification.find({$or : [{senderUserId: notification.userId},{householdId : notification.householdId, type: "invitation-household-to-user"}]})
+      const notificationsSended = await Notification.find(
+      {$or : 
+        [
+          {senderUserId: notification.userId},
+          {householdId : notification.householdId, type: "invitation-household-to-user"},
+          {householdId : notification.householdId, type: "need-switch-admin"}
+        ]
+      })
       .populate({
         path: 'userId',
         select: 'firstname lastname -_id'
@@ -386,7 +393,14 @@ exports.addUserRequest = async (req, res, next) => {
 
     let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
 
-    let notificationExist = await Notification.findOne({$or : [{type: "invitation-household-to-user", userId: user._id},{type: "invitation-user-to-household", userId: household.userId}]});
+    let notificationExist = await Notification.findOne(
+      {$or : 
+        [
+          {type: "invitation-household-to-user", userId: user._id},
+          {type: "invitation-user-to-household", userId: household.userId},
+          {type: "need-switch-admin", userId: user._id}
+        ]
+      });
 
     if(notificationExist){
       let errorMessage = "";
@@ -426,7 +440,7 @@ exports.addUserRequest = async (req, res, next) => {
       notificationObject.userId = household.userId;
       notificationObject.type = "invitation-user-to-household"
       notificationObject.otherUserId = user._id
-      notificationObject.senderUserId = req.user._id,
+      notificationObject.senderUserId = req.user._id
       notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
       notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }

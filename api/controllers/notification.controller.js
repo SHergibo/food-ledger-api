@@ -33,7 +33,14 @@ exports.findAll = async (req, res, next) => {
     let notificationsSended = [];
 
     if(user.role === "admin"){
-      notificationsSended = await Notification.find({$or : [{senderUserId: req.params.userId},{householdId : household._id, type: "invitation-household-to-user"}]})
+      notificationsSended = await Notification.find(
+      {$or : 
+        [
+          {senderUserId: req.params.userId},
+          {householdId : household._id, type: "invitation-household-to-user"},
+          {householdId : household._id, type: "need-switch-admin"}
+        ]
+      })
       .populate({
         path: 'userId',
         select: 'firstname lastname -_id'
