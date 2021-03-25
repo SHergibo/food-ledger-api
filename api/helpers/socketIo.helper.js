@@ -22,8 +22,10 @@ exports.socketIoEmit = async (userId, arrayEmitData) => {
           });
           data = notificationTransform;
         }
-  
-        io.to(socketIoDb.socketId).emit(emitData.name, data);
+        
+        socketIoDb.socketId.forEach(socketId => {
+          io.to(socketId).emit(emitData.name, data);
+        });
   
       });
     }
