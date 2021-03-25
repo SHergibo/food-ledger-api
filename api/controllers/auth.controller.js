@@ -69,7 +69,7 @@ exports.login = async (req, res, next) => {
     }
     
   } catch (error) {
-    console.log("controller login------------", error);
+    //console.log("controller login------------", error);
     return next(error);
   }
 };
@@ -87,18 +87,18 @@ exports.login = async (req, res, next) => {
  */
 exports.refresh = async (req, res, next) => {
   try {
-    console.log("body-refresh", req.body);
+    //console.log("body-refresh", req.body);
     const { email, refreshToken } = req.body;
     const refreshObject = await RefreshToken.findOneAndDelete({
       userEmail: email,
       token: refreshToken
     });
-    console.log("refreshObject dans refresh", refreshObject);
+    //console.log("refreshObject dans refresh", refreshObject);
     const { user, accessToken } = await User.findAndGenerateToken({ email, refreshObject });
     const response = _generateTokenResponse(user, accessToken);
     return res.json(response);
   } catch (error) {
-    console.log("refresh", error);
+    //console.log("refresh", error);
     return next(error);
   }
 };

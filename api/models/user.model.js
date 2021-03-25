@@ -112,7 +112,7 @@ schema.statics.get = async function(id) {
 
 schema.statics.findAndGenerateToken = async function(options){
     const { email, password, refreshObject } = options;
-    console.log(options);
+    //console.log(options);
 
     if(!email) throw Boom.badRequest('An email is required to generate a token');
     if(!refreshObject){
