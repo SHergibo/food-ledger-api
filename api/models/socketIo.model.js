@@ -4,9 +4,8 @@ let Schema = Mongoose.Schema;
 
 let schema = new Schema({
   socketId: {
-    type: String,
+    type: Array,
     required: true,
-    trim: true,
   },
   userId: {
     required: true,
