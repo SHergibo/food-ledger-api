@@ -370,7 +370,6 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     return res.json(objectReturn);
 
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -553,6 +552,8 @@ exports.addUserRespond = async (req, res, next) => {
         await newNotification.save();
 
         socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification}]);
+
+        socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
         
         return res.json({notificationsReceived : arrayNotificationsTransformed});
       }
@@ -637,6 +638,8 @@ exports.addUserRespond = async (req, res, next) => {
       }
       
     }
+
+    socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
     return res.json({notificationsReceived : arrayNotificationsTransformed});
   } catch (error) {
