@@ -37,7 +37,7 @@ exports.removeAll = async (req, res, next) => {
   try {
     const household = await Household.findOne({ householdCode: req.params.householdCode });
     await ShoppingList.deleteMany({householdId : household._id});
-    return res.status(200).send();
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -169,7 +169,7 @@ exports.sendMail = async (req, res, next) => {
   
       NodeMailer.send(output, 'Votre liste de course pour votre stock !');
     }
-    return res.status(200).send();
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
