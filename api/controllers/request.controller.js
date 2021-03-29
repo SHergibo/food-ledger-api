@@ -1,10 +1,11 @@
 const Household = require('./../models/household.model'),
       User = require('./../models/user.model'),
-      Notification = require('./../models/notification.model')
+      Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { transformArray } = require('./../helpers/transformArray.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -17,6 +18,10 @@ exports.switchAdminRequest = async (req, res, next) => {
     }
 
     const notification = await Notification.findById(req.params.notificationId);
+
+    if(notification.type !== "last-chance-request-delegate-admin"){
+      await Notification.findByIdAndDelete(notification._id);
+    }
     
     if (!notification) {
       return next(Boom.notFound('Notification not found!'));
@@ -25,15 +30,12 @@ exports.switchAdminRequest = async (req, res, next) => {
     let user;
     let household = await Household.findById(notification.householdId);
     let arrayMember = household.member;
-    let objectReturn = {};
     if (req.query.acceptedRequest === "yes") {
-      //Chercher si le nouvel admin à une ancienne famille et la supprimer
       let oldHousehold = await Household.findOne({ userId: notification.userId });
       if (oldHousehold) {
         await Helpers.removeHousehold(oldHousehold._id);
       }
 
-      //Reset isFlagged en false pour les membres de la famille
       for (const otherUser of arrayMember) {
         if (otherUser.isFlagged === true) {
           otherUser.isFlagged = false;
@@ -48,14 +50,31 @@ exports.switchAdminRequest = async (req, res, next) => {
       arrayMember.splice(indexUserToChange, 1);
       arrayMember.unshift(AdminInfoMember);
 
-      //Change userId de l'ancien admin par l'userId du nouvel admin, remet isWaiting en false dans household et reset isFlagged en false pour les membres
       let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, member: arrayMember, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
 
-      //Met le role du nouvel admin en admin
       user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
 
-      objectReturn.userData = user;
-      objectReturn.householdData = updatedHousehold;
+      const newAdminNotificationsSended = await Notification.find(
+        {$or : 
+          [
+            {senderUserId: notification.userId},
+            {householdId : notification.householdId, type: "invitation-household-to-user"},
+            {householdId : notification.householdId, type: "need-switch-admin"}
+          ]
+        })
+        .populate({
+          path: 'userId',
+          select: 'firstname lastname -_id'
+        }); 
+
+      const newAdminNotificationsReceived = await Notification.find({userId : notification.userId});
+
+      socketIoEmit(notification.userId, 
+        [
+          {name : "updateUserAndFamillyData", data: {userData : user, householdData : updatedHousehold}},
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
+        ]
+      );
 
       for (const otherUser of arrayMember){
         if(otherUser.userId.toString() !== user._id.toString()){
@@ -95,12 +114,12 @@ exports.switchAdminRequest = async (req, res, next) => {
       user = await User.findById(notification.userId);
       if (notification.type === "request-delegate-admin") {
         if (req.query.otherMember) {
-          //flague le membre qui n'a pas accepté la requête de changement d'admin
           let updatedArrayMember = household.member;
           let indexMember = updatedArrayMember.findIndex(obj => obj.usercode === user.usercode);
           updatedArrayMember[indexMember].isFlagged = true;
           let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
-          objectReturn.householdData = updatedHousehold;
+
+          socketIoEmit(user._id, [{name : "updateFamilly", data: updatedHousehold}]);
 
           let otherMember = await User.findById(req.query.otherMember);
 
@@ -127,8 +146,6 @@ exports.switchAdminRequest = async (req, res, next) => {
           );
 
         } else if (!req.query.otherMember) {
-          //check si il n'y réellement plus d'autre membre éligible
-
           arrayMember = household.member;
           let indexMember = arrayMember.findIndex(member => member.isFlagged === false && member.userId.toString() !== notification.userId.toString());
 
@@ -138,7 +155,9 @@ exports.switchAdminRequest = async (req, res, next) => {
             await Helpers.noMoreAdmin(arrayMember, household._id);
           }
         }
+        socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
       }
+
       if(notification.type === "last-chance-request-delegate-admin"){
         let arrayLastChanceNotif = [];
 
@@ -155,25 +174,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       }
     }
 
-    //Delete la notification
-    if(notification.type !== "last-chance-request-delegate-admin"){
-      await Notification.findByIdAndDelete(req.params.notificationId);
-    }
-
-    const notificationsReceived = await Notification.find({userId : notification.userId});
-    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-    let arrayNotificationsReceivedTransformed = [];
-    notificationsReceived.forEach((item)=>{
-        const object = {};
-        fields.forEach((field)=>{
-            object[field] = item[field];
-        });
-        arrayNotificationsReceivedTransformed.push(object);
-    });
-
-    objectReturn.notificationsReceived = arrayNotificationsReceivedTransformed;
-
-    return res.json(objectReturn);
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -205,7 +206,9 @@ exports.switchAdminRights = async (req, res, next) => {
         select: 'firstname lastname -_id'
       });
 
-      return res.json(notifWithPopulate);
+      socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate}]);
+
+      return res.status(204).send();
     }
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -229,8 +232,6 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
       return next(Boom.badRequest('Invalid query'));
     }
-
-    let objectReturn = {};
 
     await Notification.findByIdAndDelete(notification._id);
 
@@ -304,8 +305,8 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, member : arrayMember}, { override: true, upsert: true, new: true });
       
-      const notificationsReceived = await Notification.find({userId : oldAdmin._id});
-      const notificationsSended = await Notification.find({senderUserId: oldAdmin._id})
+      const oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id});
+      const oldAdminNotificationsSended = await Notification.find({senderUserId: oldAdmin._id})
       .populate({
         path: 'userId',
         select: 'firstname lastname -_id'
@@ -314,7 +315,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       socketIoEmit(oldAdmin._id, 
         [
           {name : "updateUserAndFamillyData", data: {userData : oldAdmin, householdData : household}},
-          {name : "updateAllNotifications", data: {notificationsReceived : notificationsReceived, notificationsSended : notificationsSended}},
+          {name : "updateAllNotifications", data: {notificationsReceived : oldAdminNotificationsReceived, notificationsSended : oldAdminNotificationsSended}},
         ]
       );
 
@@ -324,51 +325,35 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         }
       }
 
-      objectReturn.userData = newAdmin;
-      objectReturn.householdData = household;
-    }
+      const newAdminNotificationsSended = await Notification.find(
+        {$or : 
+          [
+            {senderUserId: notification.userId},
+            {householdId : notification.householdId, type: "invitation-household-to-user"},
+            {householdId : notification.householdId, type: "need-switch-admin"}
+          ]
+        })
+        .populate({
+          path: 'userId',
+          select: 'firstname lastname -_id'
+        }); 
 
-    const transformNotificationArray = (notificationArray, withUserId = false) => {
-      let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-  
-      if(withUserId){
-        fields.push('userId')
-      }
-      
-      let arrayNotificationsTransformed = [];
-      notificationArray.forEach((item) => {
-        const object = {};
-        fields.forEach((field) => {
-          object[field] = item[field];
-        });
-        arrayNotificationsTransformed.push(object);
-      });
-      return arrayNotificationsTransformed;
-    }
-    
-    const notificationsReceived = await Notification.find({userId : notification.userId});
-    objectReturn.notificationsReceived = transformNotificationArray(notificationsReceived);
+      const newAdminNotificationsReceived = await Notification.find({userId : notification.userId});
 
-    if (req.query.acceptedRequest === "yes"){
-      const notificationsSended = await Notification.find(
-      {$or : 
+      socketIoEmit(notification.userId, 
         [
-          {senderUserId: notification.userId},
-          {householdId : notification.householdId, type: "invitation-household-to-user"},
-          {householdId : notification.householdId, type: "need-switch-admin"}
+          {name : "updateUserAndFamillyData", data: {userData : newAdmin, householdData : household}},
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
         ]
-      })
-      .populate({
-        path: 'userId',
-        select: 'firstname lastname -_id'
-      }); 
-      objectReturn.notificationsSended = transformNotificationArray(notificationsSended, true);
-    }else if (req.query.acceptedRequest === "no"){
-      socketIoEmit(notification.senderUserId, [{ name : "deleteNotificationSended", data: notification._id }]);
+      );
     }
 
-    return res.json(objectReturn);
+    if(req.query.acceptedRequest === "no"){
+      socketIoEmit(notification.senderUserId, [{ name : "deleteNotificationSended", data: notification._id }]);
+      socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
+    }
 
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -396,7 +381,7 @@ exports.addUserRequest = async (req, res, next) => {
       {$or : 
         [
           {type: "invitation-household-to-user", userId: user._id},
-          {type: "invitation-user-to-household", userId: household.userId},
+          {type: "invitation-user-to-household", userId: user._id},
           {type: "need-switch-admin", userId: user._id}
         ]
       });
@@ -455,7 +440,9 @@ exports.addUserRequest = async (req, res, next) => {
       select: 'firstname lastname -_id'
     });
 
-    return res.json(notifWithPopulate);
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate}]);
+
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
@@ -496,7 +483,6 @@ exports.addUserRespond = async (req, res, next) => {
         return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour !"));
       }
     }
-
 
     let oldNotification = await Notification.findByIdAndDelete(notification._id);
 
@@ -539,9 +525,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       let newMemberArray = newHousehold.member;
 
-      //Envoie une notification au membre admin ayant d'autre membre dans sa famille si cette admin veut rentrer dans une nouvelle famille en tant que simple user
       if (notification.otherUserId && user.role === "admin" && oldMemberArray.length > 1) {
-        //Créée nouvelle notification pour obliger l'user à déléguer ses droit admin à une autre personne avant de pouvoir switch de famille
         let newNotification = await new Notification({
           message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un autre membre de votre famille.",
           householdId: newHousehold._id,
@@ -558,7 +542,6 @@ exports.addUserRespond = async (req, res, next) => {
         return res.json({notificationsReceived : arrayNotificationsTransformed});
       }
 
-      //Chercher le user dans l'array member de son ancienne famille
       let indexMember = oldMemberArray.findIndex(obj => obj.usercode === user.usercode);
 
       if (oldHousehold) {
@@ -567,40 +550,31 @@ exports.addUserRespond = async (req, res, next) => {
         let objectMember = await Helpers.createObjectMember(user);
         newMemberArray.push(objectMember);
       }
-      //Ajoute le membre dans sa nouvelle famille
+
       let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { member: newMemberArray }, { override: true, upsert: true, new: true });
 
       let updatedOldHousehold;
-      //check si le membre est user
       if (user.role === "user") {
-        //Change le householdCode dans user
         user = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
         if (oldHousehold) {
-          //Supprime le membre de son ancienne famille
           oldMemberArray.splice(indexMember, 1);
           updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
         }
 
       }
 
-      //check si le membre est admin et qu'il n'y a aucun membre dans sa famille
       if (user.role === "admin" && oldMemberArray.length === 1) {
-        //Change le rôle d'admin en user et le householdCode
         user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
-        //Supprime le membre de son ancienne famille
         oldMemberArray = [];
         await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
       }
 
-      //check si le membre est admin et qu'il y a d'autre membre dans sa famille et utiliser query otherMember
       let requestSwitchAdmin = {};
       if (user.role === "admin" && oldMemberArray.length > 1 && req.query.otherMember) {
-        //Change le rôle d'admin en user et le householdCode
         user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
-        //Supprimer le membre de son ancienne famille et créée et envoie une notification au délégué(e)
         requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
@@ -612,7 +586,6 @@ exports.addUserRespond = async (req, res, next) => {
           oldMemberArray.splice(indexMember, 1);
         }
         user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
-        //no more admin
         await Helpers.noMoreAdmin(oldMemberArray, oldHousehold._id);
       }
 
@@ -641,7 +614,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
-    return res.json({notificationsReceived : arrayNotificationsTransformed});
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
