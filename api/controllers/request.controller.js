@@ -493,17 +493,6 @@ exports.addUserRespond = async (req, res, next) => {
       socketIoEmit(household.userId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
     }
 
-    const notifications = await Notification.find({userId : notification.userId});
-    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-    let arrayNotificationsTransformed = [];
-    notifications.forEach((item)=>{
-        const object = {};
-        fields.forEach((field)=>{
-            object[field] = item[field];
-        });
-        arrayNotificationsTransformed.push(object);
-    });
-
     if (req.query.acceptedRequest === "yes") {
       let user;
       if (notification.otherUserId) {
@@ -539,7 +528,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
         
-        return res.json({notificationsReceived : arrayNotificationsTransformed});
+        return res.status(204).send();
       }
 
       let indexMember = oldMemberArray.findIndex(obj => obj.usercode === user.usercode);
