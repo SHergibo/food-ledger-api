@@ -1,26 +1,9 @@
 const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
-      Boom = require('@hapi/boom'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper');
-
-  const transformNotificationArray = (notificationArray, withUserId = false) => {
-    let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
-
-    if(withUserId){
-      fields.push('userId')
-    }
-    
-    let arrayNotificationsTransformed = [];
-    notificationArray.forEach((item) => {
-      const object = {};
-      fields.forEach((field) => {
-        object[field] = item[field];
-      });
-      arrayNotificationsTransformed.push(object);
-    });
-    return arrayNotificationsTransformed;
-  }
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { transformArray } = require('./../helpers/transformArray.helper'),
+      Boom = require('@hapi/boom');
 
 /**
 * GET all notifications
@@ -54,8 +37,8 @@ exports.findAll = async (req, res, next) => {
     } 
     
     let objectNotification ={
-      notificationsReceived : transformNotificationArray(notificationsReceived),
-      notificationsSended : transformNotificationArray(notificationsSended, true)
+      notificationsReceived : transformArray(notificationsReceived, 'notification'),
+      notificationsSended : transformArray(notificationsSended, 'notificationUserId')
     }
     return res.json(objectNotification);
   } catch (error) {

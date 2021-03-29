@@ -1,17 +1,5 @@
-const Brand = require('./../models/brand.model');
-
-const transformedFinalObject = (arrayFields, data, totalProduct) => {
-  const fields = arrayFields;
-  let arrayTransformed = [];
-  data.forEach((item) => {
-    const object = {};
-    fields.forEach((field) => {
-      object[field] = item[field];
-    });
-    arrayTransformed.push(object);
-  });
-  return finalObject = { arrayData: arrayTransformed, totalProduct };
-}
+const Brand = require('./../models/brand.model'),
+      { transformArray } = require('./../helpers/transformArray.helper');
 
 exports.finalObject = async (req, householdId, model) => {
   let queryObject = req.query;
@@ -78,8 +66,7 @@ exports.finalObject = async (req, householdId, model) => {
     totalProduct = countProductSearch.length;
   }
 
-  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'];
-  return transformedFinalObject(fields, products, totalProduct);
+  return {arrayData : transformArray(products, 'product'), totalProduct};
 };
 
 exports.finalObjectProductLog = async (req, householdId, model) => {
@@ -94,9 +81,8 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
       .skip(page * limit)
       .limit(limit)
       .sort({createdAt : -1});
-
-  const fields = ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'];
-  return transformedFinalObject(fields, productLog, totalProductLog);
+  
+  return {arrayData : transformArray(productLog, 'productLog'), totalProductLog};
 };
 
 exports.finalObjectShoppingList = async (req, householdId, model) => {
@@ -132,7 +118,6 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
       .skip(page * limit)
       .limit(limit);
 
-  const fields = ['_id', 'product', 'historic', 'numberProduct', 'createdAt'];
-  return transformedFinalObject(fields, shoppingList, totalShoppingList);
+  return {arrayData : transformArray(shoppingList, 'shoppingList'), totalShoppingList}
 };
 

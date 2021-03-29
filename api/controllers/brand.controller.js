@@ -1,5 +1,6 @@
 const Brand = require('./../models/brand.model'),
       Household = require('./../models/household.model'),
+      { transformArray } = require('./../helpers/transformArray.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -10,16 +11,8 @@ exports.findAll = async (req, res, next) => {
     const household = await Household.findOne({householdCode : req.params.householdCode})
     const brands = await Brand.find({householdId : household._id})
     .sort({brandName : 1});
-    const fields = ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"];
-        let arrayBrandTransformed = [];
-        brands.forEach((item)=>{
-            const object = {};
-            fields.forEach((field)=>{
-                object[field] = item[field];
-            });
-            arrayBrandTransformed.push(object);
-        });
-    return res.json(arrayBrandTransformed);
+
+    return res.json(transformArray(brands, 'brand'));
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
