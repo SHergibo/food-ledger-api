@@ -1,5 +1,7 @@
 const sio = require('socket.io'),
-      SocketIoModel = require('./../api/models/socketIo.model');
+      SocketIoModel = require('./../api/models/socketIo.model'),
+      { loggerError } = require('./logger.config'),
+      { env, environments } = require('./environment.config');
 
 let io = null;
 
@@ -30,7 +32,11 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           await newSocketIoDb.save();
         }
       } catch (error) {
-        console.log(error);
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`setSocketId in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
       }
     });
   
@@ -48,7 +54,11 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           });
         }
       } catch (error) {
-        console.log(error);
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`disconnect in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
       }
     });
   });
