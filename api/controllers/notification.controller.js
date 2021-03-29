@@ -71,8 +71,9 @@ exports.remove = async (req, res, next) => {
     const notification = await Notification.findByIdAndRemove(req.params.notificationId);
 
     socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: notification._id}]);
+    socketIoEmit(req.user._id, [{name : "deleteNotificationSended", data: notification._id}]);
 
-    return res.json(notification);
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
