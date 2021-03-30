@@ -50,8 +50,13 @@ let schema = new Schema({
     }
 });
 
-schema.methods.transform = function() {
-    const fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+schema.methods.transform = function(withUserId = false) {
+    let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+
+    if(withUserId){
+       fields = [...fields, 'userId'];
+    }
+
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];
