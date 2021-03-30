@@ -105,7 +105,7 @@ exports.switchAdminRequest = async (req, res, next) => {
         socketIoEmit(invitationHousehold.userId, 
           [
             {name : "deleteNotificationSended", data: invitationNotif._id},
-            {name : "updateNotificationSended", data: newNotifSended},
+            {name : "updateNotificationSended", data: newNotifSended.transform(true)},
           ]
         );
       }
@@ -141,7 +141,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           socketIoEmit(otherMember._id, 
             [
               {name : "updateFamilly", data: updatedHousehold},
-              {name : "updateNotificationReceived", data: newNotification}
+              {name : "updateNotificationReceived", data: newNotification.transform()}
             ]
           );
 
@@ -198,7 +198,7 @@ exports.switchAdminRights = async (req, res, next) => {
         urlRequest: "switch-admin-rights-respond",
       });
       await notification.save();
-      socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification}]);
+      socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
       let notifWithPopulate = await Notification.findById(notification._id)
       .populate({
@@ -206,7 +206,7 @@ exports.switchAdminRights = async (req, res, next) => {
         select: 'firstname lastname -_id'
       });
 
-      socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate}]);
+      socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
 
       return res.status(204).send();
     }
@@ -270,7 +270,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         socketIoEmit(invitationHousehold.userId, 
           [
             {name : "deleteNotificationSended", data: needSwitchAdminNotif._id},
-            {name : "updateNotificationSended", data: newNotifSended},
+            {name : "updateNotificationSended", data: newNotifSended.tranform(true)},
           ]
         );
       }
@@ -298,7 +298,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         socketIoEmit(invitationHousehold.userId, 
           [
             {name : "deleteNotificationSended", data: invitationNotif._id},
-            {name : "updateNotificationSended", data: newNotifSended},
+            {name : "updateNotificationSended", data: newNotifSended.transform(true)},
           ]
         );
       }
@@ -432,7 +432,7 @@ exports.addUserRequest = async (req, res, next) => {
     let notification = await new Notification(notificationObject);
     await notification.save();
 
-    socketIoEmit(notificationObject.userId, [{name : "updateNotificationReceived", data: notification}]);
+    socketIoEmit(notificationObject.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
     let notifWithPopulate = await Notification.findById(notification._id)
     .populate({
@@ -440,7 +440,7 @@ exports.addUserRequest = async (req, res, next) => {
       select: 'firstname lastname -_id'
     });
 
-    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate}]);
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
 
     return res.status(204).send();
   } catch (error) {
@@ -524,7 +524,7 @@ exports.addUserRespond = async (req, res, next) => {
         });
         await newNotification.save();
 
-        socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification}]);
+        socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
 
         socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
         

@@ -76,7 +76,7 @@ exports.add = async (req, res, next) => {
             urlRequest: "add-user-respond"
           });
           await notification.save();
-          socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: notification}]);
+          socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
         }
         searchUserArray = [];
       }
@@ -98,7 +98,7 @@ exports.add = async (req, res, next) => {
         urlRequest: "add-user-respond"
       });
       await notification.save();
-      socketIoEmit(household.userId, [{name : "updateNotificationReceived", data: notification}]);
+      socketIoEmit(household.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
     } else {
       return next(Boom.badRequest('Need a household name or a household code'));
     }

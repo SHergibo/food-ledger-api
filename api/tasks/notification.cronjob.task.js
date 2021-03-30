@@ -42,7 +42,7 @@ exports.notification = async () => {
             });
             await newNotification.save();
 
-            socketIoEmit(newArrayMember[0].userId, [{ name : "updateNotificationReceived", data: newNotification }]);
+            socketIoEmit(newArrayMember[0].userId, [{ name : "updateNotificationReceived", data: newNotification.transform() }]);
 
           } else {
             if(!household.lastChance){
@@ -56,7 +56,7 @@ exports.notification = async () => {
                   urlRequest: "delegate-admin",
                 });
                 await lastChanceNotification.save();
-                socketIoEmit(member.userId, [{ name : "updateNotificationReceived", data: lastChanceNotification }]);
+                socketIoEmit(member.userId, [{ name : "updateNotificationReceived", data: lastChanceNotification.transform() }]);
               }
               await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() }, { override: true, upsert: true, new: true });
             }
