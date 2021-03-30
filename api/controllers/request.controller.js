@@ -5,7 +5,7 @@ const Household = require('./../models/household.model'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformArray } = require('./../helpers/transformArray.helper');
+      { transformArray, transformLeanedObject } = require('./../helpers/transformArray.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -413,34 +413,31 @@ exports.addUserRequest = async (req, res, next) => {
     if (req.body.type === "householdToUser") {
       let householdSender = await Household.findOne({ householdCode: user.householdCode });
       if(user.role === "user" || (user.role === "admin" && householdSender.member.length === 1)){
-        notificationObject.type = "invitation-household-to-user"
+        notificationObject.type = "invitation-household-to-user";
         notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
       }else{
-        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`
-        notificationObject.type = "need-switch-admin"
+        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`;
+        notificationObject.type = "need-switch-admin";
       }
       notificationObject.userId = user._id;
     } else if (req.body.type === "userToHousehold") {
-      notificationObject.userId = household.userId;
-      notificationObject.type = "invitation-user-to-household"
-      notificationObject.otherUserId = user._id
-      notificationObject.senderUserId = req.user._id
+      notificationObject.type = "invitation-user-to-household";
+      notificationObject.senderUserId = req.user._id;
       notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
-      notificationObject = {...notificationObject, ...{fullname: `${user.firstname} ${user.lastname}`,senderUserCode: user.usercode}};
     }
 
     let notification = await new Notification(notificationObject);
     await notification.save();
 
-    socketIoEmit(notificationObject.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
+    let idUser;
+    notification.type !== "invitation-user-to-household" ? idUser = notificationObject.userId : idUser = household.userId;
+    socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification.transform()}]);
+    
+    let notifWithPopulate = await Notification.findById(notification._id).lean();
+    let userData = household.member.find(member => member.userId.toString() === household.userId.toString());
+    notifWithPopulate.userId = { firstname: userData.firstname, lastname: userData.lastname };
 
-    let notifWithPopulate = await Notification.findById(notification._id)
-    .populate({
-      path: 'userId',
-      select: 'firstname lastname -_id'
-    });
-
-    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: transformLeanedObject(notifWithPopulate)}]);
 
     return res.status(204).send();
   } catch (error) {
@@ -493,10 +490,11 @@ exports.addUserRespond = async (req, res, next) => {
       socketIoEmit(household.userId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
     }
 
+    let newHousehold = await Household.findById(notification.householdId);
     if (req.query.acceptedRequest === "yes") {
       let user;
-      if (notification.otherUserId) {
-        user = await User.findById(notification.otherUserId);
+      if (notification.type === "invitation-user-to-household") {
+        user = await User.findById(notification.senderUserId);
       } else {
         user = await User.findById(notification.userId);
       }
@@ -506,15 +504,14 @@ exports.addUserRespond = async (req, res, next) => {
       if (oldHousehold) {
         oldMemberArray = oldHousehold.member;
       }
-      let newHousehold = await Household.findById(notification.householdId);
-
+      
       if(oldHousehold && (oldHousehold.householdCode === newHousehold.householdCode)){
         return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
       }
 
       let newMemberArray = newHousehold.member;
 
-      if (notification.otherUserId && user.role === "admin" && oldMemberArray.length > 1) {
+      if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMemberArray.length > 1) {
         let newNotification = await new Notification({
           message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un autre membre de votre famille.",
           householdId: newHousehold._id,
@@ -526,8 +523,10 @@ exports.addUserRespond = async (req, res, next) => {
 
         socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
 
-        socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
-        
+        let idUser;
+        notification.type !== "invitation-user-to-household" ? idUser = notification.userId : idUser = newHousehold.userId;
+        socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
+
         return res.status(204).send();
       }
 
@@ -601,7 +600,9 @@ exports.addUserRespond = async (req, res, next) => {
       
     }
 
-    socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
+    let idUser;
+    notification.type !== "invitation-user-to-household" ? idUser = notification.userId : idUser = newHousehold.userId;
+    socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
     return res.status(204).send();
   } catch (error) {

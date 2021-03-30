@@ -71,7 +71,6 @@ exports.add = async (req, res, next) => {
             message: `L'administrateur de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
-            senderUserId : user._id,
             type: "invitation-household-to-user",
             urlRequest: "add-user-respond"
           });
@@ -88,12 +87,8 @@ exports.add = async (req, res, next) => {
       //Envoie notif à l'admin de la famille en question
       let notification = await new Notification({
         message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
-        fullName: `${user.firstname} ${user.lastname}`,
-        senderUserCode: user.usercode,
         senderUserId : user._id,
         householdId: household._id,
-        userId: household.userId,
-        otherUserId: user._id,
         type: "invitation-user-to-household",
         urlRequest: "add-user-respond"
       });
