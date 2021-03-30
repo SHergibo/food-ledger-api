@@ -21,7 +21,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           if(indexSocketId !== -1){
             arraySocketId[indexSocketId] = socketId;
           }else{
-            arraySocketId.push(socketId);
+            arraySocketId = [...arraySocketId, socketId];
           }
           await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId }, { override: true, upsert: true, new: true });
         }else{
