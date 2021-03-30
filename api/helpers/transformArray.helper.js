@@ -1,8 +1,8 @@
 exports.transformArray = (dataArray, fieldName) => {
 
   let objectFields = {
-    notification: ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'],
-    notificationUserId: ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate', 'userId'],
+    notification: ['_id', 'message', 'type', 'urlRequest', 'expirationDate'],
+    notificationUserId: ['_id', 'message', 'type', 'urlRequest', 'expirationDate', 'userId'],
     product: ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'],
     brand: ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"],
     productLog: ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'],
@@ -19,3 +19,12 @@ exports.transformArray = (dataArray, fieldName) => {
   });
   return arrayTransformed;
 };
+
+exports.transformLeanedObject = (objectData) => {
+  let fields = ['_id', 'message', 'type', 'urlRequest', 'userId'];
+  const object = {};
+  fields.forEach((field)=>{
+    object[field] = objectData[field];
+  });
+  return object;
+}
