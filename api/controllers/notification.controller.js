@@ -12,16 +12,22 @@ exports.findAll = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
     const household = await Household.findOne({householdCode : user.householdCode});
-    const notificationsReceived = await Notification.find({ userId: req.params.userId });
+    let notificationsReceived = [] 
     let notificationsSended = [];
 
     if(user.role === "admin"){
+      notificationsReceived = await Notification.find({$or : 
+        [
+          { userId: req.params.userId },
+          { householdId : household._id, type: "invitation-user-to-household" },
+        ]
+      });
       notificationsSended = await Notification.find(
       {$or : 
         [
-          {senderUserId: req.params.userId},
-          {householdId : household._id, type: "invitation-household-to-user"},
-          {householdId : household._id, type: "need-switch-admin"}
+          { senderUserId: req.params.userId },
+          { householdId : household._id, type: "invitation-household-to-user" },
+          { householdId : household._id, type: "need-switch-admin" }
         ]
       })
       .populate({
@@ -29,11 +35,13 @@ exports.findAll = async (req, res, next) => {
         select: 'firstname lastname -_id'
       });  
     }else if(user.role === "user"){
-      notificationsSended= await Notification.find({senderUserId: req.params.userId})
-      .populate({
-        path: 'userId',
-        select: 'firstname lastname -_id'
-      });
+      notificationsReceived = await Notification.find({ userId: req.params.userId });
+      notificationsSended = await Notification.find({senderUserId: req.params.userId}).lean();
+      for(let notif of notificationsSended){
+        let otherHousehold = await Household.findById(notif.householdId);
+        let userData = otherHousehold.member.find(member => member.userId.toString() === otherHousehold.userId.toString());
+        notif.userId = { firstname: userData.firstname, lastname: userData.lastname };
+      }
     } 
     
     let objectNotification ={
@@ -52,8 +60,14 @@ exports.findAll = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const notification = await Notification.findByIdAndRemove(req.params.notificationId);
+    let idUser = notification.userId;
+    
+    if(notification.type === "invitation-user-to-household"){
+      const household = await Household.findById(notification.householdId);
+      idUser = household.userId;
+    }
 
-    socketIoEmit(notification.userId, [{name : "deleteNotificationReceived", data: notification._id}]);
+    socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
     socketIoEmit(req.user._id, [{name : "deleteNotificationSended", data: notification._id}]);
 
     return res.status(204).send();
