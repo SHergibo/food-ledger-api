@@ -11,19 +11,7 @@ let schema = new Schema({
         required: true,
         trim : true
     },
-    fullName: {
-        type: String,
-        trim: true,
-    },
-    senderUserCode : {
-        type: String,
-        trim: true,
-    },
     userId : {
-        type : Schema.Types.ObjectId,
-        ref : 'User',
-    },
-    otherUserId : {
         type : Schema.Types.ObjectId,
         ref : 'User',
     },
@@ -51,7 +39,7 @@ let schema = new Schema({
 });
 
 schema.methods.transform = function(withUserId = false) {
-    let fields = ['_id', 'message', 'fullName', 'senderUserCode', 'type', 'urlRequest', 'expirationDate'];
+    let fields = ['_id', 'message', 'type', 'urlRequest', 'expirationDate'];
 
     if(withUserId){
        fields = [...fields, 'userId'];
