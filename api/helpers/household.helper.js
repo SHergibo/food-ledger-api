@@ -130,6 +130,7 @@ let removeHousehold = async (householdId) => {
     await ProductLog.deleteMany({householdId : householdId});
     await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
+    await Notification.findByIdAndDelete({householdId : householdId});
     await Household.findByIdAndDelete(householdId);
     return;
   } catch (error) {
