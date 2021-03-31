@@ -67,7 +67,14 @@ exports.switchAdminRequest = async (req, res, next) => {
           select: 'firstname lastname -_id'
         }); 
 
-      const newAdminNotificationsReceived = await Notification.find({userId : notification.userId});
+      const newAdminNotificationsReceived = await Notification.find(
+        {$or : 
+          [
+            {userId : notification.userId},
+            { householdId : household._id, type: "invitation-user-to-household" },
+          ]
+        }
+      );
 
       socketIoEmit(notification.userId, 
         [
@@ -338,7 +345,14 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           select: 'firstname lastname -_id'
         }); 
 
-      const newAdminNotificationsReceived = await Notification.find({userId : notification.userId});
+      const newAdminNotificationsReceived = await Notification.find(
+        {$or : 
+          [
+            {userId : notification.userId},
+            { householdId : household._id, type: "invitation-user-to-household" },
+          ]
+        }
+      );
 
       socketIoEmit(notification.userId, 
         [
@@ -542,8 +556,9 @@ exports.addUserRespond = async (req, res, next) => {
       let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { member: newMemberArray }, { override: true, upsert: true, new: true });
 
       let updatedOldHousehold;
+      let updatedUser;
       if (user.role === "user") {
-        user = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
         if (oldHousehold) {
           oldMemberArray.splice(indexMember, 1);
@@ -553,7 +568,7 @@ exports.addUserRespond = async (req, res, next) => {
       }
 
       if (user.role === "admin" && oldMemberArray.length === 1) {
-        user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
         oldMemberArray = [];
         await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
@@ -561,7 +576,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       let requestSwitchAdmin = {};
       if (user.role === "admin" && oldMemberArray.length > 1 && req.query.otherMember) {
-        user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
 
         requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin) {
@@ -569,15 +584,25 @@ exports.addUserRespond = async (req, res, next) => {
         }
       }
       
-      if(user.role === "admin" && oldMemberArray.length > 1){
+      if(user.role === "admin" && oldMemberArray.length > 1 && !req.query.otherMember){
         if (indexMember > -1) {
           oldMemberArray.splice(indexMember, 1);
         }
-        user = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
         await Helpers.noMoreAdmin(oldMemberArray, oldHousehold._id);
       }
 
-      socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : updatedNewHousehold}}]);
+      if(user.role === "user"){
+        socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser, householdData : updatedNewHousehold}}]);
+      }else{
+        const userNotificationsReceived = await Notification.find({userId : user._id});
+        socketIoEmit(user._id, 
+          [
+              {name : "updateUserAndFamillyData", data: {userData : updatedUser, householdData : updatedNewHousehold}},
+              {name : "updateAllNotificationsReceived", data: userNotificationsReceived},
+          ]
+        );
+      }
 
       for (const otherUser of updatedNewHousehold.member){
         if(otherUser.userId.toString() !== user._id.toString()){
