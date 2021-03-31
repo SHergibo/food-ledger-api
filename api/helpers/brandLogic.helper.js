@@ -4,7 +4,8 @@ const Brand = require('./../models/brand.model'),
       Historic = require('./../models/historic.model');
 
 exports.brandLogicWhenCreate = async (req, type) => {
-  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value});
+  console.log(req.body);
+  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   if (brandDB) {
     if (type === "product") {
       await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
