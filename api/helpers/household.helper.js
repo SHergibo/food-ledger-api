@@ -130,7 +130,20 @@ let removeHousehold = async (householdId) => {
     await ProductLog.deleteMany({householdId : householdId});
     await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
-    await Notification.findByIdAndDelete({householdId : householdId});
+
+    let notifications = await Notifcation.find({householdId : householdId});
+    for (const notif of notifications) {
+      let idUser = notif.userId;
+      if(notif.type === "invitation-user-to-household"){
+        idUser = notif.senderUserId;
+        data = [{ name : "deleteNotificationSended", data: notif._id }];
+      }else{
+        data = [{ name : "deleteNotificationReceived", data: notif._id }];
+      }
+      socketIoEmit(idUser, data);
+      await Notification.findByIdAndDelete(notif._id);
+    }
+
     await Household.findByIdAndDelete(householdId);
     return;
   } catch (error) {
