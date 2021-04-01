@@ -11,7 +11,8 @@ const Express = require('express'),
       ShoppingListRoutes = require('./shopping-list.route'),
       StatisticRoutes = require('./statistic.route'),
       AuthRoutes = require('./auth.route'),
-      TokenAuthRoutes = require('./token-auth.route');
+      TokenAuthRoutes = require('./token-auth.route'),
+      ScriptRoutes = require('./script.route');
 
 const router = Express.Router();
 
@@ -28,5 +29,6 @@ router.use('/product-logs', ProductLogRoutes);
 router.use('/shopping-lists', ShoppingListRoutes);
 router.use('/statistics', StatisticRoutes);
 router.use('/tokens', TokenAuthRoutes);
+router.use('/scripts', ScriptRoutes);
 
 module.exports = router;
