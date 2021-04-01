@@ -44,6 +44,9 @@ let schema = new Schema({
         required : true,
         trim : true
     },
+    householdCode : {
+        type: String,
+    },
     householdId : {
         type: Schema.Types.ObjectId,
         ref: 'Household',
