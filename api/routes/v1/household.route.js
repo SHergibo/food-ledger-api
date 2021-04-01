@@ -2,7 +2,7 @@ const Express = require('express'),
       HouseholdController = require(`${process.cwd()}/api/controllers/household.controller`);
 
 const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
+const { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
 
 
 const router = Express.Router();
@@ -12,7 +12,7 @@ router
         .post(HouseholdController.add);
 
 router
-    .route('/:householdCode')
+    .route('/:householdId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, HouseholdController.findOne);
 
 router

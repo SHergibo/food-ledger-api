@@ -389,7 +389,7 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest('Code famille non valide !'));
     }
 
-    let otherHousehold = await Household.findOne({ householdCode: user.householdCode });
+    let otherHousehold = await Household.findById(user.householdId);
 
     let notificationExist = await Notification.findOne(
       {$or : 
@@ -410,7 +410,7 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest(errorMessage));
     }
 
-    if(user.householdCode === req.body.householdCode){
+    if(user.householdId === household._id){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
     }
 
@@ -425,7 +425,7 @@ exports.addUserRequest = async (req, res, next) => {
     }
 
     if (req.body.type === "householdToUser") {
-      let householdSender = await Household.findOne({ householdCode: user.householdCode });
+      let householdSender = await Household.findById(user.householdId);
       if(user.role === "user" || (user.role === "admin" && householdSender.member.length === 1)){
         notificationObject.type = "invitation-household-to-user";
         notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
@@ -455,6 +455,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
@@ -513,13 +514,13 @@ exports.addUserRespond = async (req, res, next) => {
         user = await User.findById(notification.userId);
       }
 
-      let oldHousehold = await Household.findOne({ householdCode: user.householdCode });
+      let oldHousehold = await Household.findById(user.householdId);
       let oldMemberArray = [];
       if (oldHousehold) {
         oldMemberArray = oldHousehold.member;
       }
       
-      if(oldHousehold && (oldHousehold.householdCode === newHousehold.householdCode)){
+      if(oldHousehold && (oldHousehold._id.toString() === newHousehold._id.toString())){
         return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
       }
 
@@ -558,7 +559,7 @@ exports.addUserRespond = async (req, res, next) => {
       let updatedOldHousehold;
       let updatedUser;
       if (user.role === "user") {
-        updatedUser = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id }, { override: true, upsert: true, new: true });
 
         if (oldHousehold) {
           oldMemberArray.splice(indexMember, 1);
@@ -568,7 +569,7 @@ exports.addUserRespond = async (req, res, next) => {
       }
 
       if (user.role === "admin" && oldMemberArray.length === 1) {
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
 
         oldMemberArray = [];
         await Household.findByIdAndUpdate(oldHousehold._id, { member: oldMemberArray }, { override: true, upsert: true, new: true });
@@ -576,7 +577,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       let requestSwitchAdmin = {};
       if (user.role === "admin" && oldMemberArray.length > 1 && req.query.otherMember) {
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
 
         requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin) {
@@ -588,7 +589,7 @@ exports.addUserRespond = async (req, res, next) => {
         if (indexMember > -1) {
           oldMemberArray.splice(indexMember, 1);
         }
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
         await Helpers.noMoreAdmin(oldMemberArray, oldHousehold._id);
       }
 

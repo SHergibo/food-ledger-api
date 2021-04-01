@@ -1,5 +1,4 @@
 const ProductLog = require('./../models/product-log.model'),
-      Household = require('./../models/household.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       Boom = require('@hapi/boom');
 
@@ -9,8 +8,7 @@ const ProductLog = require('./../models/product-log.model'),
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, household._id, ProductLog);
+    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, req.params.householdId, ProductLog);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -35,8 +33,7 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.removeAll = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    await ProductLog.deleteMany({householdId : household._id});
+    await ProductLog.deleteMany({householdId : req.params.householdId});
     return res.status(200).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));

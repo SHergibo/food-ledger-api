@@ -44,9 +44,9 @@ let schema = new Schema({
         required : true,
         trim : true
     },
-    householdCode : {
-        type : String,
-        trim : true
+    householdId : {
+        type: Schema.Types.ObjectId,
+        ref: 'Household',
     },
     optionId: {
         type: Schema.Types.ObjectId,
@@ -82,7 +82,7 @@ schema.methods.passwordMatches = async function(pwd){
 };
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdCode"];
+    const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdCode", "householdId"];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];

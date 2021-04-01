@@ -21,7 +21,7 @@ exports.add = async (req, res, next) => {
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
+    const household = await Household.findById(req.params.householdId);
     return res.json(household.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -52,7 +52,7 @@ exports.kickUser = async (req, res, next) => {
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let user;
     if(oldHousehold){
-      user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdCode : oldHousehold.householdCode}, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdId : oldHousehold._id}, { override: true, upsert: true, new: true });
       let oldArrayMember = oldHousehold.member;
       let newMemberObject = {
         userId : user._id,
@@ -64,7 +64,7 @@ exports.kickUser = async (req, res, next) => {
       oldArrayMember.push(newMemberObject);
       oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldArrayMember }, { override: true, upsert: true, new: true });
     }else{
-      user = await User.findByIdAndUpdate(req.body.userId, {householdCode : "none"}, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
       oldHousehold = {};
     }
 

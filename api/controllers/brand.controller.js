@@ -1,5 +1,4 @@
 const Brand = require('./../models/brand.model'),
-      Household = require('./../models/household.model'),
       { transformArray } = require('./../helpers/transformArray.helper'),
       Boom = require('@hapi/boom');
 
@@ -8,8 +7,7 @@ const Brand = require('./../models/brand.model'),
 */
 exports.findAll = async (req, res, next) => {
   try {
-    const household = await Household.findOne({householdCode : req.params.householdCode})
-    const brands = await Brand.find({householdId : household._id})
+    const brands = await Brand.find({householdId : req.params.householdId})
     .sort({brandName : 1});
 
     return res.json(transformArray(brands, 'brand'));

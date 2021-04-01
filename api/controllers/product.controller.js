@@ -1,6 +1,5 @@
 const Product = require('./../models/product.model'),
       ShoppingList = require('./../models/shopping-list.model'),
-      Household = require('./../models/household.model'),
       Historic = require('./../models/historic.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       SortExpDateHelper = require('./../helpers/sortExpDate.helper'),
@@ -35,8 +34,7 @@ exports.add = async (req, res, next) => {
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const finalObject = await FindByQueryHelper.finalObject(req, household._id, Product);
+    const finalObject = await FindByQueryHelper.finalObject(req, req.params.householdId, Product);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -193,8 +191,7 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.download = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const productList = await Product.find({householdId : household._id}).populate('brand', 'brandName');
+    const productList = await Product.find({householdId : req.params.householdId}).populate('brand', 'brandName');
     let finalProductList = [];
     productList.forEach(prodList => {
       let arrayExpDate = [];

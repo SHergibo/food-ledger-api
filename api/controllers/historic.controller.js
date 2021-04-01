@@ -1,7 +1,6 @@
 const Historic = require('./../models/historic.model'),
       ShoppingList = require('./../models/shopping-list.model'),
       Product = require('./../models/product.model'),
-      Household = require('./../models/household.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       SortExpDateHelper = require('./../helpers/sortExpDate.helper'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
@@ -31,8 +30,7 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const finalObject = await FindByQueryHelper.finalObject(req, household._id, Historic);
+    const finalObject = await FindByQueryHelper.finalObject(req, req.params.householdId, Historic);
 
     return res.json(finalObject);
   } catch (error) {
@@ -161,8 +159,7 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.download = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const historicList = await Historic.find({householdId : household._id}).populate('brand', 'brandName');
+    const historicList = await Historic.find({householdId : req.params.householdId}).populate('brand', 'brandName');
     let finaleHistoricList = [];
     historicList.forEach(histList => {
       let historicObject = {

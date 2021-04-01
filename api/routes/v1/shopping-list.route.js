@@ -2,13 +2,13 @@ const Express = require('express'),
       ShoppingListController = require(`${process.cwd()}/api/controllers/shopping-list.controller`);
 
 const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
+const { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
 
 
 const router = Express.Router();
 
 router
-  .route('/pagination/:householdCode')
+  .route('/pagination/:householdId')
       .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.findPaginate);
 
 router
@@ -16,15 +16,15 @@ router
       .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.removePagination);
   
 router
-  .route('/:householdCode')
+  .route('/:householdId')
       .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.removeAll);
 
 router
-  .route('/download/:householdCode')
+  .route('/download/:householdId')
       .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.download);
   
 router
-    .route('/send-mail/:householdCode')
+    .route('/send-mail/:householdId')
         .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.sendMail);
 
 module.exports = router;

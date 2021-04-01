@@ -1,6 +1,5 @@
 const Statistic = require('./../models/statistic.model'),
       Product = require('./../models/product.model'),
-      Household = require('./../models/household.model'),
       Moment = require('moment');
       Boom = require('@hapi/boom');
 
@@ -9,10 +8,8 @@ const Statistic = require('./../models/statistic.model'),
 */
 exports.chartData = async (req, res, next) => {
   try {
-    
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    let statistic = await Statistic.findOne({ householdId: household._id });
-    const products = await Product.find({ householdId: household._id });
+    let statistic = await Statistic.findOne({ householdId:req.params.householdId });
+    const products = await Product.find({ householdId:req.params.householdId });
 
     if(products.length >= 1){
       if(!statistic || statistic.isOutdated === true || !statistic.chartOne){
@@ -71,7 +68,7 @@ exports.chartData = async (req, res, next) => {
         if(!statistic){
           let stat = {
             statistics : dataFinal,
-            householdId: household._id
+            householdId: req.params.householdId
           }
       
           statistic = new Statistic(stat);

@@ -2,13 +2,13 @@ const Express = require('express'),
       ProductLogController = require(`${process.cwd()}/api/controllers/product-log.controller`);
 
 const { authorize, ADMIN } = require('../../middlewares/auth.middleware');
-const { checkSameHousehold } = require('../../middlewares/sameHouseholdCode.middleware');
+const { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
 
 
 const router = Express.Router();
 
 router
-  .route('/pagination/:householdCode')
+  .route('/pagination/:householdId')
       .get(authorize([ADMIN]), checkSameHousehold, ProductLogController.findPaginate);
 
 router
@@ -16,7 +16,7 @@ router
       .delete(authorize([ADMIN]), checkSameHousehold, ProductLogController.removePagination);
   
 router
-  .route('/:householdCode')
+  .route('/:householdId')
       .delete(authorize([ADMIN]), checkSameHousehold, ProductLogController.removeAll);
 
 module.exports = router;

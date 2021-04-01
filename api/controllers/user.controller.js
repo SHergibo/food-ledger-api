@@ -23,7 +23,7 @@ exports.add = async (req, res, next) => {
     if (req.query.householdCode) {
       household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
-        return next(Boom.badRequest('No familly found with this household code'));
+        return next(Boom.badRequest('Pas de famille trouvée avec ce code famille !'));
       }
     }
 
@@ -46,7 +46,7 @@ exports.add = async (req, res, next) => {
     if (req.body.householdName || req.query.householdCode) {
       req.body.usercode = userCode;
       if(req.query.householdCode){
-        req.body.householdCode = "none";
+        req.body.householdId = null;
       }
       user = new User(req.body);
       await user.save();
@@ -54,19 +54,17 @@ exports.add = async (req, res, next) => {
       await option.save();
       user = await User.findByIdAndUpdate(user._id, { optionId: option._id }, { override: true, upsert: true, new: true });
     }
-    //Si création d'un utilisateur en même temps qu'un ménage
+
     if (req.body.householdName) {
       let newHousehold = await Helpers.addHousehold({
         householdName: req.body.householdName,
         user: user
       });
-      user = await User.findByIdAndUpdate(user._id, { householdCode: newHousehold.householdCode }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id }, { override: true, upsert: true, new: true });
 
 
       if (req.body.othermember) {
-        //Si création d'un user avec autre usercode
         for (const otherUser of searchUserArray) {
-          //New notif pour otherMember
           let notification = await new Notification({
             message: `L'administrateur de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
@@ -81,10 +79,8 @@ exports.add = async (req, res, next) => {
       }
 
 
-      //Si création d'un utilisateur avec un code famille
     } else if (req.query.householdCode) {
 
-      //Envoie notif à l'admin de la famille en question
       let notification = await new Notification({
         message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
         senderUserId : user._id,
@@ -134,28 +130,19 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    let paramsUserId = req.params.userId;
-    let queryUserId = req.query.delegateUserId;
-    const user = await User.findById(paramsUserId);
-    let household;
+    const queryUserId = req.query.delegateUserId;
+    const user = await User.findById(req.params.userId);
+    const household = await Household.findById(user.householdId);
 
-    if (user.role === "admin") {
-      household = await Household.findOne({ userId: paramsUserId });
-    } else if (user.role === "user") {
-      household = await Household.findOne({ householdCode: user.householdCode });
-    }
-
-    //met à jour le tableau des membres d'une famille sans la personne qui va supprimer son compte
     let arrayMember = household.member;
     let indexUserToDelete = arrayMember.findIndex(obj => obj.usercode === user.usercode);
     arrayMember.splice(indexUserToDelete, 1);
 
-    //Delete si pas de délégation de famille à un autre membre de la même famille
     if (user.role === "admin") {
       if (!queryUserId) {
         await Helpers.noMoreAdmin(arrayMember, household._id);
       } else if (queryUserId) {
-        let requestSwitchAdmin = await Helpers.requestSwitchAdmin(paramsUserId, queryUserId);
+        let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, queryUserId);
         if (requestSwitchAdmin) {
           return next(Boom.badRequest(requestSwitchAdmin.message));
         }
@@ -183,7 +170,7 @@ exports.remove = async (req, res, next) => {
       userEmail : user.email
     });
 
-    await User.findByIdAndDelete(paramsUserId);
+    await User.findByIdAndDelete(user._id);
     await Option.findByIdAndDelete(user.optionId);
     return res.json(user.transform());
   } catch (error) {

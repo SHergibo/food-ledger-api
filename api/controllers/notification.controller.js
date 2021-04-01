@@ -11,7 +11,6 @@ const Notification = require('./../models/notification.model'),
 exports.findAll = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
-    const household = await Household.findOne({householdCode : user.householdCode});
     let notificationsReceived = [] 
     let notificationsSended = [];
 
@@ -19,15 +18,15 @@ exports.findAll = async (req, res, next) => {
       notificationsReceived = await Notification.find({$or : 
         [
           { userId: req.params.userId },
-          { householdId : household._id, type: "invitation-user-to-household" },
+          { householdId : user.householdId, type: "invitation-user-to-household" },
         ]
       });
       notificationsSended = await Notification.find(
       {$or : 
         [
           { senderUserId: req.params.userId },
-          { householdId : household._id, type: "invitation-household-to-user" },
-          { householdId : household._id, type: "need-switch-admin" }
+          { householdId : user.householdId, type: "invitation-household-to-user" },
+          { householdId : user.householdId, type: "need-switch-admin" }
         ]
       })
       .populate({

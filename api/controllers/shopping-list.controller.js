@@ -1,5 +1,4 @@
 const ShoppingList = require('./../models/shopping-list.model'),
-      Household = require('./../models/household.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       NodeMailer = require('./../helpers/nodemailer.helper'),
       Boom = require('@hapi/boom');
@@ -9,8 +8,7 @@ const ShoppingList = require('./../models/shopping-list.model'),
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, household._id, ShoppingList);
+    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, req.params.householdId, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -35,8 +33,7 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.removeAll = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    await ShoppingList.deleteMany({householdId : household._id});
+    await ShoppingList.deleteMany({householdId : req.params.householdId});
     return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -49,8 +46,7 @@ exports.removeAll = async (req, res, next) => {
 */
 exports.download = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    const shoppingList = await ShoppingList.find({householdId : household._id})      
+    const shoppingList = await ShoppingList.find({householdId : req.params.householdId})      
     .populate({
       path: 'product',
       populate : {
@@ -106,8 +102,7 @@ exports.download = async (req, res, next) => {
 */
 exports.sendMail = async (req, res, next) => {
   try {
-    const household = await Household.findOne({ householdCode: req.params.householdCode });
-    let shoppingList = await ShoppingList.find({householdId : household._id})
+    let shoppingList = await ShoppingList.find({householdId : req.params.householdId})
     .populate({
       path: 'product',
       populate : {
