@@ -1,14 +1,13 @@
-const Product = require('./../models/product.model'),
-  Historic = require('./../models/historic.model'),
-  Household = require('./../models/household.model'),
-  Brand = require('./../models/brand.model'),
-  ProductLog = require('./../models/product-log.model'),
-  ShoppingList = require('./../models/shopping-list.model'),
+const Product = require('../models/product.model'),
+  Historic = require('../models/historic.model'),
+  Household = require('../models/household.model'),
+  Brand = require('../models/brand.model'),
+  ProductLog = require('../models/product-log.model'),
+  ShoppingList = require('../models/shopping-list.model'),
   Boom = require('@hapi/boom');
 
 exports.checkSameHousehold = async (req, res, next) => {
   try {
-    let householdCode;
     let household;
     let data;
 
@@ -24,7 +23,7 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await ShoppingList.findById(req.params.shoppingId);
     }
 
-    if(!req.params.householdCode && !req.params.householdId){
+    if(!req.params.householdId){
       if (data) {
         household = await Household.findById(data.householdId);
       } else {
@@ -32,20 +31,7 @@ exports.checkSameHousehold = async (req, res, next) => {
       }
     }
 
-    if (household) {
-      householdCode = household.householdCode;
-    }
-
-    if (req.params.householdCode) {
-      householdCode = req.params.householdCode;
-    }
-
-    if(req.params.householdId){
-      household = await Household.findById(req.params.householdId);
-      householdCode = household.householdCode;
-    }
-
-    if (householdCode === req.user.householdCode) {
+    if ((household && household._id.toString() === req.user.householdId.toString()) || (req.params.householdId.toString() === req.user.householdId.toString())) {
       return next();
     } else {
       return next(Boom.unauthorized("Vous n'avez pas accès à cette donnée car elle n'appartient pas à votre famille !"));
