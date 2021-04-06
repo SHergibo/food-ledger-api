@@ -31,7 +31,6 @@ let schema = new Schema({
     urlRequest : {
         type : String,
         enum : url,
-        required : true
     },
     expirationDate: {
         type: Date,
