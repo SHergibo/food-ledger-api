@@ -72,6 +72,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           [
             {userId : notification.userId},
             { householdId : household._id, type: "invitation-user-to-household" },
+            { householdId : household._id, type: "information" },
           ]
         }
       );
@@ -350,6 +351,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           [
             {userId : notification.userId},
             { householdId : household._id, type: "invitation-user-to-household" },
+            { householdId : household._id, type: "information" },
           ]
         }
       );
@@ -363,7 +365,18 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     }
 
     if(req.query.acceptedRequest === "no"){
-      socketIoEmit(notification.senderUserId, [{ name : "deleteNotificationSended", data: notification._id }]);
+      let user = await User.findById(notification.userId);
+      let newNotification = await new Notification({
+        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration !`,
+        type: 'information',
+        householdId: notification.householdId,
+      });
+      await newNotification.save();
+
+      socketIoEmit(notification.senderUserId, [
+        { name : "deleteNotificationSended", data: notification._id }, 
+        { name : "updateNotificationReceived", data: newNotification.transform() }
+      ]);
       socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
     }
 
@@ -410,7 +423,7 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest(errorMessage));
     }
 
-    if(user.householdId === household._id){
+    if(user.householdId.toString() === household._id.toString()){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
     }
 
@@ -513,14 +526,15 @@ exports.addUserRespond = async (req, res, next) => {
     }
 
     let newHousehold = await Household.findById(notification.householdId);
-    if (req.query.acceptedRequest === "yes") {
-      let user;
-      if (notification.type === "invitation-user-to-household") {
-        user = await User.findById(notification.senderUserId);
-      } else {
-        user = await User.findById(notification.userId);
-      }
+    let user;
+    if (notification.type === "invitation-user-to-household") {
+      user = await User.findById(notification.senderUserId);
+    } else {
+      user = await User.findById(notification.userId);
+    }
 
+    if (req.query.acceptedRequest === "yes") {
+      
       let oldHousehold = await Household.findById(user.householdId);
       let oldMemberArray = [];
       if (oldHousehold) {
@@ -631,6 +645,28 @@ exports.addUserRespond = async (req, res, next) => {
         }
       }
       
+    }else if(req.query.acceptedRequest === "no"){
+      let notificationObject = {
+        message: "",
+        type: "information"
+      }
+      let userId;
+
+      if(notification.type === "invitation-user-to-household"){
+        userId = user._id;
+        let householdAdmin = await User.findById(newHousehold.userId);
+        notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation !`;
+        notificationObject.userId = user._id;
+      }else if(notification.type === "invitation-household-to-user"){
+        userId = newHousehold.userId;
+        notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invatation !`;
+        notificationObject.householdId = newHousehold._id;
+      }
+
+      let newNotification = await new Notification(notificationObject);
+      await newNotification.save();
+
+      socketIoEmit(userId, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
     }
 
     let idUser;
