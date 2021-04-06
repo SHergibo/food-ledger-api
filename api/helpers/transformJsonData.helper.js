@@ -20,10 +20,13 @@ exports.transformArray = (dataArray, fieldName) => {
   return arrayTransformed;
 };
 
-exports.transformLeanedObject = (objectData) => {
-  let fields = ['_id', 'message', 'type', 'urlRequest', 'userId'];
+exports.transformObject = (objectData, fieldName) => {
+
+  let objectFields = {
+    notification : ['_id', 'message', 'type', 'urlRequest', 'userId']
+  }
   const object = {};
-  fields.forEach((field)=>{
+  objectFields[fieldName].forEach((field)=>{
     object[field] = objectData[field];
   });
   return object;
