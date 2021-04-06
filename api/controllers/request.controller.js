@@ -5,7 +5,7 @@ const Household = require('./../models/household.model'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformArray, transformLeanedObject } = require('./../helpers/transformArray.helper');
+      { transformArray, transformObject } = require('../helpers/transformJsonData.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -447,15 +447,22 @@ exports.addUserRequest = async (req, res, next) => {
     notification.type !== "invitation-user-to-household" ? idUser = notificationObject.userId : idUser = household.userId;
     socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification.transform()}]);
     
-    let notifWithPopulate = await Notification.findById(notification._id).lean();
-    let userData = household.member.find(member => member.userId.toString() === household.userId.toString());
-    notifWithPopulate.userId = { firstname: userData.firstname, lastname: userData.lastname };
-
-    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: transformLeanedObject(notifWithPopulate)}]);
+    let notificationSended;
+    if(req.body.type === "userToHousehold"){
+      notificationSended = await Notification.findById(notification._id).lean();
+      let userData = household.member.find(member => member.userId.toString() === household.userId.toString());
+      notificationSended.userId = { firstname: userData.firstname, lastname: userData.lastname };
+    }else if(req.body.type ==="householdToUser"){
+      notificationSended = await Notification.findById(notification._id)
+        .populate({
+          path: 'userId',
+          select: 'firstname lastname -_id'
+        });
+    }
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: transformObject(notificationSended, 'notification')}]); 
 
     return res.status(204).send();
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

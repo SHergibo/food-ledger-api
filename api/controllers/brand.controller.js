@@ -1,5 +1,5 @@
 const Brand = require('./../models/brand.model'),
-      { transformArray } = require('./../helpers/transformArray.helper'),
+      { transformArray } = require('./../helpers/transformJsonData.helper'),
       Boom = require('@hapi/boom');
 
 /**
