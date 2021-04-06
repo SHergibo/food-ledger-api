@@ -19,6 +19,7 @@ exports.findAll = async (req, res, next) => {
         [
           { userId: req.params.userId },
           { householdId : user.householdId, type: "invitation-user-to-household" },
+          { householdId : user.householdId, type: "information" },
         ]
       });
       notificationsSended = await Notification.find(
@@ -66,8 +67,12 @@ exports.remove = async (req, res, next) => {
       idUser = household.userId;
     }
 
-    socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
-    socketIoEmit(req.user._id, [{name : "deleteNotificationSended", data: notification._id}]);
+    if(notification.type !== "information"){
+      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
+    }
+
+    let socketIoEmitName = notification.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
+    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notification._id}]);
 
     return res.status(204).send();
   } catch (error) {
