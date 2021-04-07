@@ -23,7 +23,7 @@ exports.add = async (req, res, next) => {
     if (req.query.householdCode) {
       household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
-        return next(Boom.badRequest('Pas de famille trouvée avec ce code famille !'));
+        return next(Boom.badRequest('Pas de famille trouvée avec ce code famille!'));
       }
     }
 
@@ -39,7 +39,7 @@ exports.add = async (req, res, next) => {
       }
       if(wrongUserCode.length >= 1){
         searchUserArray = [];
-        return next(Boom.notFound(`There is one or more invalid usercode.`, wrongUserCode));
+        return next(Boom.notFound('Il y a un ou plusieurs code utilisateurs invalides', wrongUserCode));
       }
     }
 
@@ -66,7 +66,7 @@ exports.add = async (req, res, next) => {
       if (req.body.othermember) {
         for (const otherUser of searchUserArray) {
           let notification = await new Notification({
-            message: `L'administrateur de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+            message: `L'administrateur.trice de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
             type: "invitation-household-to-user",
@@ -82,7 +82,7 @@ exports.add = async (req, res, next) => {
     } else if (req.query.householdCode) {
 
       let notification = await new Notification({
-        message: `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
+        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`,
         senderUserId : user._id,
         householdId: household._id,
         type: "invitation-user-to-household",

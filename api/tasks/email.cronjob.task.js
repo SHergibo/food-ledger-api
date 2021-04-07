@@ -67,11 +67,11 @@ const findShoppingListAndMailIt = async (householdId) => {
       </table>
       `;
   
-      NodeMailer.send(output, 'Votre liste de course pour votre stock !');
+      NodeMailer.send(output, 'Votre liste de course pour votre stock!');
     }
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findShoppingListAndMailIt !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findShoppingListAndMailIt!');
   }
 };
 
@@ -110,7 +110,7 @@ exports.shoppingListEmail = async () => {
     });
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction shoppingListEmail !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction shoppingListEmail!');
   }
 };
 
@@ -214,12 +214,12 @@ const findProductAndMailIt = async (householdId, warningExpirationDate) => {
         </table>
         `;
 
-        NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions !');
+        NodeMailer.send(output, 'Vous avez des produits proches de leur date de péremptions!');
       }
     }
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findProductAndMailIt !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction findProductAndMailIt!');
   }
 };
 
@@ -268,6 +268,6 @@ exports.globalEmail = async () => {
     
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction globalEmail !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction globalEmail!');
   }
 };

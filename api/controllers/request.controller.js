@@ -95,7 +95,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       if(invitationNotif){
         let invitationHousehold = await Household.findById(invitationNotif.householdId);
         let newNotification = await new Notification({
-          message: `L'administrateur de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`,
+          message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
           householdId: invitationHousehold._id,
           userId: user._id,
           type: "need-switch-admin",
@@ -137,7 +137,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
           //Créer la notification pour que le membre désigné comme nouvel admin, accepte ou non la requête.
           let newNotification = await new Notification({
-            message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'ancien administrateur, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée !",
+            message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'ancien.ne administrateur.trice, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée!",
             householdId: notification.householdId,
             userId: otherMember._id,
             type: "request-delegate-admin",
@@ -158,7 +158,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           let indexMember = arrayMember.findIndex(member => member.isFlagged === false && member.userId.toString() !== notification.userId.toString());
 
           if (indexMember >= 0) {
-            return next(Boom.badRequest('One or more members are still eligible for admin'));
+            return next(Boom.badRequest("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!"));
           } else if (indexMember === -1) {
             await Helpers.noMoreAdmin(arrayMember, household._id);
           }
@@ -195,10 +195,10 @@ exports.switchAdminRights = async (req, res, next) => {
   try {
     let searchNotification = await Notification.findOne({householdId : req.body.householdId, urlRequest: "switch-admin-rights-respond"});
     if(searchNotification){
-      return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente ! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
+      return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
     }else{
       let notification = await new Notification({
-        message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille par l'administrateur actuel, acceptez-vous cette requête ?",
+        message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'administrateur.trice actuel.le, acceptez-vous cette requête?",
         householdId: req.body.householdId,
         userId: req.body.userId,
         senderUserId: req.user._id,
@@ -260,7 +260,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       if(needSwitchAdminNotif){
         let invitationHousehold = await Household.findById(needSwitchAdminNotif.householdId);
         let newNotification = await new Notification({
-          message: `L'administrateur de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+          message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
           householdId: invitationHousehold._id,
           userId: oldAdmin._id,
           type: "invitation-household-to-user",
@@ -288,7 +288,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       if(invitationNotif){
         let invitationHousehold = await Household.findById(invitationNotif.householdId);
         let newNotification = await new Notification({
-          message: `L'administrateur de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`,
+          message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
           householdId: invitationHousehold._id,
           userId: newAdmin._id,
           type: "need-switch-admin",
@@ -367,7 +367,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     if(req.query.acceptedRequest === "no"){
       let user = await User.findById(notification.userId);
       let newNotification = await new Notification({
-        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration !`,
+        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration!`,
         type: 'information',
         householdId: notification.householdId,
       });
@@ -395,11 +395,11 @@ exports.addUserRequest = async (req, res, next) => {
     let user = await User.findOne({ usercode: req.body.usercode });
 
     if(!user){
-      return next(Boom.badRequest('Code utilisateur non valide !'));
+      return next(Boom.badRequest('Code utilisateur non valide!'));
     }
 
     if(!household){
-      return next(Boom.badRequest('Code famille non valide !'));
+      return next(Boom.badRequest('Code famille non valide!'));
     }
 
     let otherHousehold = await Household.findById(user.householdId);
@@ -416,9 +416,9 @@ exports.addUserRequest = async (req, res, next) => {
     if(notificationExist){
       let errorMessage = "";
       if(req.body.type === "userToHousehold"){
-        errorMessage = "Vous avez déjà envoyé une invitation à cette famille !"
+        errorMessage = "Vous avez déjà envoyé une invitation à cette famille!"
       }else{
-        errorMessage = "Vous avez déjà envoyé une invitation à cette personne !"
+        errorMessage = "Vous avez déjà envoyé une invitation à cette personne!"
       }
       return next(Boom.badRequest(errorMessage));
     }
@@ -429,7 +429,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
     if (otherHousehold.isWaiting === true) {
-      return next(Boom.badRequest("L'utilisateur ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
+      return next(Boom.badRequest("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
     }
 
     let notificationObject = {
@@ -441,16 +441,16 @@ exports.addUserRequest = async (req, res, next) => {
       let householdSender = await Household.findById(user.householdId);
       if(user.role === "user" || (user.role === "admin" && householdSender.member.length === 1)){
         notificationObject.type = "invitation-household-to-user";
-        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
+        notificationObject.message = `L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
       }else{
-        notificationObject.message = `L'administrateur de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un autre membre de votre famille avant de pouvoir changer de famille.`;
+        notificationObject.message = `L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`;
         notificationObject.type = "need-switch-admin";
       }
       notificationObject.userId = user._id;
     } else if (req.body.type === "userToHousehold") {
       notificationObject.type = "invitation-user-to-household";
       notificationObject.senderUserId = req.user._id;
-      notificationObject.message = `L'utilisateur ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
+      notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`;
     }
 
     let notification = await new Notification(notificationObject);
@@ -486,33 +486,33 @@ exports.addUserRequest = async (req, res, next) => {
 exports.addUserRespond = async (req, res, next) => {
   try {
     if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest('Need a query!'));
+      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
     }
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Invalid query!'));
+      return next(Boom.badRequest('Paramètre de requête invalide!'));
     }
 
     if (req.query.otherMember) {
       let otherMember = await User.findById(req.query.otherMember);
 
       if (!otherMember) {
-        return next(Boom.notFound('Delegate user not found!'));
+        return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
       }
     }
 
     let notification = await Notification.findById(req.params.notificationId);
     if(!notification){
-      return next(Boom.notFound('Notification not found!'));
+      return next(Boom.notFound('Notification non trouvée!'));
     }
     if(notification.urlRequest !== 'add-user-respond'){
-      return next(Boom.badRequest('Wrong notification!'));
+      return next(Boom.badRequest('Mauvaise notification!'));
     }
     
     if(notification.type === "need-switch-admin"){
       let notificationRequestAdmin = await Notification.findOne({type: "request-admin", senderUserId : req.user._id});
       if(notificationRequestAdmin){
-        return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour !"));
+        return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!"));
       }
     }
 
@@ -542,14 +542,14 @@ exports.addUserRespond = async (req, res, next) => {
       }
       
       if(oldHousehold && (oldHousehold._id.toString() === newHousehold._id.toString())){
-        return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
+        return next(Boom.badRequest('Le membre fait déjà partie de cette famille!'));
       }
 
       let newMemberArray = newHousehold.member;
 
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMemberArray.length > 1) {
         let newNotification = await new Notification({
-          message: "L'administrateur a accepté votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un autre membre de votre famille.",
+          message: "L'administrateur.trice a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
           householdId: newHousehold._id,
           userId: user._id,
           type: "need-switch-admin",
@@ -655,11 +655,11 @@ exports.addUserRespond = async (req, res, next) => {
       if(notification.type === "invitation-user-to-household"){
         userId = user._id;
         let householdAdmin = await User.findById(newHousehold.userId);
-        notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation !`;
+        notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.userId = user._id;
       }else if(notification.type === "invitation-household-to-user"){
         userId = newHousehold.userId;
-        notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invatation !`;
+        notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invatation!`;
         notificationObject.householdId = newHousehold._id;
       }
 

@@ -52,6 +52,6 @@ exports.statisticChartFour = async () => {
 
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction statisticChartFour !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction statisticChartFour!');
   }
 };

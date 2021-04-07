@@ -33,7 +33,7 @@ exports.notification = async () => {
           if(newArrayMember.length >= 1){
             //Création nouvelle notif pour le prochain membre eligible
             let newNotification = await new Notification({
-              message: "Vous avez été désigné(e) comme nouvel administrateur de cette famille, acceptez-vous cette requête ou passez l'administration à un autre membre de votre famille. Attention si vous êtes le/la dernier(ère) membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
+              message: "Vous avez été désigné.e comme nouvel administrateur.trice de cette famille, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
               householdId: notif.householdId,
               userId: newArrayMember[0].userId,
               type: "request-delegate-admin",
@@ -49,7 +49,7 @@ exports.notification = async () => {
               for (const member of memberArray) {
                 //Création dernière notification pour changement d'admin pour chaque membre de la famille
                 let lastChanceNotification = await new Notification({
-                  message: "Ceci est le dernier message pour accepter les droits administrateurs de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endéans les 7 jours, votre famille sera supprimée.",
+                  message: "Ceci est le dernier message pour accepter les droits d'administrations de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endéans les 7 jours, votre famille sera supprimée.",
                   householdId: notif.householdId,
                   userId: member.userId,
                   type: "last-chance-request-delegate-admin",
@@ -73,6 +73,6 @@ exports.notification = async () => {
     }
   } catch (error) {
     loggerError.error(error);
-    NodeMailer.send(error, 'Une erreur est survenue dans la fonction cronJob !');
+    NodeMailer.send(error, 'Une erreur est survenue dans la fonction cronJob!');
   }
 };
