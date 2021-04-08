@@ -21,7 +21,11 @@ exports.add = async (req, res, next) => {
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const household = await Household.findById(req.params.householdId);
+    const household = await Household.findById(req.params.householdId)
+    .populate({
+      path: 'members.userData',
+      select: 'firstname lastname usercode role'
+    }); 
     return res.json(household.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -46,23 +50,20 @@ exports.update = async (req, res, next) => {
 exports.kickUser = async (req, res, next) => {
   try {
     let household = await Household.findById(req.params.householdId);
-    let updatedArrayMember = household.member.filter(member => member.userId.toString() !== req.body.userId);
-    household = await Household.findByIdAndUpdate(household._id, { member: updatedArrayMember }, { override: true, upsert: true, new: true });
+    let updatedArrayMembers = household.members.filter(member => member.userData.toString() !== req.body.userId);
+    household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers }, { override: true, upsert: true, new: true });
 
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let user;
     if(oldHousehold){
       user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdId : oldHousehold._id}, { override: true, upsert: true, new: true });
-      let oldArrayMember = oldHousehold.member;
+      let oldArrayMembers = oldHousehold.members;
       let newMemberObject = {
-        userId : user._id,
-        usercode : user.usercode,
-        firstname : user.firstname,
-        lastname : user.lastname,
+        userData : user._id,
         isFlagged : false
       }
-      oldArrayMember.push(newMemberObject);
-      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { member: oldArrayMember }, { override: true, upsert: true, new: true });
+      oldArrayMembers = [...oldArrayMembers, newMemberObject];
+      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldArrayMembers }, { override: true, upsert: true, new: true });
     }else{
       user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
       oldHousehold = {};
