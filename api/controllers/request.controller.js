@@ -423,12 +423,11 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest(errorMessage));
     }
 
-    if(user.householdId.toString() === household._id.toString()){
+    if(user.household && user.householdId.toString() === household._id.toString()){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
     }
 
-    //Check si la famille de la personne recevant ou demandant une requête d'invitation n'a pas une famille avec un statue isWaiting à true
-    if (otherHousehold.isWaiting === true) {
+    if (otherHousehold && otherHousehold.isWaiting === true) {
       return next(Boom.badRequest("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
     }
 
@@ -575,7 +574,11 @@ exports.addUserRespond = async (req, res, next) => {
         newMembersArray.push(objectMember);
       }
 
-      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true });
+      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true })
+      .populate({
+        path: 'members.userData',
+        select: 'firstname lastname usercode role'
+      });
 
       let updatedOldHousehold;
       let updatedUser;
@@ -584,7 +587,11 @@ exports.addUserRespond = async (req, res, next) => {
 
         if (oldHousehold) {
           oldMembersArray.splice(indexMember, 1);
-          updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray }, { override: true, upsert: true, new: true });
+          updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray }, { override: true, upsert: true, new: true })
+          .populate({
+            path: 'members.userData',
+            select: 'firstname lastname usercode role'
+          });
         }
 
       }
@@ -627,11 +634,11 @@ exports.addUserRespond = async (req, res, next) => {
       }
 
       for (const member of updatedNewHousehold.members){
-        if(member.userData.toString() !== user._id.toString()){
-          if(member.userData.toString() !== updatedNewHousehold.userId.toString()){
-            socketIoEmit(members.userData, [{name : "updateFamilly", data: updatedNewHousehold}]);
+        if(member.userData._id.toString() !== user._id.toString()){
+          if(member.userData._id.toString() !== updatedNewHousehold.userId.toString()){
+            socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedNewHousehold}]);
           }else{
-            socketIoEmit(members.userData, [
+            socketIoEmit(member.userData._id, [
               {name : "updateFamilly", data: updatedNewHousehold},
               {name : "deleteNotificationSended", data: req.params.notificationId},
             ]);
@@ -641,7 +648,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       if(updatedOldHousehold){
         for (const member of updatedOldHousehold.members){
-          socketIoEmit(member.userData, [{name : "updateFamilly", data: updatedOldHousehold}]);
+          socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedOldHousehold}]);
         }
       }
       
@@ -675,6 +682,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };

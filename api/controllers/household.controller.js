@@ -51,7 +51,11 @@ exports.kickUser = async (req, res, next) => {
   try {
     let household = await Household.findById(req.params.householdId);
     let updatedArrayMembers = household.members.filter(member => member.userData.toString() !== req.body.userId);
-    household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers }, { override: true, upsert: true, new: true });
+    household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers }, { override: true, upsert: true, new: true })
+    .populate({
+      path: 'members.userData',
+      select: 'firstname lastname usercode role'
+    });
 
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let user;
