@@ -2,9 +2,26 @@ const Mongoose = require('mongoose');
 
 let Schema = Mongoose.Schema;
 
+let memberSchema = new Schema({
+    userData: {
+        type : Schema.Types.ObjectId,
+        ref : 'User',
+    },
+    isFlagged: {
+      type: Boolean,
+      default: false
+    }
+  }, { 
+    _id : false 
+  });
+
 let schema = new Schema({
     member : {
         type : Array,
+        required: true
+    },
+    members : {
+        type : [memberSchema],
         required: true
     },
     householdName : {
@@ -34,7 +51,7 @@ let schema = new Schema({
 });
 
 schema.methods.transform = function() {
-    const fields = ['_id', 'member', 'householdName', 'householdCode', 'isWaiting', 'userId'];
+    const fields = ['_id', 'members', 'householdName', 'householdCode', 'isWaiting', 'userId'];
     const object = {};
     fields.forEach((field)=>{
         object[field] = this[field];
