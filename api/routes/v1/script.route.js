@@ -4,8 +4,12 @@ const Express = require('express'),
 const router = Express.Router();
 
 router
-    .route('/')
+    .route('/launch')
         .get(ScriptController.launch);
+
+router
+    .route('/householdMember')
+        .get(ScriptController.householdMember);
   
 
 module.exports = router;
