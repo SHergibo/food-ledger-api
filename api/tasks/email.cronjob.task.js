@@ -80,9 +80,9 @@ exports.shoppingListEmail = async () => {
     let today = new Date();
     let households = await HouseHold.find({});
     households.forEach(household => {
-      let members = household.member;
+      let members = household.members;
       members.forEach(async (member) => {
-        let option = await Option.findOne({userId : member.userId});
+        let option = await Option.findOne({userId : member.userData});
         if(option.sendMailShoppingList){
           let numberWeek = Moment(today, "DDMMYYYY").isoWeek();
           switch (option.dateMailShoppingList.value) {
@@ -231,9 +231,9 @@ exports.globalEmail = async () => {
     let households = await HouseHold.find({});
   
     households.forEach(household => {
-      let members = household.member;
+      let members = household.members;
       members.forEach(async (member) => {
-        let option = await Option.findOne({userId : member.userId});
+        let option = await Option.findOne({userId : member.userData});
 
         if(!option.sendMailGlobal && !option.sendMailShoppingList) return;
 

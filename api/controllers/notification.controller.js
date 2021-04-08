@@ -39,7 +39,7 @@ exports.findAll = async (req, res, next) => {
       notificationsSended = await Notification.find({senderUserId: req.params.userId}).lean();
       for(let notif of notificationsSended){
         let otherHousehold = await Household.findById(notif.householdId);
-        let userData = otherHousehold.member.find(member => member.userId.toString() === otherHousehold.userId.toString());
+        let userData = otherHousehold.members.find(member => member.userData.toString() === otherHousehold.userId.toString());
         notif.userId = { firstname: userData.firstname, lastname: userData.lastname };
       }
     } 

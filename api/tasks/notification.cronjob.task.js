@@ -7,7 +7,6 @@ const Notification = require('./../models/notification.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { loggerError } = require('./../../config/logger.config');
 
-//TODO envoyer un mail comme quoi si la famille n'a pas d'admin et que X temps passe la famille sera delete pour cause d'inactivité et d'un manque d'admin.
 exports.notification = async () => {
   try {
     let notificationArray = await Notification.find({ type: "request-delegate-admin" });
@@ -15,48 +14,43 @@ exports.notification = async () => {
     for (const notif of notificationArray) {
       if (notif.expirationDate < Moment().toDate()) {
         const household = await Household.findById(notif.householdId);
-        const memberArray = household.member;
+        const membersArray = household.members;
         let user = await User.findById(notif.userId);
-        if(memberArray.length === 1){
+        if(membersArray.length === 1){
           return;
         }else{
 
-          //Flagge l'ancien membre en true
-          let indexMember = memberArray.findIndex(obj => obj.usercode === user.usercode);
-          memberArray[indexMember].isFlagged = true;
-          //Update member array dans household
-          await Household.findByIdAndUpdate(notif.householdId, { member: memberArray }, { override: true, upsert: true, new: true });
+          let indexMember = membersArray.findIndex(member => member.userData.toString() === user._id.toString());
+          membersArray[indexMember].isFlagged = true;
+          await Household.findByIdAndUpdate(notif.householdId, { members: membersArray }, { override: true, upsert: true, new: true });
 
-          //Delete membre ayant déjà reçu une notification pour request switch admin
-          let newArrayMember = memberArray.filter(e => e.isFlagged !== true);
+          let newArrayMembers = membersArray.filter(member => member.isFlagged !== true);
 
-          if(newArrayMember.length >= 1){
-            //Création nouvelle notif pour le prochain membre eligible
+          if(newArrayMembers.length >= 1){
             let newNotification = await new Notification({
               message: "Vous avez été désigné.e comme nouvel administrateur.trice de cette famille, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée",
               householdId: notif.householdId,
-              userId: newArrayMember[0].userId,
+              userId: newArrayMembers[0].userData,
               type: "request-delegate-admin",
               urlRequest: "delegate-admin",
               expirationDate: Moment().add({h: 23, m: 59, s: 59}).toDate()
             });
             await newNotification.save();
 
-            socketIoEmit(newArrayMember[0].userId, [{ name : "updateNotificationReceived", data: newNotification.transform() }]);
+            socketIoEmit(newArrayMembers[0].userData, [{ name : "updateNotificationReceived", data: newNotification.transform() }]);
 
           } else {
             if(!household.lastChance){
-              for (const member of memberArray) {
-                //Création dernière notification pour changement d'admin pour chaque membre de la famille
+              for (const member of membersArray) {
                 let lastChanceNotification = await new Notification({
                   message: "Ceci est le dernier message pour accepter les droits d'administrations de votre famille, ce message a été envoyé à chaque membre de votre famille, si personne n'accepte endéans les 7 jours, votre famille sera supprimée.",
                   householdId: notif.householdId,
-                  userId: member.userId,
+                  userId: member.userData,
                   type: "last-chance-request-delegate-admin",
                   urlRequest: "delegate-admin",
                 });
                 await lastChanceNotification.save();
-                socketIoEmit(member.userId, [{ name : "updateNotificationReceived", data: lastChanceNotification.transform() }]);
+                socketIoEmit(member.userData, [{ name : "updateNotificationReceived", data: lastChanceNotification.transform() }]);
               }
               await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() }, { override: true, upsert: true, new: true });
             }
@@ -67,8 +61,7 @@ exports.notification = async () => {
     }
     for (const household of householdLastChanceArray) {
       if (household.lastChance < Moment().toDate()) {
-        //delete famille
-        await Helpers.noMoreAdmin(household.member, household._id);
+        await Helpers.noMoreAdmin(household.members, household._id);
       }
     }
   } catch (error) {

@@ -15,7 +15,7 @@ const User = require('./../models/user.model'),
 exports.add = async (req, res, next) => {
   try {
     let user;
-    let arrayOtherMember;
+    let arrayOtherMember = [];
     let searchUserArray = [];
     const userCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let household;
@@ -134,13 +134,13 @@ exports.remove = async (req, res, next) => {
     const user = await User.findById(req.params.userId);
     const household = await Household.findById(user.householdId);
 
-    let arrayMember = household.member;
-    let indexUserToDelete = arrayMember.findIndex(obj => obj.usercode === user.usercode);
-    arrayMember.splice(indexUserToDelete, 1);
+    let arrayMembers = household.members;
+    let indexUserToDelete = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
+    arrayMembers.splice(indexUserToDelete, 1);
 
     if (user.role === "admin") {
       if (!queryUserId) {
-        await Helpers.noMoreAdmin(arrayMember, household._id);
+        await Helpers.noMoreAdmin(arrayMembers, household._id);
       } else if (queryUserId) {
         let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, queryUserId);
         if (requestSwitchAdmin) {
@@ -148,7 +148,7 @@ exports.remove = async (req, res, next) => {
         }
       }
     } else if (user.role === "user") {
-      await Household.findByIdAndUpdate(household._id, { member: arrayMember }, { override: true, upsert: true, new: true });
+      await Household.findByIdAndUpdate(household._id, { members: arrayMembers }, { override: true, upsert: true, new: true });
 
       let olderHousehold = await Household.findOne({ userId: user._id });
       if (olderHousehold) {
@@ -156,7 +156,6 @@ exports.remove = async (req, res, next) => {
       }
     }
 
-    //delete toutes les notifications de l'utilisateur à delete
     let notifToDelete = await Notification.find({userId : user._id});
 
     if(notifToDelete.length >= 1){

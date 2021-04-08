@@ -12,10 +12,7 @@ const Household = require('./../models/household.model'),
 
 createObjectMemberNoExport = async (body) => {
     let objectMember = {
-        userId: body._id,
-        usercode: body.usercode,
-        firstname: body.firstname,
-        lastname: body.lastname,
+        userData: body._id,
         isFlagged: false,
     };
     return objectMember;
@@ -30,7 +27,7 @@ exports.addHousehold = async (body) => {
     const householdCode = cryptoRandomString({length: 10, type: 'url-safe'});
     let objectMember = await createObjectMemberNoExport(body.user);
     const household = new Household({
-        member: [objectMember],
+        members: [objectMember],
         householdName: body.householdName,
         userId: body.user._id,
         householdCode: householdCode
@@ -50,12 +47,12 @@ exports.requestSwitchAdmin = async (userId, query) => {
     if (!delegate) {
         return { status: 400, message: "Invalid userId!" };
     } else {
-        let arrayMember = household.member;
-        let indexMember = arrayMember.findIndex(obj => obj.usercode === oldAdmin.usercode);
+        let arrayMembers = household.members;
+        let indexMember = arrayMembers.findIndex(member => member.userData.toString() === oldAdmin._id.toString());
         if (indexMember > -1) {
-            arrayMember.splice(indexMember, 1);
+            arrayMembers.splice(indexMember, 1);
         }
-        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, member: arrayMember }, { override: true, upsert: true, new: true });
+        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, members: arrayMembers }, { override: true, upsert: true, new: true });
 
         let notification = await new Notification({
             message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'ancien.ne administrateur.trice, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée!",
@@ -69,8 +66,8 @@ exports.requestSwitchAdmin = async (userId, query) => {
 
         socketIoEmit(delegate._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
-        for (const otherUser of household.member){
-          socketIoEmit(otherUser.userId, [{name : "updateFamilly", data: household}]);
+        for (const member of household.members){
+          socketIoEmit(member.userData, [{name : "updateFamilly", data: household}]);
         }
 
         return;
@@ -80,28 +77,28 @@ exports.requestSwitchAdmin = async (userId, query) => {
   }
 };
 
-exports.noMoreAdmin = async (arrayMember, householdId) => {
+exports.noMoreAdmin = async (arrayMembers, householdId) => {
   try {
-    for (const otherUser of arrayMember) {
+    for (const member of arrayMembers) {
       let householdData = {};
       let userData;
-      let oldHousehold = await Household.findOne({ userId: otherUser.userId });
+      let oldHousehold = await Household.findOne({ userId: member.userData });
       if (oldHousehold) {
 
-          if(otherUser.isFlagged === true){
-              otherUser.isFlagged = false;
+          if(member.isFlagged === true){
+              member.isFlagged = false;
           }
           
-          userData = await User.findByIdAndUpdate(otherUser.userId, {role : "admin", householdId: oldHousehold._id }, { override: true, upsert: true, new: true });
-          let addMember = oldHousehold.member;
-          addMember.push(otherUser);
-          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { member: addMember }, { override: true, upsert: true, new: true });
+          userData = await User.findByIdAndUpdate(member.userData, {role : "admin", householdId: oldHousehold._id }, { override: true, upsert: true, new: true });
+          let addMember = oldHousehold.members;
+          addMember.push(member);
+          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember }, { override: true, upsert: true, new: true });
       }
       else {
-        userData = await User.findByIdAndUpdate(otherUser.userId, { householdId: null }, { override: true, upsert: true, new: true });
+        userData = await User.findByIdAndUpdate(member.userData, { householdId: null }, { override: true, upsert: true, new: true });
       }
 
-      let deletedNotification = await Notification.findOneAndDelete({userId : otherUser.userId, type: "last-chance-request-delegate-admin" });
+      let deletedNotification = await Notification.findOneAndDelete({userId : member.userData, type: "last-chance-request-delegate-admin" });
 
       let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData, householdData : householdData } }];
 
@@ -109,7 +106,7 @@ exports.noMoreAdmin = async (arrayMember, householdId) => {
         arraySocketIo.push({ name : "deleteNotificationReceived", data: deletedNotification._id })
       }
 
-      socketIoEmit(otherUser.userId, arraySocketIo);
+      socketIoEmit(member.userData, arraySocketIo);
     }
     await removeHousehold(householdId);
     return;
