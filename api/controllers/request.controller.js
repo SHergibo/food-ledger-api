@@ -50,7 +50,11 @@ exports.switchAdminRequest = async (req, res, next) => {
       arrayMembers.splice(indexUserToChange, 1);
       arrayMembers.unshift(AdminInfoMember);
 
-      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true });
+      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true })
+      .populate({
+        path: 'members.userData',
+        select: 'firstname lastname usercode role'
+      });
 
       user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
 
@@ -125,7 +129,11 @@ exports.switchAdminRequest = async (req, res, next) => {
           let updatedArrayMembers = household.members;
           let indexMember = updatedArrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
           updatedArrayMembers[indexMember].isFlagged = true;
-          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: updatedArrayMembers }, { override: true, upsert: true, new: true });
+          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: updatedArrayMembers }, { override: true, upsert: true, new: true })
+          .populate({
+            path: 'members.userData',
+            select: 'firstname lastname usercode role'
+          });
 
           socketIoEmit(user._id, [{name : "updateFamilly", data: updatedHousehold}]);
 
@@ -311,7 +319,11 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         );
       }
 
-      household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers}, { override: true, upsert: true, new: true });
+      household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers}, { override: true, upsert: true, new: true })
+      .populate({
+        path: 'members.userData',
+        select: 'firstname lastname usercode role'
+      });
       
       const oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id});
       const oldAdminNotificationsSended = await Notification.find({senderUserId: oldAdmin._id})

@@ -37,7 +37,12 @@ exports.findOne = async (req, res, next) => {
 */
 exports.update = async (req, res, next) => {
   try {
-    const household = await Household.findByIdAndUpdate(req.params.householdId, req.body, { override: true, upsert: true, new: true });
+    const household = await Household.findByIdAndUpdate(req.params.householdId, req.body, { override: true, upsert: true, new: true })
+    .populate({
+      path: 'members.userData',
+      select: 'firstname lastname usercode role'
+    });
+    
     return res.json(household.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -67,7 +72,11 @@ exports.kickUser = async (req, res, next) => {
         isFlagged : false
       }
       oldArrayMembers = [...oldArrayMembers, newMemberObject];
-      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldArrayMembers }, { override: true, upsert: true, new: true });
+      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldArrayMembers }, { override: true, upsert: true, new: true })
+      .populate({
+        path: 'members.userData',
+        select: 'firstname lastname usercode role'
+      });
     }else{
       user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
       oldHousehold = {};

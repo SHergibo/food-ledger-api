@@ -52,7 +52,11 @@ exports.requestSwitchAdmin = async (userId, query) => {
         if (indexMember > -1) {
             arrayMembers.splice(indexMember, 1);
         }
-        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, members: arrayMembers }, { override: true, upsert: true, new: true });
+        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, members: arrayMembers }, { override: true, upsert: true, new: true })
+        .populate({
+          path: 'members.userData',
+          select: 'firstname lastname usercode role'
+        });
 
         let notification = await new Notification({
             message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'ancien.ne administrateur.trice, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée!",
@@ -92,7 +96,11 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
           userData = await User.findByIdAndUpdate(member.userData, {role : "admin", householdId: oldHousehold._id }, { override: true, upsert: true, new: true });
           let addMember = oldHousehold.members;
           addMember.push(member);
-          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember }, { override: true, upsert: true, new: true });
+          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember }, { override: true, upsert: true, new: true })
+          .populate({
+            path: 'members.userData',
+            select: 'firstname lastname usercode role'
+          });
       }
       else {
         userData = await User.findByIdAndUpdate(member.userData, { householdId: null }, { override: true, upsert: true, new: true });
