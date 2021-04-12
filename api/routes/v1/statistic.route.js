@@ -1,15 +1,10 @@
-const Express = require('express'),
-      StatisticController = require(`${process.cwd()}/api/controllers/statistic.controller`);
-
-const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-const { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
-
-
-const router = Express.Router();
-
+const router = require('express').Router(),
+      StatisticController = require(`${process.cwd()}/api/controllers/statistic.controller`),
+      { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware'),       
+      { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
+ 
 router
   .route('/chart-data/:householdId')
-      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, StatisticController.chartData);
-
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, StatisticController.chartData);
 
 module.exports = router;

@@ -1,10 +1,6 @@
-const Express = require('express'),
-      OptionController = require(`${process.cwd()}/api/controllers/option.controller`);
-
-const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-
-
-const router = Express.Router();
+const router = require('express').Router(),
+      OptionController = require(`${process.cwd()}/api/controllers/option.controller`),
+      { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
 
 router
   .route('/:userId')

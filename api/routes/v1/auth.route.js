@@ -1,24 +1,21 @@
-const Express = require('express'),
-      AuthController = require(`${process.cwd()}/api/controllers/auth.controller`);
-
-const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-
-const router = Express.Router();
+const router = require('express').Router(),
+      AuthController = require(`${process.cwd()}/api/controllers/auth.controller`),
+      { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
 
 router
-    .route('/register')
-        .post(AuthController.register);
+  .route('/register')
+    .post(AuthController.register);
 
 router
-    .route('/login')
-        .post(AuthController.login);
+  .route('/login')
+    .post(AuthController.login);
 
 router
-    .route('/refresh-token')
-        .post(AuthController.refresh);
+  .route('/refresh-token')
+    .post(AuthController.refresh);
 
 router
-    .route('/logout')
-        .post(authorize([ADMIN, LOGGED_USER]), AuthController.logout);
+  .route('/logout')
+    .post(authorize([ADMIN, LOGGED_USER]), AuthController.logout);
 
 module.exports = router;

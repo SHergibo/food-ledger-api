@@ -1,15 +1,12 @@
-const Express = require('express'),
+const router = require('express').Router(),
       ScriptController = require(`${process.cwd()}/api/controllers/script.controller`);
-
-const router = Express.Router();
+ 
+router
+  .route('/launch')
+  .get(ScriptController.launch);
 
 router
-    .route('/launch')
-        .get(ScriptController.launch);
-
-router
-    .route('/householdMember')
-        .get(ScriptController.householdMember);
-  
+  .route('/householdMember')
+  .get(ScriptController.householdMember);
 
 module.exports = router;

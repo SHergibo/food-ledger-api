@@ -1,4 +1,4 @@
-const Express = require('express'),
+const router = require('express').Router(),
       UserRoutes = require('./user.route'),
       OptionRoutes = require('./option.route'),
       HouseholdRoutes = require('./household.route'),
@@ -13,8 +13,6 @@ const Express = require('express'),
       AuthRoutes = require('./auth.route'),
       TokenAuthRoutes = require('./token-auth.route'),
       ScriptRoutes = require('./script.route');
-
-const router = Express.Router();
 
 router.use('/auth', AuthRoutes);
 router.use('/users', UserRoutes);
