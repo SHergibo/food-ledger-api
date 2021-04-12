@@ -1,30 +1,27 @@
-const Express = require('express'),
-      ShoppingListController = require(`${process.cwd()}/api/controllers/shopping-list.controller`);
-
-const { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
-const { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware');
-
-
-const router = Express.Router();
+const router = require('express').Router(),
+      ShoppingListController = require(`${process.cwd()}/api/controllers/shopping-list.controller`),
+      { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware'),
+      { checkSameHousehold } = require('../../middlewares/sameHousehold.middleware'),
+      { isWaiting } = require('../../middlewares/isWaiting.middleware');
 
 router
   .route('/pagination/:householdId')
-      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.findPaginate);
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.findPaginate);
 
 router
   .route('/delete-pagination/:shoppingId')
-      .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.removePagination);
-  
+    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, ShoppingListController.removePagination);
+
 router
   .route('/:householdId')
-      .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.removeAll);
+    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, ShoppingListController.removeAll);
 
 router
   .route('/download/:householdId')
-      .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.download);
-  
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.download);
+
 router
-    .route('/send-mail/:householdId')
-        .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.sendMail);
+  .route('/send-mail/:householdId')
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.sendMail);
 
 module.exports = router;
