@@ -59,20 +59,25 @@ exports.findAll = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    const notification = await Notification.findByIdAndRemove(req.params.notificationId);
-    let idUser = notification.userId;
+    let notification = await Notification.findById(req.params.notificationId);
+    if(notification.type === "request-delegate-admin"){
+      return next(Boom.forbidden('Vous ne pouvez pas supprimer cette notification!'));
+    }
+
+    const notificationDeleted = await Notification.findByIdAndRemove(req.params.notificationId);
+    let idUser = notificationDeleted.userId;
     
-    if(notification.type === "invitation-user-to-household"){
-      const household = await Household.findById(notification.householdId);
+    if(notificationDeleted.type === "invitation-user-to-household"){
+      const household = await Household.findById(notificationDeleted.householdId);
       idUser = household.userId;
     }
 
-    if(notification.type !== "information"){
-      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
+    if(notificationDeleted.type !== "information"){
+      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notificationDeleted._id}]);
     }
 
-    let socketIoEmitName = notification.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
-    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notification._id}]);
+    let socketIoEmitName = notificationDeleted.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
+    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notificationDeleted._id}]);
 
     return res.status(204).send();
   } catch (error) {
