@@ -549,7 +549,7 @@ exports.addUserRespond = async (req, res, next) => {
       let oldHousehold = await Household.findById(user.householdId);
       let oldMembersArray = [];
       if (oldHousehold) {
-        oldMemberArrays = oldHousehold.members;
+        oldMembersArray = oldHousehold.members;
       }
       
       if(oldHousehold && (oldHousehold._id.toString() === newHousehold._id.toString())){
@@ -678,7 +678,7 @@ exports.addUserRespond = async (req, res, next) => {
         notificationObject.userId = user._id;
       }else if(notification.type === "invitation-household-to-user"){
         userId = newHousehold.userId;
-        notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invatation!`;
+        notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.householdId = newHousehold._id;
       }
 
