@@ -23,15 +23,18 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await ShoppingList.findById(req.params.shoppingId);
     }
 
-    if(!req.params.householdId){
-      if (data) {
+    if(req.body.householdId){
+      household = await Household.findById(req.body.householdId);
+    }else if(!req.params.householdId && !req.body.householdId){
+      if(data){
         household = await Household.findById(data.householdId);
-      } else {
+      }else{
         return next(Boom.notFound("Cette donnée n'existe pas!"));
       }
     }
 
     if ((household && household._id.toString() === req.user.householdId.toString()) || (req.params.householdId.toString() === req.user.householdId.toString())) {
+      res.locals.householdData = household;
       return next();
     } else {
       return next(Boom.unauthorized("Vous n'avez pas accès à cette donnée car elle n'appartient pas à votre famille!"));
