@@ -134,32 +134,45 @@ exports.remove = async (req, res, next) => {
     const user = await User.findById(req.params.userId);
     const household = await Household.findById(user.householdId);
 
-    let arrayMembers = household.members;
-    let indexUserToDelete = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
-    arrayMembers.splice(indexUserToDelete, 1);
-
-    if (user.role === "admin") {
-      if (!queryUserId) {
-        await Helpers.noMoreAdmin(arrayMembers, household._id);
-      } else if (queryUserId) {
-        let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, queryUserId);
-        if (requestSwitchAdmin) {
-          return next(Boom.badRequest(requestSwitchAdmin.message));
+    if(household){
+      let arrayMembers = household.members;
+      let indexUserToDelete = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
+      arrayMembers.splice(indexUserToDelete, 1);
+  
+      if (user.role === "admin") {
+        if (!queryUserId) {
+          await Helpers.noMoreAdmin(arrayMembers, household._id);
+        } else if (queryUserId) {
+          let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, queryUserId);
+          if (requestSwitchAdmin) {
+            return next(Boom.badRequest(requestSwitchAdmin.message));
+          }
         }
-      }
-    } else if (user.role === "user") {
-      await Household.findByIdAndUpdate(household._id, { members: arrayMembers }, { override: true, upsert: true, new: true });
-
-      let olderHousehold = await Household.findOne({ userId: user._id });
-      if (olderHousehold) {
-        await Helpers.removeHousehold(olderHousehold._id);
+      } else if (user.role === "user") {
+        await Household.findByIdAndUpdate(household._id, { members: arrayMembers }, { override: true, upsert: true, new: true });
+  
+        let olderHousehold = await Household.findOne({ userId: user._id });
+        if (olderHousehold) {
+          await Helpers.removeHousehold(olderHousehold._id);
+        }
       }
     }
 
-    let notifToDelete = await Notification.find({userId : user._id});
+    let notifToDelete = await Notification.find({$or : 
+      [
+        { userId: user._id },
+        { senderUserId : user._id },
+      ]
+    });
 
     if(notifToDelete.length >= 1){
       for (const notif of notifToDelete) {
+        let notifHousehold = await Household.findById(notif.householdId);
+        if(notif.userId){
+          socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationSended", data: notif._id}]);
+        }else if (notif.senderUserId){
+          socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationReceived", data: notif._id}]);
+        }
         await Notification.findByIdAndDelete(notif._id);
       }
     }
