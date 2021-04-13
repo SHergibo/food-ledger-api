@@ -38,9 +38,12 @@ exports.findAll = async (req, res, next) => {
       notificationsReceived = await Notification.find({ userId: req.params.userId });
       notificationsSended = await Notification.find({senderUserId: req.params.userId}).lean();
       for(let notif of notificationsSended){
-        let otherHousehold = await Household.findById(notif.householdId);
-        let userData = otherHousehold.members.find(member => member.userData.toString() === otherHousehold.userId.toString());
-        notif.userId = { firstname: userData.firstname, lastname: userData.lastname };
+        let otherHousehold = await Household.findById(notif.householdId)
+        .populate({
+          path: 'userId',
+          select: 'firstname lastname -_id'
+        });
+        notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
       }
     } 
     
@@ -50,6 +53,7 @@ exports.findAll = async (req, res, next) => {
     }
     return res.json(objectNotification);
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
