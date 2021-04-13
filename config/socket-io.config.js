@@ -14,10 +14,6 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
   io.on('connection', function(socket) {
     socket.on('setSocketId', async ({userId, socketId, oldSocketId}) => {
       try {
-        console.log('ICI----------------------------')
-        console.log(userId);
-        console.log(socketId);
-        console.log(oldSocketId);
         let socketIoDb = await SocketIoModel.findOne({userId : userId});
         if(socketIoDb){
           let arraySocketId = socketIoDb.socketId;
