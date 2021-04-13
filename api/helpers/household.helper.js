@@ -131,7 +131,7 @@ let removeHousehold = async (householdId) => {
     await ShoppingList.deleteMany({householdId : householdId});
     await Brand.deleteMany({householdId : householdId});
 
-    let notifications = await Notifcation.find({householdId : householdId});
+    let notifications = await Notification.find({householdId : householdId});
     for (const notif of notifications) {
       let idUser = notif.userId;
       if(notif.type === "invitation-user-to-household"){
