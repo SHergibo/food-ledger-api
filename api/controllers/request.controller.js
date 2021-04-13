@@ -419,9 +419,9 @@ exports.addUserRequest = async (req, res, next) => {
     let notificationExist = await Notification.findOne(
       {$or : 
         [
-          {type: "invitation-household-to-user", userId: user._id},
-          {type: "invitation-user-to-household", userId: user._id},
-          {type: "need-switch-admin", userId: user._id}
+          {type: "invitation-household-to-user", userId: user._id, householdId: household._id},
+          {type: "invitation-user-to-household", userId: user._id, householdId: household._id},
+          {type: "need-switch-admin", userId: user._id, householdId: household._id}
         ]
       });
 
