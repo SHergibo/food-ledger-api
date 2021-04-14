@@ -14,6 +14,16 @@ exports.findAll = async (req, res, next) => {
     let notificationsReceived = [] 
     let notificationsSended = [];
 
+    let notificationsSendedLeaned = await Notification.find({senderUserId: req.params.userId}).lean();
+    for(let notif of notificationsSendedLeaned){
+      let otherHousehold = await Household.findById(notif.householdId)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+      notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
+    }
+
     if(user.role === "admin"){
       notificationsReceived = await Notification.find({$or : 
         [
@@ -22,10 +32,9 @@ exports.findAll = async (req, res, next) => {
           { householdId : user.householdId, type: "information" },
         ]
       });
-      notificationsSended = await Notification.find(
+      let notificationsSendedPopulated = await Notification.find(
       {$or : 
         [
-          { senderUserId: req.params.userId },
           { householdId : user.householdId, type: "invitation-household-to-user" },
           { householdId : user.householdId, type: "need-switch-admin" }
         ]
@@ -34,17 +43,10 @@ exports.findAll = async (req, res, next) => {
         path: 'userId',
         select: 'firstname lastname -_id'
       });  
+      notificationsSended = [...notificationsSendedPopulated, ...notificationsSendedLeaned];
     }else if(user.role === "user"){
       notificationsReceived = await Notification.find({ userId: req.params.userId });
-      notificationsSended = await Notification.find({senderUserId: req.params.userId}).lean();
-      for(let notif of notificationsSended){
-        let otherHousehold = await Household.findById(notif.householdId)
-        .populate({
-          path: 'userId',
-          select: 'firstname lastname -_id'
-        });
-        notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
-      }
+      notificationsSended = notificationsSendedLeaned;
     } 
     
     let objectNotification ={
