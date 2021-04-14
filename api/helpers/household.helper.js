@@ -10,29 +10,23 @@ const Household = require('./../models/household.model'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper');
 
-createObjectMemberNoExport = async (body) => {
-    let objectMember = {
-        userData: body._id,
-        isFlagged: false,
-    };
-    return objectMember;
-};
-
-exports.createObjectMember = async (body) => {
-    return await createObjectMemberNoExport(body);
-};
-
 exports.addHousehold = async (body) => {
   try {
     const householdCode = cryptoRandomString({length: 10, type: 'url-safe'});
-    let objectMember = await createObjectMemberNoExport(body.user);
-    const household = new Household({
-        members: [objectMember],
+    let newHousehold = new Household({
+        members: [
+          {userData : body.userId, isFlagged: false}
+        ],
         householdName: body.householdName,
-        userId: body.user._id,
+        userId: body.userId,
         householdCode: householdCode
     });
-    await household.save();
+    newHousehold = await newHousehold.save()
+    const household = await newHousehold.populate({
+      path: 'members.userData',
+      select: 'firstname lastname usercode role'
+    })
+    .execPopulate();
     return household;
   } catch (error) {
     return error;
