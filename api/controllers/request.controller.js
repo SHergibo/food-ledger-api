@@ -586,8 +586,10 @@ exports.addUserRespond = async (req, res, next) => {
       if (oldHousehold) {
         newMembersArray.push(oldMembersArray[indexMember]);
       } else {
-        let objectMember = await Helpers.createObjectMember(user);
-        newMembersArray.push(objectMember);
+        newMembersArray.push({
+          userData: user._id,
+          isFlagged: false,
+      });
       }
 
       let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true })
