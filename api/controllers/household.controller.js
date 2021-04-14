@@ -9,9 +9,19 @@ const Household = require('./../models/household.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    const household = await Helpers.addHousehold(req.body);
-    return res.json(household.transform());
+    if(!req.user.householdId){
+      const household = await Helpers.addHousehold({
+        householdName: req.body.householdName,
+        userId: req.user._id
+      });
+      let user = await User.findByIdAndUpdate(req.user._id, {role: "admin", householdId: household._id }, { override: true, upsert: true, new: true });
+      return res.json({householdData : household.transform(), userData: user.transform()})
+    }else{
+     return next(Boom.forbidden("Vous ne pouvez pas créer de famille si vous en avez déjà une!"))
+    }
+
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
