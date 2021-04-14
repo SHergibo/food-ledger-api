@@ -474,8 +474,12 @@ exports.addUserRequest = async (req, res, next) => {
     let notificationSended;
     if(req.body.type === "userToHousehold"){
       notificationSended = await Notification.findById(notification._id).lean();
-      let userData = household.members.find(member => member.userData.toString() === household.userId.toString());
-      notificationSended.userId = { firstname: userData.firstname, lastname: userData.lastname };
+      let otherHousehold = await Household.findById(notificationSended.householdId)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+      notificationSended.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
     }else if(req.body.type ==="householdToUser"){
       notificationSended = await Notification.findById(notification._id)
         .populate({
