@@ -5,7 +5,7 @@ const router = require('express').Router(),
 
 router
   .route('/')
-    .post(HouseholdController.add);
+    .post(authorize([LOGGED_USER]), HouseholdController.add);
 
 router
   .route('/:householdId')
