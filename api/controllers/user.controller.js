@@ -58,7 +58,7 @@ exports.add = async (req, res, next) => {
     if (req.body.householdName) {
       let newHousehold = await Helpers.addHousehold({
         householdName: req.body.householdName,
-        user: user
+        userId: user._id
       });
       user = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id }, { override: true, upsert: true, new: true });
 
