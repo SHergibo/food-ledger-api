@@ -415,7 +415,7 @@ exports.addUserRequest = async (req, res, next) => {
     }
 
     if(household.isWaiting){
-      return next(Boom.badRequest("Vous ne pouvez pas envoyer une requête à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!"));
+      return next(Boom.badRequest("Vous ne pouvez pas envoyer une requête d'invitation à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!"));
     }
 
     let otherHousehold = await Household.findById(user.householdId);
