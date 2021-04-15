@@ -25,6 +25,9 @@ exports.add = async (req, res, next) => {
       if (!household) {
         return next(Boom.badRequest('Pas de famille trouvée avec ce code famille!'));
       }
+      if(household.isWaiting){
+        return next(Boom.badRequest("Vous ne pouvez pas envoyer une requête d'invitation à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!"));
+      }
     }
 
     if (req.body.othermember) {
