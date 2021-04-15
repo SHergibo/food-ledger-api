@@ -414,6 +414,10 @@ exports.addUserRequest = async (req, res, next) => {
       return next(Boom.badRequest('Code famille non valide!'));
     }
 
+    if(household.isWaiting){
+      return next(Boom.badRequest("Vous ne pouvez pas envoyer une requête à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!"));
+    }
+
     let otherHousehold = await Household.findById(user.householdId);
 
     let notificationExist = await Notification.findOne(
@@ -440,7 +444,7 @@ exports.addUserRequest = async (req, res, next) => {
     }
 
     if (otherHousehold && otherHousehold.isWaiting === true) {
-      return next(Boom.badRequest("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur!"));
+      return next(Boom.badRequest("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur.trice!"));
     }
 
     let notificationObject = {
