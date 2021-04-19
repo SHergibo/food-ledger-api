@@ -31,18 +31,38 @@ exports.add = async (req, res, next) => {
     }
 
     if (req.body.othermember) {
-      let wrongUserCode = [];
+      let errorUserCode = [];
       arrayOtherMember = req.body.othermember;
       for (const otherUsercode of arrayOtherMember) {
         const searchUser = await User.findOne({ usercode: otherUsercode });
+        let notification;
+
         if (!searchUser) {
-          wrongUserCode.push(otherUsercode);
+          errorUserCode = [...errorUserCode, {usercode : otherUsercode, errorType : "userCodeNotFound"}];
         }
-        searchUserArray.push(searchUser);
+
+        if(searchUser){
+          notification = await Notification.findOne({
+            $and: [
+              {userId : searchUser._id },
+              {$or : [
+                {type: "request-delegate-admin"},
+                {type: "last-chance-request-delegate-admin"}
+              ]}
+            ]
+          });
+          if(notification){
+            errorUserCode = [...errorUserCode, {usercode : otherUsercode, errorType : "userIsWaiting"}];
+          }
+        }
+
+        if(searchUser && !notification){
+          searchUserArray = [...searchUserArray, otherUsercode];
+        }
       }
-      if(wrongUserCode.length >= 1){
+      if(errorUserCode.length >= 1 ){
         searchUserArray = [];
-        return next(Boom.notFound('Il y a un ou plusieurs code utilisateurs invalides', wrongUserCode));
+        return next(Boom.notFound('Il y a un ou plusieurs problèmes avec certains de vos codes utilisateurs', errorUserCode));
       }
     }
 
@@ -100,6 +120,7 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
+    console.log(error);
     next(User.checkDuplicateEmail(error));
   }
 };
