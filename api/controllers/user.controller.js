@@ -120,7 +120,6 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
-    console.log(error);
     next(User.checkDuplicateEmail(error));
   }
 };
