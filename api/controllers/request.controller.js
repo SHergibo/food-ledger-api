@@ -704,7 +704,6 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
