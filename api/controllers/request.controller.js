@@ -424,7 +424,7 @@ exports.addUserRequest = async (req, res, next) => {
       {$or : 
         [
           {type: "invitation-household-to-user", userId: user._id, householdId: household._id},
-          {type: "invitation-user-to-household", userId: user._id, householdId: household._id},
+          {type: "invitation-user-to-household", senderUserId: user._id, householdId: household._id},
           {type: "need-switch-admin", userId: user._id, householdId: household._id}
         ]
       });
@@ -432,14 +432,14 @@ exports.addUserRequest = async (req, res, next) => {
     if(notificationExist){
       let errorMessage = "";
       if(req.body.type === "userToHousehold"){
-        errorMessage = "Vous avez déjà envoyé une invitation à cette famille!"
+        errorMessage = "Vous avez déjà envoyé ou reçu une invitation de cette famille!"
       }else{
-        errorMessage = "Vous avez déjà envoyé une invitation à cette personne!"
+        errorMessage = "Vous avez déjà envoyé ou reçu une invitation de cette personne!"
       }
       return next(Boom.badRequest(errorMessage));
     }
 
-    if(user.household && user.householdId.toString() === household._id.toString()){
+    if(user.householdId && user.householdId.toString() === household._id.toString()){
       return next(Boom.badRequest('Le membre fait déjà partie de cette famille !'));
     }
 
@@ -560,10 +560,6 @@ exports.addUserRespond = async (req, res, next) => {
         oldMembersArray = oldHousehold.members;
       }
       
-      if(oldHousehold && (oldHousehold._id.toString() === newHousehold._id.toString())){
-        return next(Boom.badRequest('Le membre fait déjà partie de cette famille!'));
-      }
-
       let newMembersArray = newHousehold.members;
 
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMembersArray.length > 1) {
