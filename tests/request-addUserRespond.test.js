@@ -1,12 +1,16 @@
-const request = require("supertest");
-const app = require("../config/app.config");
-const { api } = require('../config/environment.config');
-const Household = require('../api/models/household.model');
-const Notification = require('../api/models/notification.model');
-const User = require('../api/models/user.model');
+const request = require("supertest"),
+      app = require("../config/app.config"),
+      { api } = require('../config/environment.config'),
+      Household = require('../api/models/household.model'),
+      Notification = require('../api/models/notification.model'),
+      User = require('../api/models/user.model'),
+      { login } = require('./login.helper'),
+      { createAddUserRequestTest } = require('./addUserRequest.helper'),
+      { createAddUserRespondTest, acceptAddUserRequest } = require('./addUserRespond.helper');
 
-const { dbManagement, login, createAddUserRequestTest } = require('./test-utils');
+const { dbManagement } = require('./db-management-utils');
 dbManagement();
+
 
 const createErrorTest = async (adminData, urlRequest) => {
   await request(app)
@@ -165,12 +169,21 @@ describe("Test addUserRespond", () => {
     expect(userAfterSwitchFamilly.role).toBe("user");
     expect(indexUserInHouseholdAdminMemberArray).toBe(1);
   });
+  it("Create delegate Notification and check if that notification is created", async () => {
+    const { householdOne, adminTwo } = await createAddUserRespondTest();
+    const { addUserRequestResponse, notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+
+    expect(addUserRequestResponse.statusCode).toBe(204);
+    expect(notificationDelegateUser.userId.toString()).toBe(adminTwo._id.toString());
+    expect(notificationDelegateUser.householdId.toString()).toBe(householdOne._id.toString());
+    expect(notificationDelegateUser.type).toBe("need-switch-admin");
+  });
 });
 
 const adminDataComplete = {
     firstname: 'John',
     lastname: 'Doe',
-    email: 'johnDoe@test.com',
+    email: 'johndoe@test.com',
     password: '123456789',
     role : 'admin',
     householdName: "Familly-Doe"
@@ -179,7 +192,7 @@ const adminDataComplete = {
 const userDataComplete = {
   firstname: 'David',
   lastname: 'Doe',
-  email: 'DavidDoe@test.com',
+  email: 'daviddoe@test.com',
   password: '123456789',
   role : 'admin',
   householdName: "Familly-DavidDoe"
