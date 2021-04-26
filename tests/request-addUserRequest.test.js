@@ -1,4 +1,5 @@
-const { dbManagement, createAddUserRequestTest } = require('./test-utils');
+const { createAddUserRequestTest } = require('./addUserRequest.helper');
+const { dbManagement } = require('./db-management-utils');
 dbManagement();
 
 describe("Test simple add user request", () => {
@@ -15,7 +16,7 @@ describe("Test simple add user request", () => {
 const adminDataComplete = {
     firstname: 'John',
     lastname: 'Doe',
-    email: 'johnDoe@test.com',
+    email: 'johndoe@test.com',
     password: '123456789',
     role : 'admin',
     householdName: "Familly-Doe"
@@ -24,7 +25,7 @@ const adminDataComplete = {
 const userDataComplete = {
   firstname: 'David',
   lastname: 'Doe',
-  email: 'DavidDoe@test.com',
+  email: 'daviddoe@test.com',
   password: '123456789',
   role : 'admin',
   householdName: "Familly-DavidDoe"

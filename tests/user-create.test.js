@@ -1,9 +1,10 @@
-const request = require("supertest");
-const app = require("./../config/app.config");
-const { api } = require('./../config/environment.config');
-const Household = require('./../api/models/household.model');
+const request = require("supertest"),
+      app = require("./../config/app.config"),
+      { api } = require('./../config/environment.config'),
+      Household = require('./../api/models/household.model'),
+      { login } = require('./login.helper');
 
-const { dbManagement, login } = require('./test-utils');
+const { dbManagement } = require('./db-management-utils');
 dbManagement();
 
 describe("User test", () => {
@@ -45,7 +46,7 @@ describe("User test", () => {
 const userDataComplete = {
   firstname: 'John',
   lastname: 'Doe',
-  email: 'johnDoe@test.com',
+  email: 'johndoe@test.com',
   password: '123456789',
   role : 'admin',
   householdName: "Familly-Doe"
@@ -54,7 +55,7 @@ const userDataComplete = {
 const userDataMissing = {
   firstname: 'John',
   lastname: 'Doe',
-  email: 'johnDoe@test.com',
+  email: 'johndoe@test.com',
   password: '123456789',
   role : 'admin'
 };
