@@ -512,14 +512,6 @@ exports.addUserRespond = async (req, res, next) => {
       return next(Boom.badRequest('Paramètre de requête invalide!'));
     }
 
-    if (req.query.otherMember) {
-      let otherMember = await User.findById(req.query.otherMember);
-
-      if (!otherMember) {
-        return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
-      }
-    }
-
     let notification = await Notification.findById(req.params.notificationId);
     if(!notification){
       return next(Boom.notFound('Notification non trouvée!'));
@@ -589,14 +581,8 @@ exports.addUserRespond = async (req, res, next) => {
         newMembersArray.push({
           userData: user._id,
           isFlagged: false,
-      });
+        });
       }
-
-      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true })
-      .populate({
-        path: 'members.userData',
-        select: 'firstname lastname usercode role'
-      });
 
       let updatedOldHousehold;
       let updatedUser;
@@ -623,12 +609,12 @@ exports.addUserRespond = async (req, res, next) => {
 
       let requestSwitchAdmin = {};
       if (user.role === "admin" && oldMembersArray.length > 1 && req.query.otherMember) {
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
-
         requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin) {
-          return next(Boom.badRequest(requestSwitchAdmin.message));
+          return next(requestSwitchAdmin);
         }
+
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
       }
       
       if(user.role === "admin" && oldMembersArray.length > 1 && !req.query.otherMember){
@@ -639,6 +625,12 @@ exports.addUserRespond = async (req, res, next) => {
         await Helpers.noMoreAdmin(oldMembersArray, oldHousehold._id);
       }
 
+      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true })
+      .populate({
+        path: 'members.userData',
+        select: 'firstname lastname usercode role'
+      });
+    
       if(user.role === "user"){
         socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser, householdData : updatedNewHousehold}}]);
       }else{
