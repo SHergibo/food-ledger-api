@@ -6,11 +6,11 @@ const request = require("supertest"),
       User = require('../api/models/user.model'),
       Option = require('../api/models/option.model'),
       Notification = require('../api/models/notification.model'),
-      cryptoRandomString = require('crypto-random-string');
-
+      cryptoRandomString = require('crypto-random-string'),
+      {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('./test-data');
 
 const createUser = async (userData) => {
-  let createUser = await new User({
+  let createdUser = await new User({
     firstname: userData.firstname,
     lastname: userData.lastname,
     email: userData.email,
@@ -18,13 +18,13 @@ const createUser = async (userData) => {
     role: userData.role,
     usercode: cryptoRandomString({length: 10, type: 'url-safe'}),
   });
-  await createUser.save();
+  await createdUser.save();
 
-  let option = new Option({userId : user._id});
+  let option = new Option({userId : createdUser._id});
   await option.save();
 
-  createUser = await User.findByIdAndUpdate(createUser._id, { optionId: option._id }, { override: true, upsert: true, new: true });
-  return createUser;
+  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id }, { override: true, upsert: true, new: true });
+  return createdUser;
 };
 
 const createHousehold = async (userId, householdName) => {
@@ -98,45 +98,36 @@ module.exports.acceptAddUserRequest = async (adminTwo, householdOne) => {
   .set('Authorization', `Bearer ${accessTokenAdminOne}`);
 
   const notificationDelegateUser = await Notification.findOne({
+    message: "L'administrateur.trice a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
     userId : adminTwo._id,
     householdId : householdOne._id,
-    type: "need-switch-admin"
+    type: "need-switch-admin",
+    urlRequest: "add-user-respond"
   });
 
   return { addUserRequestResponse, notificationDelegateUser };
 };
 
-const adminOneDataComplete = {
-  firstname: 'John',
-  lastname: 'Doe',
-  email: 'johndoe@test.com',
-  password: '123456789',
-  role : 'admin',
-  householdName: "Familly-Doe"
-};
+module.exports.delegateWithOtherMember = async (adminTwo, householdOne, householdTwo, notificationId, otherMember) => {
+  const accessTokenAdminTwo = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
-const adminTwoDataComplete = {
-  firstname: 'David',
-  lastname: 'Doe',
-  email: 'daviddoe@test.com',
-  password: '123456789',
-  role : 'admin',
-  householdName: "Familly-DavidDoe"
-};
+  const delegateResponse = await request(app)
+  .get(`/api/${api}/requests/add-user-respond/${notificationId}?acceptedRequest=yes&otherMember=${otherMember}`)
+  .set('Authorization', `Bearer ${accessTokenAdminTwo}`);
 
-const userTwoDataComplete = {
-  firstname: 'Sabine',
-  lastname: 'Doe',
-  email: 'sabinedoe@test.com',
-  password: '123456789',
-  role : 'user',
-};
+  const notificationRequestDelegateAdmin = await Notification.findOne({
+    userId : otherMember,
+    householdId : adminTwo.householdId,
+    type: "request-delegate-admin",
+    urlRequest : "delegate-admin",
+  });
 
-const userThreeDataComplete = {
-  firstname: 'Jules',
-  lastname: 'Doe',
-  email: 'julesjoe@test.com',
-  password: '123456789',
-  role : 'user',
-  householdName: "Familly-JulesDoe"
+  const householdOneAfterSwitch = await Household.findById(householdOne._id);
+  const isUserInHouseholdOne = householdOneAfterSwitch.members.find(member => member.userData.toString() === adminTwo._id.toString());
+  const householdTwoAfterSwitch = await Household.findById(householdTwo._id);
+  const isUserInHouseholdTwo = householdTwoAfterSwitch.members.find(member => member.userData.toString() === adminTwo._id.toString());
+
+  const adminTwoAfterSwitch = await User.findById(adminTwo._id);
+
+  return { delegateResponse, notificationRequestDelegateAdmin, householdOneAfterSwitch, householdTwoAfterSwitch, isUserInHouseholdOne, isUserInHouseholdTwo, adminTwoAfterSwitch };
 };
