@@ -1,10 +1,13 @@
-const { createAddUserRequestTest } = require('./addUserRequest.helper');
+const { createAddUserRequestTest } = require('./addUserRequest.helper'),
+      { adminOneDataComplete, adminTwoDataComplete } = require('./test-data');
+
 const { dbManagement } = require('./db-management-utils');
+
 dbManagement();
 
 describe("Test simple add user request", () => {
   it("Send addUser request from admin to user and test if notification is created", async () => {
-    const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminDataComplete, userDataComplete);
+    const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.userId.toString()).toBe(user._id.toString());
@@ -12,21 +15,3 @@ describe("Test simple add user request", () => {
     expect(notificationAddUser.type).toBe("invitation-household-to-user");
   });
 });
-
-const adminDataComplete = {
-    firstname: 'John',
-    lastname: 'Doe',
-    email: 'johndoe@test.com',
-    password: '123456789',
-    role : 'admin',
-    householdName: "Familly-Doe"
-};
-
-const userDataComplete = {
-  firstname: 'David',
-  lastname: 'Doe',
-  email: 'daviddoe@test.com',
-  password: '123456789',
-  role : 'admin',
-  householdName: "Familly-DavidDoe"
-}
