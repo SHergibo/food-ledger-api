@@ -6,7 +6,8 @@ const request = require("supertest"),
       User = require('../api/models/user.model'),
       { login } = require('./login.helper'),
       { createAddUserRequestTest } = require('./addUserRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest } = require('./addUserRespond.helper');
+      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper'),
+      { adminOneDataComplete, adminTwoDataComplete } = require('./test-data');
 
 const { dbManagement } = require('./db-management-utils');
 dbManagement();
@@ -27,39 +28,31 @@ const createErrorTest = async (adminData, urlRequest) => {
 };
 
 describe("Test addUserRespond", () => {
-  it("Send add user request without acceptedRequest query", async () => {
+  it("Test1) send add user request without acceptedRequest query", async () => {
     const url = 'no-notification-id';
-    const res = await createErrorTest(adminDataComplete, url);
+    const res = await createErrorTest(adminOneDataComplete, url);
     
     expect(res.statusCode).toBe(400);
     expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toBe("Besoin d'un paramètre de requête!");
+    expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
   });
-  it("Send add user request with a wrong acceptedRequest query", async () => {
+  it("Test 2) send add user request with a wrong acceptedRequest query", async () => {
     const url = 'no-notification-id?acceptedRequest=oui';
-    const res = await createErrorTest(adminDataComplete, url);
+    const res = await createErrorTest(adminOneDataComplete, url);
     
     expect(res.statusCode).toBe(400);
     expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toBe("Paramètre de requête invalide!");
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
   });
-  it("Send add user request with a bad otherMember query", async () => {
-    const url = 'no-notification-id?acceptedRequest=yes&otherMember=606dad080ac1c22766b37a53';
-    const res = await createErrorTest(adminDataComplete, url);
-    
-    expect(res.statusCode).toBe(404);
-    expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toBe("Code utilisateur du/de la délégué.e non trouvé!");
-  });
-  it("Send add user request with a bad notification id", async () => {
+  it("Test 3) send add user request with a bad notification id", async () => {
     const url = '606dad080ac1c22766b37a53?acceptedRequest=yes';
-    const res = await createErrorTest(adminDataComplete, url);
+    const res = await createErrorTest(adminOneDataComplete, url);
     
     expect(res.statusCode).toBe(404);
     expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toBe("Notification non trouvée!");
+    expect(res.error.output.payload.message).toMatch("Notification non trouvée!");
   });
-  it("Send add user request with a wrong notification id", async () => {
+  it("Test 4) send add user request with a wrong notification id", async () => {
     let createWrongNotification = await new Notification({
       message: "Mauvaise notification test",
       householdId: "606dad080ac1c22766b37a53",
@@ -70,13 +63,13 @@ describe("Test addUserRespond", () => {
     await createWrongNotification.save();
 
     const url = `${createWrongNotification._id}?acceptedRequest=yes`
-    const res = await createErrorTest(adminDataComplete, url);
+    const res = await createErrorTest(adminOneDataComplete, url);
     
     expect(res.statusCode).toBe(400);
     expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toBe("Mauvaise notification!");
+    expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
   });
-  it("Test if another notification of type request-admin exist", async () => {
+  it("Test 5) test if another notification of type request-admin exist", async () => {
     let createGoodNotification = await new Notification({
       message: "Mauvaise notification test",
       householdId: "606dad080ac1c22766b37a53",
@@ -88,7 +81,7 @@ describe("Test addUserRespond", () => {
 
     const admin = await request(app)
       .post(`/api/${api}/users`)
-      .send(adminDataComplete);
+      .send(adminOneDataComplete);
 
     let createNotificationRequestAdmin = await new Notification({
       message: "Notification request admin",
@@ -100,7 +93,7 @@ describe("Test addUserRespond", () => {
     });
     await createNotificationRequestAdmin.save();
 
-    const accessTokenAdmin = await login(adminDataComplete.email, adminDataComplete.password);
+    const accessTokenAdmin = await login(adminOneDataComplete.email, adminOneDataComplete.password);
 
     const res = await request(app)
       .get(`/api/${api}/requests/add-user-respond/${createGoodNotification._id}?acceptedRequest=yes`)
@@ -108,12 +101,12 @@ describe("Test addUserRespond", () => {
 
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.error.text).isBoom).toBe(true);
-    expect(JSON.parse(res.error.text).output.payload.message).toBe("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!");
+    expect(JSON.parse(res.error.text).output.payload.message).toMatch("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!");
   });
-  it("Send addUser request from admin to user and the user reject the offer", async () => {
-    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminDataComplete, userDataComplete);
+  it("Test 6) send addUser request from admin to user and the user reject the offer", async () => {
+    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
-    const accessTokenUser = await login(userDataComplete.email, userDataComplete.password);
+    const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
     const rejectAddUserRequest = await request(app)
     .get(`/api/${api}/requests/add-user-respond/${notificationAddUser._id}?acceptedRequest=no`)
@@ -133,18 +126,18 @@ describe("Test addUserRespond", () => {
     const householdUser = await Household.findById(user.householdId);
 
     expect(rejectAddUserRequest.statusCode).toBe(204);
-    expect(notificationAddUserDeleted).toBe(null);
+    expect(notificationAddUserDeleted).toBeNull();
 
     expect(notificationInformation.householdId.toString()).toBe(admin.householdId.toString());
-    expect(notificationInformation.type).toBe("information");
+    expect(notificationInformation.type).toMatch("information");
 
     expect(user.householdId.toString()).toBe(householdUser._id.toString());
     expect(user._id.toString()).toBe(householdUser.userId.toString());
   });
-  it("Send addUser request from admin to user and the user accept the offer", async () => {
-    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminDataComplete, userDataComplete);
+  it("Test 7) send addUser request from admin to user and the user accept the offer", async () => {
+    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
-    const accessTokenUser = await login(userDataComplete.email, userDataComplete.password);
+    const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
     const acceptAddUserRequest = await request(app)
     .get(`/api/${api}/requests/add-user-respond/${notificationAddUser._id}?acceptedRequest=yes`)
@@ -162,38 +155,56 @@ describe("Test addUserRespond", () => {
     const indexUserInHouseholdAdminMemberArray = householAdminWithNewMember.members.findIndex(member => member.userData.toString() === userAfterSwitchFamilly._id.toString())
 
     expect(acceptAddUserRequest.statusCode).toBe(204);
-    expect(notificationAddUserDeleted).toBe(null);
+    expect(notificationAddUserDeleted).toBeNull();
 
     expect(householdUser.members.length).toBe(0);
     expect(userAfterSwitchFamilly.householdId.toString()).toBe(householdAdmin._id.toString());
-    expect(userAfterSwitchFamilly.role).toBe("user");
+    expect(userAfterSwitchFamilly.role).toMatch("user");
     expect(indexUserInHouseholdAdminMemberArray).toBe(1);
   });
-  it("Create delegate Notification and check if that notification is created", async () => {
+  it("Test 8) create delegate Notification and check if that notification is created", async () => {
     const { householdOne, adminTwo } = await createAddUserRespondTest();
     const { addUserRequestResponse, notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
 
     expect(addUserRequestResponse.statusCode).toBe(204);
     expect(notificationDelegateUser.userId.toString()).toBe(adminTwo._id.toString());
     expect(notificationDelegateUser.householdId.toString()).toBe(householdOne._id.toString());
-    expect(notificationDelegateUser.type).toBe("need-switch-admin");
+    expect(notificationDelegateUser.type).toMatch("need-switch-admin");
+  });
+  it("Test 9) admin delegate admin rights with a wrong otherMember query", async () => {
+    const { householdOne, adminTwo, householdTwo } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { delegateResponse, notificationRequestDelegateAdmin, isUserInHouseholdOne, isUserInHouseholdTwo, adminTwoAfterSwitch } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, "606dad080ac1c22766b37a55");
+
+    expect(delegateResponse.statusCode).toBe(404);
+    expect(JSON.parse(delegateResponse.error.text).isBoom).toBe(true);
+    expect(JSON.parse(delegateResponse.error.text).output.payload.message).toMatch("Code utilisateur du/de la délégué.e non trouvé!");
+    expect(notificationRequestDelegateAdmin).toBeNull();
+    expect(isUserInHouseholdOne).toBeUndefined();
+    expect(isUserInHouseholdTwo.userData.toString()).toBe(adminTwo._id.toString());
+    expect(adminTwoAfterSwitch.role).toMatch("admin");
+    expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdTwo._id.toString());
+  });
+  it("Test 10) admin delegate admin rights with a good otherMember query", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { 
+      delegateResponse, 
+      notificationRequestDelegateAdmin, 
+      householdTwoAfterSwitch,
+      isUserInHouseholdOne, 
+      isUserInHouseholdTwo, 
+      adminTwoAfterSwitch 
+    } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+
+    expect(delegateResponse.statusCode).toBe(204);
+    expect(notificationRequestDelegateAdmin.userId.toString()).toBe(userTwo._id.toString());
+    expect(notificationRequestDelegateAdmin.householdId.toString()).toBe(householdTwo._id.toString());
+    expect(notificationRequestDelegateAdmin.type).toMatch("request-delegate-admin");
+    expect(isUserInHouseholdOne.userData.toString()).toBe(adminTwo._id.toString());
+    expect(isUserInHouseholdTwo).toBeUndefined();
+    expect(adminTwoAfterSwitch.role).toMatch("user");
+    expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdOne._id.toString());
+    expect(householdTwoAfterSwitch.isWaiting).toBe(true);
   });
 });
-
-const adminDataComplete = {
-    firstname: 'John',
-    lastname: 'Doe',
-    email: 'johndoe@test.com',
-    password: '123456789',
-    role : 'admin',
-    householdName: "Familly-Doe"
-};
-
-const userDataComplete = {
-  firstname: 'David',
-  lastname: 'Doe',
-  email: 'daviddoe@test.com',
-  password: '123456789',
-  role : 'admin',
-  householdName: "Familly-DavidDoe"
-};
