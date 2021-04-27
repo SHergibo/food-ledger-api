@@ -39,7 +39,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
     let oldAdmin = await User.findById(userId);
     let household = await Household.findOne({ userId });
     if (!delegate) {
-        return { status: 400, message: "Invalid userId!" };
+        return Boom.notFound("Code utilisateur du/de la délégué.e non trouvé!")
     } else {
         let arrayMembers = household.members;
         let indexMember = arrayMembers.findIndex(member => member.userData.toString() === oldAdmin._id.toString());
