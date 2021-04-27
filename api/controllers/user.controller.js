@@ -168,7 +168,7 @@ exports.remove = async (req, res, next) => {
         } else if (queryUserId) {
           let requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, queryUserId);
           if (requestSwitchAdmin) {
-            return next(Boom.badRequest(requestSwitchAdmin.message));
+            return next(requestSwitchAdmin);
           }
         }
       } else if (user.role === "user") {
