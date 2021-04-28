@@ -1,11 +1,71 @@
-const { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper');
-const { userAcceptNotificationRequestDelegateAdmin } = require('./switchAdminRequest.helper');
+const { createErrorTest } = require('./createErrorTestRequest.helper'),
+      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper'),
+      { userAcceptNotificationRequestDelegateAdmin } = require('./switchAdminRequest.helper'),
+      { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('./test-data');
 
 const { dbManagement } = require('./db-management-utils');
 dbManagement();
 
+const URL_REQUEST = "delegate-admin";
+
 describe("Test addUserRespond", () => {
-  it("User accept notificationRequestDelegateAdmin", async () => {
+  it("Test 1) send delegate admin request with a bad notification id", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+    );
+    
+    expect(res.statusCode).toBe(404);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Notification non trouvée!");
+  });
+  it("Test 2) send delegate admin request with a wrong notification id", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationAddUserRespond
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
+  });
+  it("Test3) send delegate admin request without acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
+  });
+  it("Test 4) send delegate admin request with a wrong acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin,
+      '?acceptedRequest=oui'
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
+  });
+  it("Test 5) send delegate admin request with a wrong otherMember query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin,
+      '?acceptedRequest=yes&otherMember=606dad080ac1c22766b37a53'
+    );
+    
+    expect(res.statusCode).toBe(404);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Code utilisateur du/de la délégué.e non trouvé!");
+  });
+  it("Test 6) user accept notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
