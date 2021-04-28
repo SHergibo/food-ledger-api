@@ -40,3 +40,19 @@ module.exports.userDataMissing = {
   password: '123456789',
   role : 'admin'
 };
+
+module.exports.notificationAddUserRespond = {
+  message: "Bonne notification test",
+  householdId: "606dad080ac1c22766b37a53",
+  userId: "606dad080ac1c22766b37a53",
+  type: "need-switch-admin",
+  urlRequest: "add-user-respond"
+}
+
+module.exports.notificationDelegateAdmin = {
+  message: "Mauvaise notification test",
+  householdId: "606dad080ac1c22766b37a53",
+  userId: "606dad080ac1c22766b37a53",
+  type: "need-switch-admin",
+  urlRequest: "delegate-admin"
+};
