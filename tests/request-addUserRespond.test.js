@@ -5,69 +5,60 @@ const request = require("supertest"),
       Notification = require('../api/models/notification.model'),
       User = require('../api/models/user.model'),
       { login } = require('./login.helper'),
+      { createErrorTest } = require('./createErrorTestRequest.helper'),
       { createAddUserRequestTest } = require('./addUserRequest.helper'),
       { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper'),
-      { adminOneDataComplete, adminTwoDataComplete } = require('./test-data');
+      { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('./test-data');
 
 const { dbManagement } = require('./db-management-utils');
 dbManagement();
 
-
-const createErrorTest = async (adminData, urlRequest) => {
-  await request(app)
-    .post(`/api/${api}/users`)
-    .send(adminData);
-
-  const accessTokenAdmin = await login(adminData.email, adminData.password);
-
-  const res = await request(app)
-    .get(`/api/${api}/requests/add-user-respond/${urlRequest}`)
-    .set('Authorization', `Bearer ${accessTokenAdmin}`);
-
-  return {statusCode : res.statusCode, error : JSON.parse(res.error.text)};
-};
+const URL_REQUEST = "add-user-respond";
 
 describe("Test addUserRespond", () => {
-  it("Test1) send add user request without acceptedRequest query", async () => {
-    const url = 'no-notification-id';
-    const res = await createErrorTest(adminOneDataComplete, url);
-    
-    expect(res.statusCode).toBe(400);
-    expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
-  });
-  it("Test 2) send add user request with a wrong acceptedRequest query", async () => {
-    const url = 'no-notification-id?acceptedRequest=oui';
-    const res = await createErrorTest(adminOneDataComplete, url);
-    
-    expect(res.statusCode).toBe(400);
-    expect(res.error.isBoom).toBe(true);
-    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
-  });
-  it("Test 3) send add user request with a bad notification id", async () => {
-    const url = '606dad080ac1c22766b37a53?acceptedRequest=yes';
-    const res = await createErrorTest(adminOneDataComplete, url);
+  it("Test 1) send add user request with a bad notification id", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+    );
     
     expect(res.statusCode).toBe(404);
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Notification non trouvée!");
   });
-  it("Test 4) send add user request with a wrong notification id", async () => {
-    let createWrongNotification = await new Notification({
-      message: "Mauvaise notification test",
-      householdId: "606dad080ac1c22766b37a53",
-      userId: "606dad080ac1c22766b37a53",
-      type: "need-switch-admin",
-      urlRequest: "delegate-admin"
-    });
-    await createWrongNotification.save();
-
-    const url = `${createWrongNotification._id}?acceptedRequest=yes`
-    const res = await createErrorTest(adminOneDataComplete, url);
+  it("Test 2) send add user request with a wrong notification id", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin
+    );
     
     expect(res.statusCode).toBe(400);
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
+  });
+  it("Test 3) send add user request without acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationAddUserRespond
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
+  });
+  it("Test 4) send add user request with a wrong acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationAddUserRespond,
+      '?acceptedRequest=oui'
+      );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
   });
   it("Test 5) test if another notification of type request-admin exist", async () => {
     let createGoodNotification = await new Notification({
