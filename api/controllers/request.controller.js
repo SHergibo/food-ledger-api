@@ -14,19 +14,36 @@ exports.switchAdminRequest = async (req, res, next) => {
   try {
 
     if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest('invalid query'));
+      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
+    }
+
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
+      return next(Boom.badRequest('Paramètre de requête invalide!'));
+    }
+
+    let otherMember;
+    if(req.query.otherMember){
+      otherMember = await User.findById(req.query.otherMember);
+
+      if (!otherMember) {
+        return next(Boom.badRequest('Code utilisateur du/de la délégué.e non trouvé!'));
+      }
     }
 
     const notification = await Notification.findById(req.params.notificationId);
+
+    if (!notification) {
+      return next(Boom.notFound('Notification non trouvée!'));
+    }
+
+    if(notification.urlRequest !== 'delegate-admin'){
+      return next(Boom.badRequest('Mauvaise notification!'));
+    }
 
     if(notification.type !== "last-chance-request-delegate-admin"){
       await Notification.findByIdAndDelete(notification._id);
     }
     
-    if (!notification) {
-      return next(Boom.notFound('Notification not found!'));
-    }
-
     let user;
     let household = await Household.findById(notification.householdId);
     let arrayMembers = household.members;
@@ -137,13 +154,6 @@ exports.switchAdminRequest = async (req, res, next) => {
 
           socketIoEmit(user._id, [{name : "updateFamilly", data: updatedHousehold}]);
 
-          let otherMember = await User.findById(req.query.otherMember);
-
-          if (!otherMember) {
-            return next(Boom.badRequest('User not found!'));
-          }
-
-          //Créer la notification pour que le membre désigné comme nouvel admin, accepte ou non la requête.
           let newNotification = await new Notification({
             message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'ancien.ne administrateur.trice, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée!",
             householdId: notification.householdId,
