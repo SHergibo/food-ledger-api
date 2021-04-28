@@ -12,6 +12,15 @@ const Household = require('./../models/household.model'),
 */
 exports.switchAdminRequest = async (req, res, next) => {
   try {
+    const notification = await Notification.findById(req.params.notificationId);
+
+    if (!notification) {
+      return next(Boom.notFound('Notification non trouvée!'));
+    }
+
+    if(notification.urlRequest !== 'delegate-admin'){
+      return next(Boom.badRequest('Mauvaise notification!'));
+    }
 
     if (!req.query.acceptedRequest) {
       return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
@@ -26,18 +35,8 @@ exports.switchAdminRequest = async (req, res, next) => {
       otherMember = await User.findById(req.query.otherMember);
 
       if (!otherMember) {
-        return next(Boom.badRequest('Code utilisateur du/de la délégué.e non trouvé!'));
+        return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
       }
-    }
-
-    const notification = await Notification.findById(req.params.notificationId);
-
-    if (!notification) {
-      return next(Boom.notFound('Notification non trouvée!'));
-    }
-
-    if(notification.urlRequest !== 'delegate-admin'){
-      return next(Boom.badRequest('Mauvaise notification!'));
     }
 
     if(notification.type !== "last-chance-request-delegate-admin"){
@@ -514,20 +513,20 @@ exports.addUserRequest = async (req, res, next) => {
 */
 exports.addUserRespond = async (req, res, next) => {
   try {
-    if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
-    }
-
-    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Paramètre de requête invalide!'));
-    }
-
     let notification = await Notification.findById(req.params.notificationId);
     if(!notification){
       return next(Boom.notFound('Notification non trouvée!'));
     }
     if(notification.urlRequest !== 'add-user-respond'){
       return next(Boom.badRequest('Mauvaise notification!'));
+    }
+
+    if (!req.query.acceptedRequest) {
+      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
+    }
+
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
+      return next(Boom.badRequest('Paramètre de requête invalide!'));
     }
     
     if(notification.type === "need-switch-admin"){
