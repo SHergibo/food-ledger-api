@@ -1,9 +1,9 @@
-const { createErrorTest } = require('./createErrorTestRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper'),
-      { userAcceptNotificationRequestDelegateAdmin } = require('./switchAdminRequest.helper'),
-      { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('./test-data');
+const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
+      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
+      { userAcceptNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
+      { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
-const { dbManagement } = require('./db-management-utils');
+const { dbManagement } = require('../db-management-utils');
 dbManagement();
 
 const URL_REQUEST = "delegate-admin";

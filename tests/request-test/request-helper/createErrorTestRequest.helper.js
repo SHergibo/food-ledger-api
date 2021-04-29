@@ -1,8 +1,8 @@
 const request = require("supertest"),
-      app = require("../config/app.config"),
-      { api } = require('../config/environment.config'),
-      Notification = require('../api/models/notification.model'),
-      { login } = require('./login.helper');
+      app = require("../../../config/app.config"),
+      { api } = require('../../../config/environment.config'),
+      Notification = require('../../../api/models/notification.model'),
+      { login } = require('../../login.helper');
 
 module.exports.createErrorTest = async (adminData, urlRequest, objectNotif, queryParams = '') => {
   await request(app)

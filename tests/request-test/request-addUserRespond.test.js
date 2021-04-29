@@ -1,16 +1,16 @@
 const request = require("supertest"),
-      app = require("../config/app.config"),
-      { api } = require('../config/environment.config'),
-      Household = require('../api/models/household.model'),
-      Notification = require('../api/models/notification.model'),
-      User = require('../api/models/user.model'),
-      { login } = require('./login.helper'),
-      { createErrorTest } = require('./createErrorTestRequest.helper'),
-      { createAddUserRequestTest } = require('./addUserRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./addUserRespond.helper'),
-      { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('./test-data');
+      app = require("./../../config/app.config"),
+      { api } = require('./../../config/environment.config'),
+      Household = require('./../../api/models/household.model'),
+      Notification = require('./../../api/models/notification.model'),
+      User = require('./../../api/models/user.model'),
+      { login } = require('../login.helper'),
+      { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
+      { createAddUserRequestTest } = require('./request-helper/addUserRequest.helper'),
+      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
+      { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data');
 
-const { dbManagement } = require('./db-management-utils');
+const { dbManagement } = require('../db-management-utils');
 dbManagement();
 
 const URL_REQUEST = "add-user-respond";

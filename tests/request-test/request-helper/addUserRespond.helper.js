@@ -1,13 +1,13 @@
 const request = require("supertest"),
-      app = require("../config/app.config"), 
-      { api } = require('../config/environment.config'),
-      { login } = require('./login.helper'),
-      Household = require('../api/models/household.model'),
-      User = require('../api/models/user.model'),
-      Option = require('../api/models/option.model'),
-      Notification = require('../api/models/notification.model'),
+      app = require("../../../config/app.config"), 
+      { api } = require('../../../config/environment.config'),
+      { login } = require('../../login.helper'),
+      Household = require('../../../api/models/household.model'),
+      User = require('../../../api/models/user.model'),
+      Option = require('../../../api/models/option.model'),
+      Notification = require('../../../api/models/notification.model'),
       cryptoRandomString = require('crypto-random-string'),
-      {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('./test-data');
+      {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data');
 
 const createUser = async (userData) => {
   let createdUser = await new User({

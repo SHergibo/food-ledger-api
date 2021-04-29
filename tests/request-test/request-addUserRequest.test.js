@@ -1,7 +1,7 @@
-const { createAddUserRequestTest } = require('./addUserRequest.helper'),
-      { adminOneDataComplete, adminTwoDataComplete } = require('./test-data');
+const { createAddUserRequestTest } = require('./request-helper/addUserRequest.helper'),
+      { adminOneDataComplete, adminTwoDataComplete } = require('../test-data');
 
-const { dbManagement } = require('./db-management-utils');
+const { dbManagement } = require('../db-management-utils');
 
 dbManagement();
 

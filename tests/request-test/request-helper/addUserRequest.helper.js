@@ -1,9 +1,9 @@
 const request = require("supertest");
-const app = require("./../config/app.config");
-const { api } = require('./../config/environment.config');
-const Household = require('../api/models/household.model');
-const Notification = require('../api/models/notification.model');
-const { login } = require('./login.helper');
+const app = require("../../../config/app.config");
+const { api } = require('../../../config/environment.config');
+const Household = require('../../../api/models/household.model');
+const Notification = require('../../../api/models/notification.model');
+const { login } = require('../../login.helper');
 
 module.exports.createAddUserRequestTest = async (adminData, userData) => {
   const admin = await request(app)

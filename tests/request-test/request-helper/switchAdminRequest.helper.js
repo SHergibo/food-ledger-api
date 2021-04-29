@@ -1,11 +1,11 @@
 const request = require("supertest"),
-      app = require("../config/app.config"), 
-      { api } = require('../config/environment.config'),
-      { login } = require('./login.helper'),
-      Household = require('../api/models/household.model'),
-      User = require('../api/models/user.model'),
-      Notification = require('../api/models/notification.model'),
-      data = require('./test-data');
+      app = require("../../../config/app.config"), 
+      { api } = require('../../../config/environment.config'),
+      { login } = require('../../login.helper'),
+      Household = require('../../../api/models/household.model'),
+      User = require('../../../api/models/user.model'),
+      Notification = require('../../../api/models/notification.model'),
+      data = require('../../test-data');
 
 module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
 
