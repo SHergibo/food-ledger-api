@@ -30,7 +30,7 @@ describe("Test addUserRespond", () => {
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
   });
-  it("Test3) send delegate admin request without acceptedRequest query", async () => {
+  it("Test 3) send delegate admin request without acceptedRequest query", async () => {
     const res = await createErrorTest(
       adminOneDataComplete, 
       URL_REQUEST,
@@ -74,8 +74,10 @@ describe("Test addUserRespond", () => {
       DeletedNotification, 
       householdTwoAfterNewAdmin, 
       newAdminIndex, 
-      newAdminTwo 
-    } = await userAcceptNotificationRequestDelegateAdmin(userTwo, notificationRequestDelegateAdmin._id, householdTwo)
+      newAdminTwo,
+      invitationNotification, 
+      tranformedNotification
+    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -83,6 +85,8 @@ describe("Test addUserRespond", () => {
     expect(newAdminIndex).toBe(0);
     expect(newAdminTwo.role).toMatch("admin");
     expect(DeletedNotification).toBeNull();
+    expect(invitationNotification).toBeNull();
+    expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
   });
 });
 
@@ -91,6 +95,9 @@ describe("Test addUserRespond", () => {
   // OK => check userId === user._id dans household
   // OK => check user role admin
   // OK => check notif delete
+  // => check si la transformation d'une notification d'invitation a était transformé en need-switch-admin (si il y a deux membres dans la famille)
+  // 2.2.1) 
+  // => check si la transformation d'une notification d'invitation n'a pas était transformé en need-switch-admin (si il y a un seul membre dans la famille)
 // 2.3) user 2 n'accepte pas la requête, delégue les droit à user 3
   // => check ancienne notif delete 
   // => check nouvelle notif créée pour user 3
@@ -102,6 +109,7 @@ describe("Test addUserRespond", () => {
     // => check notif delete
     // => check position du nouvel admin en 0 dans members array
     // => check si user 2 isFlagged is false dans le tableau des membres
+    // => check si ancienne famille user 3 est delete
   // 2.3.2) user 3 n'accepte pas
     // => check famille est delete
     // => check si le user 3 a household id en null
@@ -112,3 +120,14 @@ describe("Test addUserRespond", () => {
     // => check si le user 3 a household id en null
     // => check si notif est delete
     // => check si user2 retourne dans son ancienne famille (role admin, householdId et array members).
+// 4) Créer deux notif type last-chance-request-delegate-admin
+  // 4.1) user 2 accepte
+      // => vérifier si les deux notif last chance sont delete pour user 2 et 3
+      // => vérifier si lastChance field de la famille est unset
+  // 4.2) user 2 n'accepte pas
+      // => test si notif de user est delete
+  // 4.3) user 3 n'accepte pas
+      // => test si notif de user est delete
+      // => test si famille est delete
+      // => test si user 3 revient dans son ancienne famille
+      // => test si user 2 a householdId en null
