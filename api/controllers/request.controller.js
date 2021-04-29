@@ -192,6 +192,8 @@ exports.switchAdminRequest = async (req, res, next) => {
 
       if(notification.type === "last-chance-request-delegate-admin"){
         let arrayLastChanceNotif = [];
+        await Notification.findByIdAndDelete(notification._id);
+        socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
 
         for (const member of arrayMembers) {
           let lastChanceNotif = await Notification.findOne({userId : member.userData, householdId : household._id, type : "last-chance-request-delegate-admin"});
