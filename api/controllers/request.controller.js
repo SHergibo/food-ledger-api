@@ -128,7 +128,14 @@ exports.switchAdminRequest = async (req, res, next) => {
         .populate({
           path: 'userId',
           select: 'firstname lastname -_id'
-        });  
+        });
+
+        socketIoEmit(notification.userId, 
+          [
+            {name : "deleteNotificationReceived", data: invitationNotif._id},
+            {name : "updateNotificationReceived", data: newNotifSended.transform(true)},
+          ]
+        );  
 
         socketIoEmit(invitationHousehold.userId, 
           [
