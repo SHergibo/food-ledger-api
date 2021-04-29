@@ -112,7 +112,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
       const invitationNotif = await Notification.findOne({userId : notification.userId, type: "invitation-household-to-user"});
 
-      if(invitationNotif){
+      if(invitationNotif && updatedHousehold.members.length > 1){
         let invitationHousehold = await Household.findById(invitationNotif.householdId);
         let newNotification = await new Notification({
           message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
@@ -210,6 +210,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
