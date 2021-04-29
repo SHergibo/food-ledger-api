@@ -692,7 +692,7 @@ exports.addUserRespond = async (req, res, next) => {
         let householdAdmin = await User.findById(newHousehold.userId);
         notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.userId = user._id;
-      }else if(notification.type === "invitation-household-to-user"){
+      }else if(notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin"){
         userId = newHousehold.userId;
         notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.householdId = newHousehold._id;
