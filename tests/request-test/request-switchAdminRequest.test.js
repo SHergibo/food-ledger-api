@@ -1,7 +1,7 @@
 const Household = require('./../../api/models/household.model'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
-      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdminWithOtherMember, userRefuseNotificationRequestDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
+      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdminWithOtherMember, userRefuseNotificationRequestDelegateAdminWithoutOtherMember, testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -128,7 +128,20 @@ describe("Test addUserRespond", () => {
     expect(DeletedNotification).toBeNull();
     expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
   });
-  it("Test 9) userThree accept notificationRequestDelegateAdmin", async () => {
+  it("Test 9) userTwo refuse notificationRequestDelegateAdmin without otherMember query", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { 
+      rejectNotification, 
+      checkNotification
+    } = await testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id});
+
+    expect(rejectNotification.statusCode).toBe(400);
+    expect(JSON.parse(rejectNotification.error.text).output.payload.message).toMatch("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!");
+    expect(checkNotification.userId.toString()).toBe(userTwo._id.toString());
+  });
+  it("Test 10) userThree accept notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -157,7 +170,7 @@ describe("Test addUserRespond", () => {
     expect(userTwoIsFlagged.isFlagged).toBe(false);
     expect(checkHouseholdThree).toBeNull();
   });
-  it("Test 10) userThree refuse notificationRequestDelegateAdmin", async () => {
+  it("Test 11) userThree refuse notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -191,7 +204,7 @@ describe("Test addUserRespond", () => {
   // => check si la transformation d'une notification d'invitation a était transformé en need-switch-admin (si il y a deux membres dans la famille)
   //OK 2.2.1) 
   // OK => check si la transformation d'une notification d'invitation n'a pas était transformé en need-switch-admin (si il y a un seul membre dans la famille)
-// 2.3) user 2 n'accepte pas la requête, delégue les droit à user 3
+// OK 2.3) user 2 n'accepte pas la requête, delégue les droit à user 3
   // OK => check ancienne notif delete 
   // OK => check nouvelle notif créée pour user 3
   // OK => check user 2 isFlagged true dans le tableau des membres 
@@ -208,9 +221,9 @@ describe("Test addUserRespond", () => {
     // OK => check si le user 2 a household id en null
     // OK => check si notif est delete
     // OK => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
-  // 2.3.3) user 2 refuse sans envoyer de otherMember id dans req.params
-    // => check error status
-    // => check error message
+  // OK 2.3.3) user 2 refuse sans envoyer de otherMember id dans req.params
+    // OK => check error status
+    // OK => check error message
 // 3) Admin2 ne delégue pas ses droits  => tester neMoreAdmin helper (avec et sans erreur)
     // => check famille est delete
     // => check si le user 2 a household id en null
