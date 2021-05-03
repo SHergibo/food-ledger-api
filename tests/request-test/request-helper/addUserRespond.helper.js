@@ -89,6 +89,22 @@ module.exports.createAddUserRespondTest = async () => {
   return { adminOne, householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree};
 };
 
+module.exports.createAddUserRespondTestOneUser = async () => {
+  let adminOne = await createUser(adminOneDataComplete);
+  const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
+  adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
+
+  let adminTwo = await createUser(adminTwoDataComplete);
+  let householdTwo = await createHousehold(adminTwo._id, adminTwoDataComplete.householdName);
+  adminTwo = await updateUserHouseholdId(adminTwo._id, householdTwo._id);
+
+  let userTwo = await createUser(userTwoDataComplete);
+  userTwo = await updateUserHouseholdId(userTwo._id, householdTwo._id);
+  householdTwo = await updateHouseholdMembers(householdTwo._id, householdTwo.members, userTwo._id);
+
+  return { adminOne, householdOne, adminTwo, householdTwo, userTwo };
+};
+
 module.exports.acceptAddUserRequest = async (adminTwo, householdOne) => {
   const addUserNotification = await createAddUserRequestNotification(adminTwo, householdOne._id);
   const accessTokenAdminOne = await login(adminOneDataComplete.email, adminOneDataComplete.password);
