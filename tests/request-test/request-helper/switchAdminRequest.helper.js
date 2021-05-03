@@ -45,12 +45,12 @@ module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, us
     userId : userdata._id,
     type: 'need-switch-admin',
     householdId: householdOne._id
-  })
+  });
 
   return { acceptNotification, DeletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
 };
 
-module.exports.userRefuseNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdTwo, userThree}) => {
+module.exports.userRefuseNotificationRequestDelegateAdminWithOtherMember = async ({userdata, username, notificationId, householdTwo, userThree}) => {
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no&otherMember=${userThree._id}`;
@@ -65,8 +65,8 @@ module.exports.userRefuseNotificationRequestDelegateAdmin = async ({userdata, us
 
   const userThreeNotification = await Notification.findOne({
     userId : userThree._id,
-    type: "request-delegate-admin",
     householdId : userThree.householdId,
+    type: "request-delegate-admin",
     urlRequest : "delegate-admin",
   });
 
@@ -74,4 +74,25 @@ module.exports.userRefuseNotificationRequestDelegateAdmin = async ({userdata, us
   const userTwoIsFlagged = householdTwoUpdated.members.find(member => member.userData.toString() === userdata._id.toString());
 
   return { rejectNotification, DeletedNotification, userThreeNotification, userTwoIsFlagged };
+};
+
+module.exports.userRefuseNotificationRequestDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId, householdTwo, userTwo, householdThree}) => {
+  const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
+
+  const queryParams = `?acceptedRequest=no`;
+  const rejectNotification = await requestApi(notificationId, accessTokenUser, queryParams);
+
+  const DeletedNotification = await Notification.findOne({
+    userId : userdata._id,
+    householdId : userdata.householdId,
+    type: "request-delegate-admin",
+    urlRequest : "delegate-admin",
+  });
+
+  const checkHouseholdTwo = await Household.findById(householdTwo._id);
+  const checkUserTwo = await User.findById(userTwo._id);
+  const checkHouseholdThree = await Household.findById(householdThree._id);
+  const checkUserThree = await User.findById(userdata._id);
+
+  return { rejectNotification, DeletedNotification, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree };
 };
