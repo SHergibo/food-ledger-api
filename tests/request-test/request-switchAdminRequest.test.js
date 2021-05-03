@@ -1,5 +1,5 @@
 const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
+      { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
       { userAcceptNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
@@ -65,7 +65,7 @@ describe("Test addUserRespond", () => {
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Code utilisateur du/de la délégué.e non trouvé!");
   });
-  it("Test 6) user accept notificationRequestDelegateAdmin", async () => {
+  it("Test 6) userTwo accept notificationRequestDelegateAdmin with transformed invitation notification", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -88,6 +88,52 @@ describe("Test addUserRespond", () => {
     expect(invitationNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
   });
+  it("Test 7) userTwo accept notificationRequestDelegateAdmin without transformed invitation notification", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { 
+      acceptNotification, 
+      DeletedNotification, 
+      householdTwoAfterNewAdmin, 
+      newAdminIndex, 
+      newAdminTwo,
+      invitationNotification, 
+      tranformedNotification
+    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+
+    expect(acceptNotification.statusCode).toBe(204);
+    expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
+    expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
+    expect(newAdminIndex).toBe(0);
+    expect(newAdminTwo.role).toMatch("admin");
+    expect(DeletedNotification).toBeNull();
+    expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
+  });
+  it("Test 8) userTwo don't accept notificationRequestDelegateAdmin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { 
+      acceptNotification, 
+      DeletedNotification, 
+      householdTwoAfterNewAdmin, 
+      newAdminIndex, 
+      newAdminTwo,
+      invitationNotification, 
+      tranformedNotification
+    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+
+    expect(acceptNotification.statusCode).toBe(204);
+    expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
+    expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
+    expect(newAdminIndex).toBe(0);
+    expect(newAdminTwo.role).toMatch("admin");
+    expect(DeletedNotification).toBeNull();
+    expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
+  });
 });
 
 //OK 2.2) user 2 accepte la requête
@@ -96,8 +142,8 @@ describe("Test addUserRespond", () => {
   // OK => check user role admin
   // OK => check notif delete
   // => check si la transformation d'une notification d'invitation a était transformé en need-switch-admin (si il y a deux membres dans la famille)
-  // 2.2.1) 
-  // => check si la transformation d'une notification d'invitation n'a pas était transformé en need-switch-admin (si il y a un seul membre dans la famille)
+  //OK 2.2.1) 
+  // OK => check si la transformation d'une notification d'invitation n'a pas était transformé en need-switch-admin (si il y a un seul membre dans la famille)
 // 2.3) user 2 n'accepte pas la requête, delégue les droit à user 3
   // => check ancienne notif delete 
   // => check nouvelle notif créée pour user 3
