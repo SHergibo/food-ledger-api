@@ -1,7 +1,7 @@
 const Household = require('./../../api/models/household.model'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
-      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
+      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdminWithOtherMember, userRefuseNotificationRequestDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -121,7 +121,7 @@ describe("Test addUserRespond", () => {
       DeletedNotification, 
       userThreeNotification, 
       userTwoIsFlagged
-    } = await userRefuseNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
 
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
@@ -132,8 +132,16 @@ describe("Test addUserRespond", () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdmin({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
-    const { acceptNotification, DeletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo,invitationNotification, tranformedNotification } = await userAcceptNotificationRequestDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
+    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
+    const { 
+      acceptNotification, 
+      DeletedNotification, 
+      householdTwoAfterNewAdmin, 
+      newAdminIndex, 
+      newAdminTwo,
+      invitationNotification, 
+      tranformedNotification 
+    } = await userAcceptNotificationRequestDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
 
     const userTwoIsFlagged = householdTwoAfterNewAdmin.members.find(member => member.userData.toString() === userTwo._id.toString());
     const checkHouseholdThree = await Household.findById(householdThree._id);
@@ -148,6 +156,30 @@ describe("Test addUserRespond", () => {
     expect(tranformedNotification.userId.toString()).toBe(userThree._id.toString());
     expect(userTwoIsFlagged.isFlagged).toBe(false);
     expect(checkHouseholdThree).toBeNull();
+  });
+  it("Test 10) userThree refuse notificationRequestDelegateAdmin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    const { 
+      rejectNotification, 
+      DeletedNotification, 
+      checkHouseholdTwo, 
+      checkUserTwo, 
+      checkHouseholdThree, 
+      checkUserThree
+    } = await userRefuseNotificationRequestDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdTwo, userTwo, householdThree});
+    
+    expect(rejectNotification.statusCode).toBe(204);
+    expect(DeletedNotification).toBeNull();
+    expect(checkHouseholdTwo).toBeNull();
+    expect(checkUserTwo.householdId).toBeNull();
+    expect(checkHouseholdThree.userId.toString()).toBe(userThree._id.toString());
+    expect(checkHouseholdThree.members[0].userData.toString()).toBe(userThree._id.toString());
+    expect(checkHouseholdThree.members[0].isFlagged).toBe(false);
+    expect(checkUserThree.householdId.toString()).toBe(householdThree._id.toString());
+    expect(checkUserThree.role).toMatch("admin");
   });
 });
 
@@ -171,11 +203,14 @@ describe("Test addUserRespond", () => {
     // OK => check position du nouvel admin en 0 dans members array
     // OK => check si user 2 isFlagged is false dans le tableau des membres
     // OK => check si ancienne famille user 3 est delete
-  // 2.3.2) user 3 n'accepte pas
-    // => check famille est delete
-    // => check si le user 2 a household id en null
-    // => check si notif est delete
-    // => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
+  //OK 2.3.2) user 3 n'accepte pas
+    // OK => check famille est delete
+    // OK => check si le user 2 a household id en null
+    // OK => check si notif est delete
+    // OK => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
+  // 2.3.3) user 2 refuse sans envoyer de otherMember id dans req.params
+    // => check error status
+    // => check error message
 // 3) Admin2 ne delégue pas ses droits  => tester neMoreAdmin helper (avec et sans erreur)
     // => check famille est delete
     // => check si le user 2 a household id en null
