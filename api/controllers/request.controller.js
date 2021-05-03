@@ -38,10 +38,6 @@ exports.switchAdminRequest = async (req, res, next) => {
         return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
       }
     }
-
-    if(notification.type !== "last-chance-request-delegate-admin"){
-      await Notification.findByIdAndDelete(notification._id);
-    }
     
     let user;
     let household = await Household.findById(notification.householdId);
@@ -208,9 +204,12 @@ exports.switchAdminRequest = async (req, res, next) => {
       }
     }
 
+    if(notification.type !== "last-chance-request-delegate-admin"){
+      await Notification.findByIdAndDelete(notification._id);
+    }
+
     return res.status(204).send();
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
