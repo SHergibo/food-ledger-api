@@ -1,4 +1,5 @@
-const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
+const Household = require('./../../api/models/household.model'),
+      { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
       { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
@@ -100,7 +101,7 @@ describe("Test addUserRespond", () => {
       newAdminTwo,
       invitationNotification, 
       tranformedNotification
-    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo});
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -120,12 +121,33 @@ describe("Test addUserRespond", () => {
       DeletedNotification, 
       userThreeNotification, 
       userTwoIsFlagged
-    } = await userRefuseNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree})
+    } = await userRefuseNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
 
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
     expect(DeletedNotification).toBeNull();
     expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
+  });
+  it("Test 9) userThree accept notificationRequestDelegateAdmin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdmin({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
+    const { acceptNotification, DeletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo,invitationNotification, tranformedNotification } = await userAcceptNotificationRequestDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
+
+    const userTwoIsFlagged = householdTwoAfterNewAdmin.members.find(member => member.userData.toString() === userTwo._id.toString());
+    const checkHouseholdThree = await Household.findById(householdThree._id);
+
+    expect(acceptNotification.statusCode).toBe(204);
+    expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
+    expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userThree._id.toString());
+    expect(newAdminIndex).toBe(0);
+    expect(newAdminTwo.role).toMatch("admin");
+    expect(DeletedNotification).toBeNull();
+    expect(invitationNotification).toBeNull();
+    expect(tranformedNotification.userId.toString()).toBe(userThree._id.toString());
+    expect(userTwoIsFlagged.isFlagged).toBe(false);
+    expect(checkHouseholdThree).toBeNull();
   });
 });
 
@@ -141,24 +163,24 @@ describe("Test addUserRespond", () => {
   // OK => check ancienne notif delete 
   // OK => check nouvelle notif créée pour user 3
   // OK => check user 2 isFlagged true dans le tableau des membres 
-  // 2.3.1) user 3 accepte
-    // => check famille isWaiting false
-    // => check userId === user._id dans household
-    // => check user role admin
-    // => check notif delete
-    // => check position du nouvel admin en 0 dans members array
-    // => check si user 2 isFlagged is false dans le tableau des membres
-    // => check si ancienne famille user 3 est delete
+  //OK 2.3.1) user 3 accepte
+    // OK => check famille isWaiting false
+    // OK => check userId === user._id dans household
+    // OK => check user role admin
+    // OK => check notif delete
+    // OK => check position du nouvel admin en 0 dans members array
+    // OK => check si user 2 isFlagged is false dans le tableau des membres
+    // OK => check si ancienne famille user 3 est delete
   // 2.3.2) user 3 n'accepte pas
     // => check famille est delete
-    // => check si le user 3 a household id en null
+    // => check si le user 2 a household id en null
     // => check si notif est delete
-    // => check si user2 retourne dans son ancienne famille (role admin, householdId et array members).
+    // => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
 // 3) Admin2 ne delégue pas ses droits  => tester neMoreAdmin helper (avec et sans erreur)
     // => check famille est delete
-    // => check si le user 3 a household id en null
+    // => check si le user 2 a household id en null
     // => check si notif est delete
-    // => check si user2 retourne dans son ancienne famille (role admin, householdId et array members).
+    // => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
 // 4) Créer deux notif type last-chance-request-delegate-admin
   // 4.1) user 2 accepte
       // => vérifier si les deux notif last chance sont delete pour user 2 et 3
