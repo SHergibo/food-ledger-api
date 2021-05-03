@@ -7,8 +7,13 @@ const request = require("supertest"),
       Notification = require('../../../api/models/notification.model'),
       data = require('../../test-data');
 
-module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
+const requestApi = async (notificationId, accessTokenUser, queryParams) => {
+  return await request(app)
+  .get(`/api/${api}/requests/delegate-admin/${notificationId}${queryParams}`)
+  .set('Authorization', `Bearer ${accessTokenUser}`);
+};
 
+module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
   let createInviteNotification = await new Notification({
     message: "Notification invitation household to user",
     householdId: householdOne._id,
@@ -20,9 +25,8 @@ module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, us
 
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
-  const acceptNotification = await request(app)
-  .get(`/api/${api}/requests/delegate-admin/${notificationId}?acceptedRequest=yes`)
-  .set('Authorization', `Bearer ${accessTokenUser}`);
+  const queryParams = '?acceptedRequest=yes';
+  const acceptNotification = await requestApi(notificationId, accessTokenUser, queryParams);
 
   const DeletedNotification = await Notification.findOne({
     userId : userdata._id,
@@ -44,4 +48,30 @@ module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, us
   })
 
   return { acceptNotification, DeletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
+};
+
+module.exports.userRefuseNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdTwo, userThree}) => {
+  const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
+
+  const queryParams = `?acceptedRequest=no&otherMember=${userThree._id}`;
+  const rejectNotification = await requestApi(notificationId, accessTokenUser, queryParams);
+
+  const DeletedNotification = await Notification.findOne({
+    userId : userdata._id,
+    householdId : userdata.householdId,
+    type: "request-delegate-admin",
+    urlRequest : "delegate-admin",
+  });
+
+  const userThreeNotification = await Notification.findOne({
+    userId : userThree._id,
+    type: "request-delegate-admin",
+    householdId : userThree.householdId,
+    urlRequest : "delegate-admin",
+  });
+
+  const householdTwoUpdated = await Household.findById(householdTwo._id);
+  const userTwoIsFlagged = householdTwoUpdated.members.find(member => member.userData.toString() === userdata._id.toString());
+
+  return { rejectNotification, DeletedNotification, userThreeNotification, userTwoIsFlagged };
 };
