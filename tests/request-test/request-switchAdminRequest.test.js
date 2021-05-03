@@ -1,6 +1,6 @@
 const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
-      { userAcceptNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
+      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -111,28 +111,21 @@ describe("Test addUserRespond", () => {
     expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
   });
-  it("Test 8) userTwo don't accept notificationRequestDelegateAdmin", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+  it("Test 8) userTwo refuse notificationRequestDelegateAdmin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
-      acceptNotification, 
+      rejectNotification, 
       DeletedNotification, 
-      householdTwoAfterNewAdmin, 
-      newAdminIndex, 
-      newAdminTwo,
-      invitationNotification, 
-      tranformedNotification
-    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+      userThreeNotification, 
+      userTwoIsFlagged
+    } = await userRefuseNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree})
 
-    expect(acceptNotification.statusCode).toBe(204);
-    expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
-    expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
-    expect(newAdminIndex).toBe(0);
-    expect(newAdminTwo.role).toMatch("admin");
+    expect(rejectNotification.statusCode).toBe(204);
+    expect(userTwoIsFlagged.isFlagged).toBe(true);
     expect(DeletedNotification).toBeNull();
-    expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
-    expect(tranformedNotification).toBeNull();
+    expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
   });
 });
 
@@ -145,9 +138,9 @@ describe("Test addUserRespond", () => {
   //OK 2.2.1) 
   // OK => check si la transformation d'une notification d'invitation n'a pas était transformé en need-switch-admin (si il y a un seul membre dans la famille)
 // 2.3) user 2 n'accepte pas la requête, delégue les droit à user 3
-  // => check ancienne notif delete 
-  // => check nouvelle notif créée pour user 3
-  // => check user 2 isFlagged true dans le tableau des membres 
+  // OK => check ancienne notif delete 
+  // OK => check nouvelle notif créée pour user 3
+  // OK => check user 2 isFlagged true dans le tableau des membres 
   // 2.3.1) user 3 accepte
     // => check famille isWaiting false
     // => check userId === user._id dans household
