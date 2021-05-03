@@ -76,6 +76,22 @@ module.exports.userRefuseNotificationRequestDelegateAdminWithOtherMember = async
   return { rejectNotification, DeletedNotification, userThreeNotification, userTwoIsFlagged };
 };
 
+module.exports.testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId}) => {
+  const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
+
+  const queryParams = `?acceptedRequest=no`;
+  const rejectNotification = await requestApi(notificationId, accessTokenUser, queryParams);
+
+  const checkNotification = await Notification.findOne({
+    userId : userdata._id,
+    householdId : userdata.householdId,
+    type: "request-delegate-admin",
+    urlRequest : "delegate-admin",
+  });
+
+  return { rejectNotification, checkNotification };
+};
+
 module.exports.userRefuseNotificationRequestDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId, householdTwo, userTwo, householdThree}) => {
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
