@@ -208,3 +208,51 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({userdata, username, n
 
   return { rejectNotification, deletedNotification, checkNumberNotif, invitationNotification, tranformedNotification };
 };
+
+module.exports.lastUserRejectLastChanceDelegateAdmin = async ({userdata, username, notifications, householdOne, householdTwo, userTwo, householdThree}) => {
+  let createInviteNotification = await new Notification({
+    message: "Notification invitation household to user",
+    householdId: householdOne._id,
+    userId: userdata._id,
+    type: "invitation-household-to-user",
+    urlRequest: "add-user-respond",
+  });
+  await createInviteNotification.save();
+
+  const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
+
+  const queryParams = '?acceptedRequest=no';
+  const notifData = notifications.find(notif => notif.username === username);
+  const rejectNotification = await requestApi(notifData.notification._id, accessTokenUser, queryParams);
+
+  const deletedNotification = await Notification.findOne({
+    userId : userdata._id,
+    householdId : userdata.householdId,
+    type: "last-chance-request-delegate-admin",
+    urlRequest: "delegate-admin",
+  });
+
+  let numberOfNotification = 0;
+  for (const notif of notifications) {
+    let checkNotifExist = await Notification.findById(notif.notification._id);
+    if(checkNotifExist){
+      numberOfNotification++;
+    } 
+  }
+
+  let checkNumberNotif = numberOfNotification === 0 ? true : false;
+
+  const checkHouseholdTwo = await Household.findById(householdTwo._id);
+  const checkUserTwo = await User.findById(userTwo._id);
+  const checkHouseholdThree = await Household.findById(householdThree._id);
+  const checkUserThree = await User.findById(userdata._id);
+
+  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const tranformedNotification = await Notification.findOne({
+    userId : userdata._id,
+    type: 'need-switch-admin',
+    householdId: householdOne._id
+  });
+
+  return { rejectNotification, deletedNotification, checkNumberNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, invitationNotification, tranformedNotification };
+};
