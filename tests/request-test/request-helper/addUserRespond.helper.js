@@ -147,3 +147,33 @@ module.exports.delegateWithOtherMember = async (adminTwo, householdOne, househol
 
   return { delegateResponse, notificationRequestDelegateAdmin, householdOneAfterSwitch, householdTwoAfterSwitch, isUserInHouseholdOne, isUserInHouseholdTwo, adminTwoAfterSwitch };
 };
+
+module.exports.delegateWithoutOtherMember = async (adminTwo, householdOne, householdTwo, notificationId, userTwo, userThree, householdThree) => {
+  const accessTokenAdminTwo = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
+
+  const delegateResponse = await request(app)
+  .get(`/api/${api}/requests/add-user-respond/${notificationId}?acceptedRequest=yes`)
+  .set('Authorization', `Bearer ${accessTokenAdminTwo}`);
+
+  const notificationDeleted = await Notification.findById(notificationId);
+
+  const householdOneAfterSwitch = await Household.findById(householdOne._id);
+  const isAdminTwoInHouseholdOne = householdOneAfterSwitch.members.find(member => member.userData.toString() === adminTwo._id.toString());
+  const householdTwoAfterSwitch = await Household.findById(householdTwo._id);
+  const adminTwoAfterSwitch = await User.findById(adminTwo._id);
+  const userTwoAfterSwitch = await User.findById(userTwo._id);
+  const userThreeAfterSwitch = await User.findById(userThree._id);
+  const householdThreeAfterSwitch = await Household.findById(householdThree._id);
+  const isUserThreeInHouseholdOne = householdThreeAfterSwitch.members.find(member => member.userData.toString() === userThree._id.toString());
+
+  return { 
+    delegateResponse, 
+    notificationDeleted, 
+    isAdminTwoInHouseholdOne, 
+    adminTwoAfterSwitch,
+    householdTwoAfterSwitch, 
+    userTwoAfterSwitch,
+    userThreeAfterSwitch,
+    isUserThreeInHouseholdOne
+  };
+};
