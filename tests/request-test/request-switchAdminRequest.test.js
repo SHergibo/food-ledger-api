@@ -1,7 +1,12 @@
 const Household = require('./../../api/models/household.model'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
-      { userAcceptDelegateAdmin, userRejectDelegateAdminWithOtherMember, userRejectDelegateAdminWithoutOtherMember, testErrorUserRejectDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
+      { userAcceptDelegateAdmin, 
+        userRejectDelegateAdminWithOtherMember, 
+        userRejectDelegateAdminWithoutOtherMember, 
+        testErrorUserRejectDelegateAdminWithoutOtherMember,
+        createLastChanceDelegateAdminNotif,
+        userAcceptLastChanceDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -194,6 +199,36 @@ describe("Test switchAdminRequest", () => {
     expect(checkUserThree.householdId.toString()).toBe(householdThree._id.toString());
     expect(checkUserThree.role).toMatch("admin");
   });
+  it("Test 12) userTwo accept last chance request delegate admin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    const notifications = await createLastChanceDelegateAdminNotif([
+      {username : "userTwo", userId: userTwo._id},
+      {username : "userThree", userId: userThree._id},
+    ], householdTwo);
+
+    const { 
+      acceptNotification, 
+      allNotifDeleted, 
+      householdTwoAfterNewAdmin, 
+      newAdminIndex, 
+      newAdminTwo, 
+      invitationNotification, 
+      tranformedNotification
+    } = await userAcceptLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
+    
+    expect(acceptNotification.statusCode).toBe(204);
+    expect(allNotifDeleted).toBe(true);
+    expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
+    expect(householdTwoAfterNewAdmin.lastChance).toBeUndefined();
+    expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
+    expect(newAdminIndex).toBe(0);
+    expect(newAdminTwo.role).toMatch("admin");
+    expect(invitationNotification).toBeNull();
+    expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
+  });
 });
 
 //OK 2.2) user 2 accepte la requête
@@ -224,15 +259,15 @@ describe("Test switchAdminRequest", () => {
   // OK 2.3.3) user 2 refuse sans envoyer de otherMember id dans req.params
     // OK => check error status
     // OK => check error message
-// 3) Admin2 ne delégue pas ses droits  => tester neMoreAdmin helper (avec et sans erreur)
-    // => check famille est delete
-    // => check si le user 2 a household id en null
-    // => check si notif est delete
-    // => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
-// 4) Créer deux notif type last-chance-request-delegate-admin
+//OK 3) Admin2 ne delégue pas ses droits  => tester neMoreAdmin helper (avec et sans erreur)
+    // OK => check famille est delete
+    // OK => check si le user 2 a household id en null
+    // OK => check si notif est delete
+    // OK => check si user3 retourne dans son ancienne famille (role admin, householdId et array members).
+// 4) OK => Créer deux notif type last-chance-request-delegate-admin
   // 4.1) user 2 accepte
-      // => vérifier si les deux notif last chance sont delete pour user 2 et 3
-      // => vérifier si lastChance field de la famille est unset
+      // OK => vérifier si les deux notif last chance sont delete pour user 2 et 3
+      // OK => vérifier si lastChance field de la famille est unset
   // 4.2) user 2 n'accepte pas
       // => test si notif de user est delete
   // 4.3) user 3 n'accepte pas
