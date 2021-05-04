@@ -112,3 +112,56 @@ module.exports.userRejectDelegateAdminWithoutOtherMember = async ({userdata, use
 
   return { rejectNotification, DeletedNotification, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree };
 };
+
+module.exports.createLastChanceDelegateAdminNotif = async (usersData, householdId) => {
+  let lastChanceDelegateNotifArray = [];
+  for (const userData of usersData) {
+    let userNotif = await new Notification({
+      message: "Notification last-chance-request-delegate-admin to userThree",
+      householdId: householdId,
+      userId: userData.userId,
+      type: "last-chance-request-delegate-admin",
+      urlRequest: "delegate-admin",
+    });
+    await userNotif.save();
+    lastChanceDelegateNotifArray = [...lastChanceDelegateNotifArray, {username : userData.username, notification : userNotif}];
+  }
+  return lastChanceDelegateNotifArray;
+};
+
+module.exports.userAcceptLastChanceDelegateAdmin = async ({userdata, username, notifications, householdOne, householdTwo}) => {
+  let createInviteNotification = await new Notification({
+    message: "Notification invitation household to user",
+    householdId: householdOne._id,
+    userId: userdata._id,
+    type: "invitation-household-to-user",
+    urlRequest: "add-user-respond",
+  });
+  await createInviteNotification.save();
+
+  const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
+
+  const queryParams = '?acceptedRequest=yes';
+  const notifData = notifications.find(notif => notif.username === username);
+  const acceptNotification = await requestApi(notifData.notification._id, accessTokenUser, queryParams);
+
+  let allNotifDeleted = true;
+  for (const notif of notifications) {
+    let checkNotifExist = await Notification.findById(notif.notification._id);
+    if(checkNotifExist) return allNotifDeleted = false;
+  }
+
+  const householdTwoAfterNewAdmin = await Household.findById(householdTwo._id);
+  const newAdminIndex = householdTwoAfterNewAdmin.members.findIndex(member => member.userData.toString() === userdata._id.toString());
+
+  const newAdminTwo = await User.findById(userdata._id);
+
+  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const tranformedNotification = await Notification.findOne({
+    userId : userdata._id,
+    type: 'need-switch-admin',
+    householdId: householdOne._id
+  });
+
+  return { acceptNotification, allNotifDeleted, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
+};
