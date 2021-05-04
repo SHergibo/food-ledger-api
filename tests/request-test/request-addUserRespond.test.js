@@ -7,7 +7,7 @@ const request = require("supertest"),
       { login } = require('../login.helper'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRequestTest } = require('./request-helper/addUserRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
+      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember, delegateWithoutOtherMember } = require('./request-helper/addUserRespond.helper'),
       { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -197,5 +197,30 @@ describe("Test addUserRespond", () => {
     expect(adminTwoAfterSwitch.role).toMatch("user");
     expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdOne._id.toString());
     expect(householdTwoAfterSwitch.isWaiting).toBe(true);
+  });
+  it("Test 11) admin switch household without otherMember query params", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { 
+      delegateResponse, 
+      notificationDeleted, 
+      isAdminTwoInHouseholdOne, 
+      adminTwoAfterSwitch,
+      householdTwoAfterSwitch, 
+      userTwoAfterSwitch,
+      userThreeAfterSwitch,
+      isUserThreeInHouseholdOne
+    } = await delegateWithoutOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo, userThree, householdThree);
+
+    expect(delegateResponse.statusCode).toBe(204);
+    expect(notificationDeleted).toBeNull();
+    expect(isAdminTwoInHouseholdOne.userData.toString()).toBe(adminTwo._id.toString());
+    expect(adminTwoAfterSwitch.role).toMatch("user");
+    expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdOne._id.toString());
+    expect(householdTwoAfterSwitch).toBeNull();
+    expect(userTwoAfterSwitch.householdId).toBeNull();
+    expect(userThreeAfterSwitch.householdId.toString()).toBe(householdThree._id.toString());
+    expect(userThreeAfterSwitch.role).toMatch("admin");
+    expect(isUserThreeInHouseholdOne.userData.toString()).toBe(userThree._id.toString());
   });
 });
