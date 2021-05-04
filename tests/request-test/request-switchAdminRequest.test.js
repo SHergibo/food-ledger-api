@@ -6,7 +6,8 @@ const Household = require('./../../api/models/household.model'),
         userRejectDelegateAdminWithoutOtherMember, 
         testErrorUserRejectDelegateAdminWithoutOtherMember,
         createLastChanceDelegateAdminNotif,
-        userAcceptLastChanceDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
+        userAcceptLastChanceDelegateAdmin,
+        userRejectLastChanceDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -77,7 +78,7 @@ describe("Test switchAdminRequest", () => {
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
       acceptNotification, 
-      DeletedNotification, 
+      deletedNotification, 
       householdTwoAfterNewAdmin, 
       newAdminIndex, 
       newAdminTwo,
@@ -90,7 +91,7 @@ describe("Test switchAdminRequest", () => {
     expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
     expect(newAdminIndex).toBe(0);
     expect(newAdminTwo.role).toMatch("admin");
-    expect(DeletedNotification).toBeNull();
+    expect(deletedNotification).toBeNull();
     expect(invitationNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
   });
@@ -100,7 +101,7 @@ describe("Test switchAdminRequest", () => {
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
       acceptNotification, 
-      DeletedNotification, 
+      deletedNotification, 
       householdTwoAfterNewAdmin, 
       newAdminIndex, 
       newAdminTwo,
@@ -113,7 +114,7 @@ describe("Test switchAdminRequest", () => {
     expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
     expect(newAdminIndex).toBe(0);
     expect(newAdminTwo.role).toMatch("admin");
-    expect(DeletedNotification).toBeNull();
+    expect(deletedNotification).toBeNull();
     expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
   });
@@ -123,14 +124,14 @@ describe("Test switchAdminRequest", () => {
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
       rejectNotification, 
-      DeletedNotification, 
+      deletedNotification, 
       userThreeNotification, 
       userTwoIsFlagged
     } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
 
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
-    expect(DeletedNotification).toBeNull();
+    expect(deletedNotification).toBeNull();
     expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
   });
   it("Test 9) userTwo refuse notificationRequestDelegateAdmin without otherMember query", async () => {
@@ -153,7 +154,7 @@ describe("Test switchAdminRequest", () => {
     const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
     const { 
       acceptNotification, 
-      DeletedNotification, 
+      deletedNotification, 
       householdTwoAfterNewAdmin, 
       newAdminIndex, 
       newAdminTwo,
@@ -169,7 +170,7 @@ describe("Test switchAdminRequest", () => {
     expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userThree._id.toString());
     expect(newAdminIndex).toBe(0);
     expect(newAdminTwo.role).toMatch("admin");
-    expect(DeletedNotification).toBeNull();
+    expect(deletedNotification).toBeNull();
     expect(invitationNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userThree._id.toString());
     expect(userTwoIsFlagged.isFlagged).toBe(false);
@@ -182,7 +183,7 @@ describe("Test switchAdminRequest", () => {
     const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
     const { 
       rejectNotification, 
-      DeletedNotification, 
+      deletedNotification, 
       checkHouseholdTwo, 
       checkUserTwo, 
       checkHouseholdThree, 
@@ -190,7 +191,7 @@ describe("Test switchAdminRequest", () => {
     } = await userRejectDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdTwo, userTwo, householdThree});
     
     expect(rejectNotification.statusCode).toBe(204);
-    expect(DeletedNotification).toBeNull();
+    expect(deletedNotification).toBeNull();
     expect(checkHouseholdTwo).toBeNull();
     expect(checkUserTwo.householdId).toBeNull();
     expect(checkHouseholdThree.userId.toString()).toBe(userThree._id.toString());
@@ -228,6 +229,29 @@ describe("Test switchAdminRequest", () => {
     expect(newAdminTwo.role).toMatch("admin");
     expect(invitationNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
+  });
+  it("Test 13) userTwo reject last chance request delegate admin with otherMember query params", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const notifications = await createLastChanceDelegateAdminNotif([
+      {username : "userTwo", userId: userTwo._id},
+      {username : "userThree", userId: userThree._id},
+    ], householdTwo);
+
+    const { 
+      rejectNotification, 
+      deletedNotification, 
+      checkNumberNotif, 
+      invitationNotification, 
+      tranformedNotification
+    } = await userRejectLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
+    
+    expect(rejectNotification.statusCode).toBe(204);
+    expect(deletedNotification).toBeNull();
+    expect(checkNumberNotif).toBe(true);
+    expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
   });
 });
 
@@ -269,7 +293,7 @@ describe("Test switchAdminRequest", () => {
       // OK => vérifier si les deux notif last chance sont delete pour user 2 et 3
       // OK => vérifier si lastChance field de la famille est unset
   // 4.2) user 2 n'accepte pas
-      // => test si notif de user est delete
+      // OK => test si notif de user est delete
   // 4.3) user 3 n'accepte pas
       // => test si notif de user est delete
       // => test si famille est delete
