@@ -1,7 +1,7 @@
 const Household = require('./../../api/models/household.model'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
-      { userAcceptNotificationRequestDelegateAdmin, userRefuseNotificationRequestDelegateAdminWithOtherMember, userRefuseNotificationRequestDelegateAdminWithoutOtherMember, testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
+      { userAcceptDelegateAdmin, userRejectDelegateAdminWithOtherMember, userRejectDelegateAdminWithoutOtherMember, testErrorUserRejectDelegateAdminWithoutOtherMember } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -9,7 +9,7 @@ dbManagement();
 
 const URL_REQUEST = "delegate-admin";
 
-describe("Test addUserRespond", () => {
+describe("Test switchAdminRequest", () => {
   it("Test 1) send delegate admin request with a bad notification id", async () => {
     const res = await createErrorTest(
       adminOneDataComplete, 
@@ -78,7 +78,7 @@ describe("Test addUserRespond", () => {
       newAdminTwo,
       invitationNotification, 
       tranformedNotification
-    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -101,7 +101,7 @@ describe("Test addUserRespond", () => {
       newAdminTwo,
       invitationNotification, 
       tranformedNotification
-    } = await userAcceptNotificationRequestDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo});
+    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo});
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -121,7 +121,7 @@ describe("Test addUserRespond", () => {
       DeletedNotification, 
       userThreeNotification, 
       userTwoIsFlagged
-    } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
 
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
@@ -135,7 +135,7 @@ describe("Test addUserRespond", () => {
     const { 
       rejectNotification, 
       checkNotification
-    } = await testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id});
+    } = await testErrorUserRejectDelegateAdminWithoutOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id});
 
     expect(rejectNotification.statusCode).toBe(400);
     expect(JSON.parse(rejectNotification.error.text).output.payload.message).toMatch("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!");
@@ -145,7 +145,7 @@ describe("Test addUserRespond", () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
+    const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
     const { 
       acceptNotification, 
       DeletedNotification, 
@@ -154,7 +154,7 @@ describe("Test addUserRespond", () => {
       newAdminTwo,
       invitationNotification, 
       tranformedNotification 
-    } = await userAcceptNotificationRequestDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
+    } = await userAcceptDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
 
     const userTwoIsFlagged = householdTwoAfterNewAdmin.members.find(member => member.userData.toString() === userTwo._id.toString());
     const checkHouseholdThree = await Household.findById(householdThree._id);
@@ -174,7 +174,7 @@ describe("Test addUserRespond", () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    const { userThreeNotification } = await userRefuseNotificationRequestDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
     const { 
       rejectNotification, 
       DeletedNotification, 
@@ -182,7 +182,7 @@ describe("Test addUserRespond", () => {
       checkUserTwo, 
       checkHouseholdThree, 
       checkUserThree
-    } = await userRefuseNotificationRequestDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdTwo, userTwo, householdThree});
+    } = await userRejectDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdTwo, userTwo, householdThree});
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(DeletedNotification).toBeNull();

@@ -13,7 +13,7 @@ const requestApi = async (notificationId, accessTokenUser, queryParams) => {
   .set('Authorization', `Bearer ${accessTokenUser}`);
 };
 
-module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
+module.exports.userAcceptDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
   let createInviteNotification = await new Notification({
     message: "Notification invitation household to user",
     householdId: householdOne._id,
@@ -50,7 +50,7 @@ module.exports.userAcceptNotificationRequestDelegateAdmin = async ({userdata, us
   return { acceptNotification, DeletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
 };
 
-module.exports.userRefuseNotificationRequestDelegateAdminWithOtherMember = async ({userdata, username, notificationId, householdTwo, userThree}) => {
+module.exports.userRejectDelegateAdminWithOtherMember = async ({userdata, username, notificationId, householdTwo, userThree}) => {
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no&otherMember=${userThree._id}`;
@@ -76,7 +76,7 @@ module.exports.userRefuseNotificationRequestDelegateAdminWithOtherMember = async
   return { rejectNotification, DeletedNotification, userThreeNotification, userTwoIsFlagged };
 };
 
-module.exports.testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId}) => {
+module.exports.testErrorUserRejectDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId}) => {
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no`;
@@ -92,7 +92,7 @@ module.exports.testErrorUserRefuseNotificationRequestDelegateAdminWithoutOtherMe
   return { rejectNotification, checkNotification };
 };
 
-module.exports.userRefuseNotificationRequestDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId, householdTwo, userTwo, householdThree}) => {
+module.exports.userRejectDelegateAdminWithoutOtherMember = async ({userdata, username, notificationId, householdTwo, userTwo, householdThree}) => {
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no`;
