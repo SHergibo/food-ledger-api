@@ -7,7 +7,8 @@ const Household = require('./../../api/models/household.model'),
         testErrorUserRejectDelegateAdminWithoutOtherMember,
         createLastChanceDelegateAdminNotif,
         userAcceptLastChanceDelegateAdmin,
-        userRejectLastChanceDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
+        userRejectLastChanceDelegateAdmin,
+        lastUserRejectLastChanceDelegateAdmin } = require('./request-helper/switchAdminRequest.helper'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -230,7 +231,7 @@ describe("Test switchAdminRequest", () => {
     expect(invitationNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
   });
-  it("Test 13) userTwo reject last chance request delegate admin with otherMember query params", async () => {
+  it("Test 13) userTwo reject last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -251,6 +252,41 @@ describe("Test switchAdminRequest", () => {
     expect(deletedNotification).toBeNull();
     expect(checkNumberNotif).toBe(true);
     expect(invitationNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
+  });
+  it("Test 14) userThree reject last chance request delegate admin", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+    const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const notifications = await createLastChanceDelegateAdminNotif([
+      {username : "userTwo", userId: userTwo._id},
+      {username : "userThree", userId: userThree._id},
+    ], householdTwo);
+    await userRejectLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
+
+    const { 
+      rejectNotification, 
+      deletedNotification, 
+      checkNumberNotif, 
+      checkHouseholdTwo, 
+      checkUserTwo, 
+      checkHouseholdThree, 
+      checkUserThree, 
+      invitationNotification, 
+      tranformedNotification
+    } = await lastUserRejectLastChanceDelegateAdmin({userdata: userThree, username: "userThree", notifications, householdOne, householdTwo, userTwo, householdThree});
+    
+    expect(rejectNotification.statusCode).toBe(204);
+    expect(deletedNotification).toBeNull();
+    expect(checkNumberNotif).toBe(true);
+    expect(checkHouseholdTwo).toBeNull();
+    expect(checkUserTwo.householdId).toBeNull();
+    expect(checkHouseholdThree.userId.toString()).toBe(userThree._id.toString());
+    expect(checkHouseholdThree.members[0].userData.toString()).toBe(userThree._id.toString());
+    expect(checkHouseholdThree.members[0].isFlagged).toBe(false);
+    expect(checkUserThree.householdId.toString()).toBe(householdThree._id.toString());
+    expect(checkUserThree.role).toMatch("admin");
+    expect(invitationNotification.userId.toString()).toBe(userThree._id.toString());
     expect(tranformedNotification).toBeNull();
   });
 });
@@ -295,7 +331,7 @@ describe("Test switchAdminRequest", () => {
   // 4.2) user 2 n'accepte pas
       // OK => test si notif de user est delete
   // 4.3) user 3 n'accepte pas
-      // => test si notif de user est delete
-      // => test si famille est delete
-      // => test si user 3 revient dans son ancienne famille
-      // => test si user 2 a householdId en null
+      // OK => test si notif de user est delete
+      // OK => test si famille est delete
+      // OK => test si user 3 revient dans son ancienne famille
+      // OK => test si user 2 a householdId en null
