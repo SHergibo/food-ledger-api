@@ -34,7 +34,8 @@ const createHousehold = async (userId, householdName) => {
     ],
     householdName: householdName,
     userId: userId,
-    householdCode: cryptoRandomString({length: 10, type: 'url-safe'})
+    householdCode: cryptoRandomString({length: 10, type: 'url-safe'}),
+    lastChance : new Date(),
   });
   return await newHousehold.save();
 };
