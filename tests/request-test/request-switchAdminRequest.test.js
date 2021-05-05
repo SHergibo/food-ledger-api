@@ -85,7 +85,7 @@ describe("Test switchAdminRequest", () => {
       newAdminTwo,
       checkInviteNotification, 
       tranformedNotification
-    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo})
+    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne})
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -108,7 +108,7 @@ describe("Test switchAdminRequest", () => {
       newAdminTwo,
       checkInviteNotification, 
       tranformedNotification
-    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo});
+    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne});
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -161,7 +161,7 @@ describe("Test switchAdminRequest", () => {
       newAdminTwo,
       checkInviteNotification, 
       tranformedNotification 
-    } = await userAcceptDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo });
+    } = await userAcceptDelegateAdmin({ userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne });
 
     const userTwoIsFlagged = householdTwoAfterNewAdmin.members.find(member => member.userData.toString() === userTwo._id.toString());
     const checkHouseholdThree = await Household.findById(householdThree._id);
@@ -219,7 +219,7 @@ describe("Test switchAdminRequest", () => {
       newAdminTwo, 
       checkInviteNotification, 
       tranformedNotification
-    } = await userAcceptLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
+    } = await userAcceptLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne});
     
     expect(acceptNotification.statusCode).toBe(204);
     expect(allNotifDeleted).toBe(true);
