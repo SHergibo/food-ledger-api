@@ -260,14 +260,14 @@ describe("Test switchAdminRequest", () => {
     const { 
       rejectNotification, 
       deletedNotification, 
-      checkNumberNotif, 
+      checkNumberLastChanceNotif, 
       checkInviteNotification, 
       tranformedNotification
     } = await userRejectLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
-    expect(checkNumberNotif).toBe(true);
+    expect(checkNumberLastChanceNotif).toBe(true);
     expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
   });
@@ -284,7 +284,7 @@ describe("Test switchAdminRequest", () => {
     const { 
       rejectNotification, 
       deletedNotification, 
-      checkNumberNotif, 
+      checkNumberLastChanceNotif, 
       checkHouseholdTwo, 
       checkUserTwo, 
       checkHouseholdThree, 
@@ -295,7 +295,7 @@ describe("Test switchAdminRequest", () => {
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
-    expect(checkNumberNotif).toBe(true);
+    expect(checkNumberLastChanceNotif).toBe(true);
     expect(checkHouseholdTwo).toBeNull();
     expect(checkUserTwo.householdId).toBeNull();
     expect(checkHouseholdThree.userId.toString()).toBe(userThree._id.toString());

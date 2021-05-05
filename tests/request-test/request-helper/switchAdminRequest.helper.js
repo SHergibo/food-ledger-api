@@ -64,14 +64,14 @@ const checkUpdatedData = async (householdTwoId, userTwoId, householdThreeId, use
 };
 
 const checkNumberOfLastChanceNotif = async (notifications) => {
-  let numberOfNotification = 0;
+  let numberOfLastChanceNotification = 0;
   for (const notif of notifications) {
     let checkNotifExist = await Notification.findById(notif.notification._id);
     if (checkNotifExist) {
-      numberOfNotification++;
+      numberOfLastChanceNotification++;
     }
   }
-  return numberOfNotification;
+  return numberOfLastChanceNotification;
 };
 
 module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificationId, householdOne }) => {
@@ -192,13 +192,13 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({ userdata, username, 
 
   const deletedNotification = await checkNotification(userdata, "last-chance-request-delegate-admin");
 
-  let numberOfNotification = await checkNumberOfLastChanceNotif(notifications);
+  const numberOfLastChanceNotification = await checkNumberOfLastChanceNotif(notifications);
 
-  let checkNumberNotif = numberOfNotification === notifications.length - 1 ? true : false;
+  const checkNumberLastChanceNotif = numberOfLastChanceNotification === notifications.length - 1 ? true : false;
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
-  return { rejectNotification, deletedNotification, checkNumberNotif, checkInviteNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, username, notifications, householdOne, householdTwo, userTwo, householdThree }) => {
@@ -212,13 +212,13 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, userna
 
   const deletedNotification = await checkNotification(userdata, "last-chance-request-delegate-admin");
 
-  let numberOfNotification = await checkNumberOfLastChanceNotif(notifications);
+  const numberOfLastChanceNotification = await checkNumberOfLastChanceNotif(notifications);
 
-  let checkNumberNotif = numberOfNotification === 0 ? true : false;
+  const checkNumberLastChanceNotif = numberOfLastChanceNotification === 0 ? true : false;
 
   const { checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree } = await checkUpdatedData(householdTwo._id, userTwo._id, householdThree._id, userdata._id);
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
-  return { rejectNotification, deletedNotification, checkNumberNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification };
 };
