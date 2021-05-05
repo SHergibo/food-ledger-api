@@ -90,7 +90,9 @@ module.exports.userRejectDelegateAdminWithOtherMember = async ({ userdata, usern
   return { rejectNotification, deletedNotification, userThreeNotification, userTwoIsFlagged, checkInviteNotification, tranformedNotification };
 };
 
-module.exports.testErrorUserRejectDelegateAdminWithoutOtherMember = async ({ userdata, username, notificationId }) => {
+module.exports.testErrorUserRejectDelegateAdminWithoutOtherMember = async ({ userdata, username, notificationId, householdOne }) => {
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
+
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no`;
@@ -98,7 +100,9 @@ module.exports.testErrorUserRejectDelegateAdminWithoutOtherMember = async ({ use
 
   const checkNotificationExist = await checkNotification(userdata, "request-delegate-admin");
 
-  return { rejectNotification, checkNotificationExist };
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
+
+  return { rejectNotification, checkNotificationExist, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.userRejectDelegateAdminWithoutOtherMember = async ({ userdata, username, notificationId, householdTwo, userTwo, householdThree }) => {
