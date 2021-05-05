@@ -63,6 +63,17 @@ const checkUpdatedData = async (householdTwoId, userTwoId, householdThreeId, use
   return { checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree };
 };
 
+const checkNumberOfLastChanceNotif = async (notifications) => {
+  let numberOfNotification = 0;
+  for (const notif of notifications) {
+    let checkNotifExist = await Notification.findById(notif.notification._id);
+    if (checkNotifExist) {
+      numberOfNotification++;
+    }
+  }
+  return numberOfNotification;
+};
+
 module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificationId, householdOne }) => {
   const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
@@ -181,13 +192,7 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({ userdata, username, 
 
   const deletedNotification = await checkNotification(userdata, "last-chance-request-delegate-admin");
 
-  let numberOfNotification = 0;
-  for (const notif of notifications) {
-    let checkNotifExist = await Notification.findById(notif.notification._id);
-    if (checkNotifExist) {
-      numberOfNotification++;
-    }
-  }
+  let numberOfNotification = await checkNumberOfLastChanceNotif(notifications);
 
   let checkNumberNotif = numberOfNotification === notifications.length - 1 ? true : false;
 
@@ -207,13 +212,7 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, userna
 
   const deletedNotification = await checkNotification(userdata, "last-chance-request-delegate-admin");
 
-  let numberOfNotification = 0;
-  for (const notif of notifications) {
-    let checkNotifExist = await Notification.findById(notif.notification._id);
-    if (checkNotifExist) {
-      numberOfNotification++;
-    }
-  }
+  let numberOfNotification = await checkNumberOfLastChanceNotif(notifications);
 
   let checkNumberNotif = numberOfNotification === 0 ? true : false;
 
