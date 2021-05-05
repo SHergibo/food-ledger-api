@@ -70,7 +70,9 @@ module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificati
   return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
 };
 
-module.exports.userRejectDelegateAdminWithOtherMember = async ({ userdata, username, notificationId, householdTwo, userThree }) => {
+module.exports.userRejectDelegateAdminWithOtherMember = async ({ userdata, username, notificationId, householdOne, householdTwo, userThree }) => {
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
+
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
   const queryParams = `?acceptedRequest=no&otherMember=${userThree._id}`;
@@ -83,7 +85,9 @@ module.exports.userRejectDelegateAdminWithOtherMember = async ({ userdata, usern
   const householdTwoUpdated = await Household.findById(householdTwo._id);
   const userTwoIsFlagged = householdTwoUpdated.members.find(member => member.userData.toString() === userdata._id.toString());
 
-  return { rejectNotification, deletedNotification, userThreeNotification, userTwoIsFlagged };
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
+
+  return { rejectNotification, deletedNotification, userThreeNotification, userTwoIsFlagged, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.testErrorUserRejectDelegateAdminWithoutOtherMember = async ({ userdata, username, notificationId }) => {
