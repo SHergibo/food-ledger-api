@@ -200,8 +200,10 @@ describe("Test switchAdminRequest", () => {
       checkHouseholdTwo, 
       checkUserTwo, 
       checkHouseholdThree, 
-      checkUserThree
-    } = await userRejectDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdTwo, userTwo, householdThree});
+      checkUserThree,
+      checkInviteNotificationUserThree,
+      tranformedNotificationUserThree
+    } = await userRejectDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo, userTwo, householdThree});
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
@@ -214,6 +216,8 @@ describe("Test switchAdminRequest", () => {
     expect(checkUserThree.role).toMatch("admin");
     expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
+    expect(checkInviteNotificationUserThree.userId.toString()).toBe(userThree._id.toString());
+    expect(tranformedNotificationUserThree).toBeNull();
   });
   it("Test 12) userTwo accept last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
