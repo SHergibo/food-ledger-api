@@ -13,15 +13,19 @@ const requestApi = async (notificationId, accessTokenUser, queryParams) => {
   .set('Authorization', `Bearer ${accessTokenUser}`);
 };
 
-module.exports.userAcceptDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
+const createInviteNotification = async (householdId, userId) => {
   let createInviteNotification = await new Notification({
     message: "Notification invitation household to user",
-    householdId: householdOne._id,
-    userId: userdata._id,
+    householdId: householdId,
+    userId: userId,
     type: "invitation-household-to-user",
     urlRequest: "add-user-respond",
   });
-  await createInviteNotification.save();
+  return await createInviteNotification.save();
+};
+
+module.exports.userAcceptDelegateAdmin = async ({userdata, username, notificationId, householdOne, householdTwo}) => {
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
@@ -40,14 +44,14 @@ module.exports.userAcceptDelegateAdmin = async ({userdata, username, notificatio
 
   const newAdminTwo = await User.findById(userdata._id);
 
-  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const checkInviteNotification = await Notification.findById(inviteNotification._id);
   const tranformedNotification = await Notification.findOne({
     userId : userdata._id,
     type: 'need-switch-admin',
     householdId: householdOne._id
   });
 
-  return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
+  return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.userRejectDelegateAdminWithOtherMember = async ({userdata, username, notificationId, householdTwo, userThree}) => {
@@ -130,14 +134,7 @@ module.exports.createLastChanceDelegateAdminNotif = async (usersData, householdI
 };
 
 module.exports.userAcceptLastChanceDelegateAdmin = async ({userdata, username, notifications, householdOne, householdTwo}) => {
-  let createInviteNotification = await new Notification({
-    message: "Notification invitation household to user",
-    householdId: householdOne._id,
-    userId: userdata._id,
-    type: "invitation-household-to-user",
-    urlRequest: "add-user-respond",
-  });
-  await createInviteNotification.save();
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
@@ -156,25 +153,18 @@ module.exports.userAcceptLastChanceDelegateAdmin = async ({userdata, username, n
 
   const newAdminTwo = await User.findById(userdata._id);
 
-  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const checkInviteNotification = await Notification.findById(inviteNotification._id);
   const tranformedNotification = await Notification.findOne({
     userId : userdata._id,
     type: 'need-switch-admin',
     householdId: householdOne._id
   });
 
-  return { acceptNotification, allNotifDeleted, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, invitationNotification, tranformedNotification };
+  return { acceptNotification, allNotifDeleted, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.userRejectLastChanceDelegateAdmin = async ({userdata, username, notifications, householdOne}) => {
-  let createInviteNotification = await new Notification({
-    message: "Notification invitation household to user",
-    householdId: householdOne._id,
-    userId: userdata._id,
-    type: "invitation-household-to-user",
-    urlRequest: "add-user-respond",
-  });
-  await createInviteNotification.save();
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
@@ -199,25 +189,18 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({userdata, username, n
 
   let checkNumberNotif = numberOfNotification === notifications.length - 1 ? true : false;
 
-  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const checkInviteNotification = await Notification.findById(inviteNotification._id);
   const tranformedNotification = await Notification.findOne({
     userId : userdata._id,
     type: 'need-switch-admin',
     householdId: householdOne._id
   });
 
-  return { rejectNotification, deletedNotification, checkNumberNotif, invitationNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberNotif, checkInviteNotification, tranformedNotification };
 };
 
 module.exports.lastUserRejectLastChanceDelegateAdmin = async ({userdata, username, notifications, householdOne, householdTwo, userTwo, householdThree}) => {
-  let createInviteNotification = await new Notification({
-    message: "Notification invitation household to user",
-    householdId: householdOne._id,
-    userId: userdata._id,
-    type: "invitation-household-to-user",
-    urlRequest: "add-user-respond",
-  });
-  await createInviteNotification.save();
+  const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
   const accessTokenUser = await login(data[`${username}DataComplete`].email, data[`${username}DataComplete`].password);
 
@@ -247,12 +230,12 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({userdata, usernam
   const checkHouseholdThree = await Household.findById(householdThree._id);
   const checkUserThree = await User.findById(userdata._id);
 
-  const invitationNotification = await Notification.findById(createInviteNotification._id);
+  const checkInviteNotification = await Notification.findById(inviteNotification._id);
   const tranformedNotification = await Notification.findOne({
     userId : userdata._id,
     type: 'need-switch-admin',
     householdId: householdOne._id
   });
 
-  return { rejectNotification, deletedNotification, checkNumberNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, invitationNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification };
 };
