@@ -66,12 +66,7 @@ module.exports.userRejectDelegateAdminWithOtherMember = async ({userdata, userna
 
   const deletedNotification = await checkNotification(userdata, "request-delegate-admin");
 
-  const userThreeNotification = await Notification.findOne({
-    userId : userThree._id,
-    householdId : userThree.householdId,
-    type: "request-delegate-admin",
-    urlRequest : "delegate-admin",
-  });
+  const userThreeNotification = await checkNotification(userThree, "request-delegate-admin");
 
   const householdTwoUpdated = await Household.findById(householdTwo._id);
   const userTwoIsFlagged = householdTwoUpdated.members.find(member => member.userData.toString() === userdata._id.toString());
