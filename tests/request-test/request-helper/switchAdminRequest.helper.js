@@ -53,6 +53,16 @@ const checkTransformedInviteNotification = async (notifId, userId, householdId) 
   return { checkInviteNotification, tranformedNotification };
 };
 
+
+const checkUpdatedData = async (householdTwoId, userTwoId, householdThreeId, userThreeId) => {
+  const checkHouseholdTwo = await Household.findById(householdTwoId);
+  const checkUserTwo = await User.findById(userTwoId);
+  const checkHouseholdThree = await Household.findById(householdThreeId);
+  const checkUserThree = await User.findById(userThreeId);
+
+  return { checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree };
+};
+
 module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificationId, householdOne }) => {
   const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
@@ -115,10 +125,7 @@ module.exports.userRejectDelegateAdminWithoutOtherMember = async ({ userdata, us
 
   const deletedNotification = await checkNotification(userdata, "request-delegate-admin");
 
-  const checkHouseholdTwo = await Household.findById(householdTwo._id);
-  const checkUserTwo = await User.findById(userTwo._id);
-  const checkHouseholdThree = await Household.findById(householdThree._id);
-  const checkUserThree = await User.findById(userdata._id);
+  const { checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree } = await checkUpdatedData(householdTwo._id, userTwo._id, householdThree._id, userdata._id);
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
@@ -210,10 +217,7 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, userna
 
   let checkNumberNotif = numberOfNotification === 0 ? true : false;
 
-  const checkHouseholdTwo = await Household.findById(householdTwo._id);
-  const checkUserTwo = await User.findById(userTwo._id);
-  const checkHouseholdThree = await Household.findById(householdThree._id);
-  const checkUserThree = await User.findById(userdata._id);
+  const { checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree } = await checkUpdatedData(householdTwo._id, userTwo._id, householdThree._id, userdata._id);
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
