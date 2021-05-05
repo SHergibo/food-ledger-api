@@ -127,13 +127,17 @@ describe("Test switchAdminRequest", () => {
       rejectNotification, 
       deletedNotification, 
       userThreeNotification, 
-      userTwoIsFlagged
-    } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+      userTwoIsFlagged,
+      checkInviteNotification, 
+      tranformedNotification
+    } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo, userThree});
 
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
     expect(deletedNotification).toBeNull();
     expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
+    expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
   });
   it("Test 9) userTwo refuse notificationRequestDelegateAdmin without otherMember query", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
@@ -152,7 +156,7 @@ describe("Test switchAdminRequest", () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo,userThree });
+    const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({ userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo, userThree });
     const { 
       acceptNotification, 
       deletedNotification, 
@@ -181,7 +185,11 @@ describe("Test switchAdminRequest", () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    const { userThreeNotification } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    const { 
+      userThreeNotification,
+      checkInviteNotification, 
+      tranformedNotification  
+    } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo, userThree});
     const { 
       rejectNotification, 
       deletedNotification, 
@@ -200,12 +208,13 @@ describe("Test switchAdminRequest", () => {
     expect(checkHouseholdThree.members[0].isFlagged).toBe(false);
     expect(checkUserThree.householdId.toString()).toBe(householdThree._id.toString());
     expect(checkUserThree.role).toMatch("admin");
+    expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(tranformedNotification).toBeNull();
   });
   it("Test 12) userTwo accept last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
-    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
-    await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdTwo, userThree});
+    await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const notifications = await createLastChanceDelegateAdminNotif([
       {username : "userTwo", userId: userTwo._id},
       {username : "userThree", userId: userThree._id},
@@ -220,7 +229,7 @@ describe("Test switchAdminRequest", () => {
       checkInviteNotification, 
       tranformedNotification
     } = await userAcceptLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne});
-    
+
     expect(acceptNotification.statusCode).toBe(204);
     expect(allNotifDeleted).toBe(true);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
