@@ -141,12 +141,12 @@ describe("Test switchAdminRequest", () => {
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
       rejectNotification, 
-      checkNotification
+      checkNotificationExist
     } = await testErrorUserRejectDelegateAdminWithoutOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id});
 
     expect(rejectNotification.statusCode).toBe(400);
     expect(JSON.parse(rejectNotification.error.text).output.payload.message).toMatch("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!");
-    expect(checkNotification.userId.toString()).toBe(userTwo._id.toString());
+    expect(checkNotificationExist.userId.toString()).toBe(userTwo._id.toString());
   });
   it("Test 10) userThree accept notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
