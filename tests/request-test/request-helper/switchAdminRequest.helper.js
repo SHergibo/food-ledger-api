@@ -42,6 +42,17 @@ const checkNewAdminChange = async (userdata) => {
   return { householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo };
 };
 
+const checkTransformedInviteNotification = async (notifId, userId, householdId) => {
+  const checkInviteNotification = await Notification.findById(notifId);
+  const tranformedNotification = await Notification.findOne({
+    userId: userId,
+    type: 'need-switch-admin',
+    householdId: householdId
+  });
+
+  return { checkInviteNotification, tranformedNotification };
+};
+
 module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificationId, householdOne }) => {
   const inviteNotification = await createInviteNotification(householdOne._id, userdata._id);
 
@@ -54,12 +65,7 @@ module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificati
 
   const { householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo } = await checkNewAdminChange(userdata);
 
-  const checkInviteNotification = await Notification.findById(inviteNotification._id);
-  const tranformedNotification = await Notification.findOne({
-    userId: userdata._id,
-    type: 'need-switch-admin',
-    householdId: householdOne._id
-  });
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
   return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
 };
@@ -140,12 +146,7 @@ module.exports.userAcceptLastChanceDelegateAdmin = async ({ userdata, username, 
 
   const { householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo } = await checkNewAdminChange(userdata);
 
-  const checkInviteNotification = await Notification.findById(inviteNotification._id);
-  const tranformedNotification = await Notification.findOne({
-    userId: userdata._id,
-    type: 'need-switch-admin',
-    householdId: householdOne._id
-  });
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
   return { acceptNotification, allNotifDeleted, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
 };
@@ -171,12 +172,7 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({ userdata, username, 
 
   let checkNumberNotif = numberOfNotification === notifications.length - 1 ? true : false;
 
-  const checkInviteNotification = await Notification.findById(inviteNotification._id);
-  const tranformedNotification = await Notification.findOne({
-    userId: userdata._id,
-    type: 'need-switch-admin',
-    householdId: householdOne._id
-  });
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
   return { rejectNotification, deletedNotification, checkNumberNotif, checkInviteNotification, tranformedNotification };
 };
@@ -207,12 +203,7 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, userna
   const checkHouseholdThree = await Household.findById(householdThree._id);
   const checkUserThree = await User.findById(userdata._id);
 
-  const checkInviteNotification = await Notification.findById(inviteNotification._id);
-  const tranformedNotification = await Notification.findOne({
-    userId: userdata._id,
-    type: 'need-switch-admin',
-    householdId: householdOne._id
-  });
+  const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
   return { rejectNotification, deletedNotification, checkNumberNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification };
 };
