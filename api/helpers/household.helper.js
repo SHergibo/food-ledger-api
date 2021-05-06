@@ -65,7 +65,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
         socketIoEmit(delegate._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
         for (const member of household.members){
-          socketIoEmit(member.userData, [{name : "updateFamilly", data: household}]);
+          socketIoEmit(member.userData, [{name : "updateFamilly", data: household.transform()}]);
         }
 
         return;
@@ -102,7 +102,7 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
 
       let deletedNotification = await Notification.findOneAndDelete({userId : member.userData, type: "last-chance-request-delegate-admin" });
 
-      let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData, householdData : householdData } }];
+      let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData.transform(), householdData : householdData.transform() } }];
 
       if(deletedNotification){
         arraySocketIo.push({ name : "deleteNotificationReceived", data: deletedNotification._id })
