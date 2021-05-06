@@ -1,8 +1,10 @@
 const Household = require('./../models/household.model'),
       User = require('./../models/user.model'),
+      Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { transformObject } = require('../helpers/transformJsonData.helper');
 
 /**
 * Post one household
@@ -72,6 +74,46 @@ exports.kickUser = async (req, res, next) => {
       select: 'firstname lastname usercode role'
     });
 
+    if(household.members.length === 1){
+      let needSwitchAdminNotification = await Notification.find({userId : household.userId, type: "need-switch-admin"});
+      if(needSwitchAdminNotification.length >= 1){
+        for (const notif of needSwitchAdminNotification) {
+          const otherHousehold = await Household.findById(notif.householdId);
+          let inviteNotification = await new Notification({
+            message: `L'administrateur.trice de la famille ${otherHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+            householdId: notif.householdId,
+            userId: notif.userId,
+            type: "invitation-household-to-user",
+            urlRequest: "add-user-respond",
+          });
+          await inviteNotification.save(); 
+
+          await Notification.findByIdAndDelete(notif._id);
+
+          socketIoEmit(notif.userId, 
+            [
+              {name : "deleteNotificationReceived", data: notif._id},
+              {name : "updateNotificationReceived", data: inviteNotification.transform()},
+            ]
+          );
+
+          let notificationSended = await Notification.findById(inviteNotification._id)
+          .populate({
+            path: 'userId',
+            select: 'firstname lastname -_id'
+          });
+
+          socketIoEmit(otherHousehold.userId, 
+            [
+              {name : "deleteNotificationSended", data: notif._id},
+              {name : "updateNotificationSended", data: transformObject(notificationSended, 'notification')},
+            ]
+          ); 
+        }
+      }
+    }
+
+
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let user;
     if(oldHousehold){
@@ -96,6 +138,7 @@ exports.kickUser = async (req, res, next) => {
 
     return res.json(household.transform());
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
