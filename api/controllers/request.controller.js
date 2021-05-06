@@ -352,8 +352,8 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
       socketIoEmit(oldAdmin._id, 
         [
-          {name : "updateUserAndFamillyData", data: {userData : oldAdmin, householdData : household}},
-          {name : "updateAllNotifications", data: {notificationsReceived : oldAdminNotificationsReceived, notificationsSended : oldAdminNotificationsSended}},
+          {name : "updateUserAndFamillyData", data: {userData : oldAdmin.transform(), householdData : household.transform()}},
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(oldAdminNotificationsReceived, "notification"), notificationsSended : transformArray(oldAdminNotificationsSended, "notificationUserId")}},
         ]
       );
 
@@ -388,7 +388,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
       socketIoEmit(notification.userId, 
         [
-          {name : "updateUserAndFamillyData", data: {userData : newAdmin, householdData : household}},
+          {name : "updateUserAndFamillyData", data: {userData : newAdmin.transform(), householdData : household.transform()}},
           {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
         ]
       );
