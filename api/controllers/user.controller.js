@@ -174,6 +174,8 @@ exports.remove = async (req, res, next) => {
       } else if (user.role === "user") {
         household = await Household.findByIdAndUpdate(household._id, { members: arrayMembers }, { override: true, upsert: true, new: true });
 
+        socketIoEmit(household.userId, [{name : "updateFamilly", data: household.transform()}]);
+
         if(household.members.length === 1){
           let needSwitchAdminNotification = await Notification.find({userId : household.userId, type: "need-switch-admin"});
           if(needSwitchAdminNotification.length >= 1){
