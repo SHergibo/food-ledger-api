@@ -650,13 +650,13 @@ exports.addUserRespond = async (req, res, next) => {
       });
     
       if(user.role === "user"){
-        socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser, householdData : updatedNewHousehold}}]);
+        socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}}]);
       }else{
         const userNotificationsReceived = await Notification.find({userId : user._id});
         socketIoEmit(user._id, 
           [
-              {name : "updateUserAndFamillyData", data: {userData : updatedUser, householdData : updatedNewHousehold}},
-              {name : "updateAllNotificationsReceived", data: userNotificationsReceived},
+              {name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}},
+              {name : "updateAllNotificationsReceived", data: userNotificationsReceived.tranform()},
           ]
         );
       }
@@ -664,10 +664,10 @@ exports.addUserRespond = async (req, res, next) => {
       for (const member of updatedNewHousehold.members){
         if(member.userData._id.toString() !== user._id.toString()){
           if(member.userData._id.toString() !== updatedNewHousehold.userId.toString()){
-            socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedNewHousehold}]);
+            socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedNewHousehold.transform()}]);
           }else{
             socketIoEmit(member.userData._id, [
-              {name : "updateFamilly", data: updatedNewHousehold},
+              {name : "updateFamilly", data: updatedNewHousehold.transform()},
               {name : "deleteNotificationSended", data: req.params.notificationId},
             ]);
           }
@@ -676,7 +676,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       if(updatedOldHousehold){
         for (const member of updatedOldHousehold.members){
-          socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedOldHousehold}]);
+          socketIoEmit(member.userData._id, [{name : "updateFamilly", data: updatedOldHousehold.transform()}]);
         }
       }
       
