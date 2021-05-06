@@ -95,14 +95,14 @@ exports.switchAdminRequest = async (req, res, next) => {
 
       socketIoEmit(notification.userId, 
         [
-          {name : "updateUserAndFamillyData", data: {userData : user, householdData : updatedHousehold}},
+          {name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : updatedHousehold.transform()}},
           {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
         ]
       );
 
       for (const member of arrayMembers){
         if(member.userData.toString() !== user._id.toString()){
-          socketIoEmit(member.userData, [{name : "updateFamilly", data: updatedHousehold}]);
+          socketIoEmit(member.userData, [{name : "updateFamilly", data: updatedHousehold.transform()}]);
         }
       }
 
@@ -154,7 +154,7 @@ exports.switchAdminRequest = async (req, res, next) => {
             select: 'firstname lastname usercode role'
           });
 
-          socketIoEmit(user._id, [{name : "updateFamilly", data: updatedHousehold}]);
+          socketIoEmit(user._id, [{name : "updateFamilly", data: updatedHousehold.transform()}]);
 
           let newNotification = await new Notification({
             message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'ancien.ne administrateur.trice, acceptez-vous cette requête ou passez l'administration à un.e autre membre de votre famille. Attention si vous êtes le/la dernier.ère membre éligible de cette famille, la famille sera supprimée et ne pourra pas être récupérée!",
@@ -168,7 +168,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
           socketIoEmit(otherMember._id, 
             [
-              {name : "updateFamilly", data: updatedHousehold},
+              {name : "updateFamilly", data: updatedHousehold.transform()},
               {name : "updateNotificationReceived", data: newNotification.transform()}
             ]
           );
