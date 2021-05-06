@@ -131,14 +131,13 @@ exports.kickUser = async (req, res, next) => {
       });
     }else{
       user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
-      oldHousehold = {};
+      oldHousehold = undefined;
     }
 
     socketIoEmit(req.body.userId, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : oldHousehold}}]);
 
     return res.json(household.transform());
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
