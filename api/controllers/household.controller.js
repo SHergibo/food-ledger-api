@@ -3,8 +3,7 @@ const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformObject } = require('../helpers/transformJsonData.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper');
 
 /**
 * Post one household
@@ -106,7 +105,7 @@ exports.kickUser = async (req, res, next) => {
           socketIoEmit(otherHousehold.userId, 
             [
               {name : "deleteNotificationSended", data: notif._id},
-              {name : "updateNotificationSended", data: transformObject(notificationSended, 'notification')},
+              {name : "updateNotificationSended", data: notificationSended.transform(true)},
             ]
           ); 
         }
@@ -129,12 +128,13 @@ exports.kickUser = async (req, res, next) => {
         path: 'members.userData',
         select: 'firstname lastname usercode role'
       });
+      oldHousehold = oldHousehold.transform()
     }else{
       user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
       oldHousehold = undefined;
     }
 
-    socketIoEmit(req.body.userId, [{name : "updateUserAndFamillyData", data: {userData : user, householdData : oldHousehold}}]);
+    socketIoEmit(req.body.userId, [{name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : oldHousehold}}]);
 
     return res.json(household.transform());
   } catch (error) {
