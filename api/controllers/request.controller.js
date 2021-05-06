@@ -572,6 +572,45 @@ exports.addUserRespond = async (req, res, next) => {
       
       let newMembersArray = newHousehold.members;
 
+      if(newMembersArray.length === 1){
+        let inviteNotification = await Notification.find({userId : newHousehold.userId, type: "invitation-household-to-user"});
+        if(inviteNotification.length >= 1){
+          for (const notif of inviteNotification) {
+            const otherHousehold = await Household.findById(notif.householdId);
+            let needSwitchAdminNotification = await new Notification({
+              message: `L'administrateur.trice de la famille ${otherHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
+              householdId: notif.householdId,
+              userId: notif.userId,
+              type: "need-switch-admin",
+              urlRequest: "add-user-respond",
+            });
+            await needSwitchAdminNotification.save(); 
+  
+            await Notification.findByIdAndDelete(notif._id);
+  
+            socketIoEmit(notif.userId, 
+              [
+                {name : "deleteNotificationReceived", data: notif._id},
+                {name : "updateNotificationReceived", data: needSwitchAdminNotification.transform()},
+              ]
+            );
+  
+            let notificationSended = await Notification.findById(needSwitchAdminNotification._id)
+            .populate({
+              path: 'userId',
+              select: 'firstname lastname -_id'
+            });
+  
+            socketIoEmit(otherHousehold.userId, 
+              [
+                {name : "deleteNotificationSended", data: notif._id},
+                {name : "updateNotificationSended", data: notificationSended.transform(true)},
+              ]
+            ); 
+          }
+        }
+      }
+
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMembersArray.length > 1) {
         let newNotification = await new Notification({
           message: "L'administrateur.trice a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
