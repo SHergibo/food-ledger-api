@@ -41,6 +41,13 @@ describe("Test addUserRequest controller", () => {
     expect(error.isBoom).toBe(true);
     expect(error.output.payload.message).toMatch("Le membre fait déjà partie de cette famille !");
   });
+  it("Test6 ) Test if otherHousehold isWaiting", async () => {
+    const { statusCode, error } = await createErrorTest(adminOneDataComplete, adminTwoDataComplete, "otherHouseholdIsWaiting");
+
+    expect(statusCode).toBe(400);
+    expect(error.isBoom).toBe(true);
+    expect(error.output.payload.message).toMatch("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur.trice!");
+  });
   it("Send addUser request from admin to user and test if notification is created", async () => {
     const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
@@ -56,7 +63,7 @@ describe("Test addUserRequest controller", () => {
 // 2) OK => test code famille
 // 3) OK => test famille est en isWaiting true
 // 4) OK => test anti spam requête d'invitation
-// 5) test si utilisateur est déjà dans la famille
+// 5) OK => test si utilisateur est déjà dans la famille
 // 6) test blocage envoie d'invite pour une personne dans une famille sans admin
 
 // création d'invitation
