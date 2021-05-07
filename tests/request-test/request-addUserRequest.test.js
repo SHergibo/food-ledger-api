@@ -34,6 +34,13 @@ describe("Test addUserRequest controller", () => {
     expect(error.isBoom).toBe(true);
     expect(error.output.payload.message).toMatch("Vous avez déjà envoyé ou reçu une invitation de cette personne!");
   });
+  it("Test5 ) Test if user is already in the admin household", async () => {
+    const { statusCode, error } = await createErrorTest(adminOneDataComplete, adminTwoDataComplete, "sameHousehold");
+
+    expect(statusCode).toBe(400);
+    expect(error.isBoom).toBe(true);
+    expect(error.output.payload.message).toMatch("Le membre fait déjà partie de cette famille !");
+  });
   it("Send addUser request from admin to user and test if notification is created", async () => {
     const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
