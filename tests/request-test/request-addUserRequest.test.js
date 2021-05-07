@@ -13,6 +13,13 @@ describe("Test addUserRequest controller", () => {
     expect(error.isBoom).toBe(true);
     expect(error.output.payload.message).toMatch("Code utilisateur non valide!");
   });
+  it("Test2 ) send add user request with bad householdCode", async () => {
+    const { statusCode, error } = await createErrorTest(adminOneDataComplete, adminTwoDataComplete, "badHouseholdCode");
+
+    expect(statusCode).toBe(400);
+    expect(error.isBoom).toBe(true);
+    expect(error.output.payload.message).toMatch("Code famille non valide!");
+  });
   it("Send addUser request from admin to user and test if notification is created", async () => {
     const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
@@ -25,7 +32,7 @@ describe("Test addUserRequest controller", () => {
 
 // Test error
 // 1) OK => test code utilisateur
-// 2) test code famille
+// 2) OK => test code famille
 // 3) test famille est en isWaiting true
 // 4) test anti spam requête d'invitation
 // 5) test si utilisateur est déjà dans la famille
