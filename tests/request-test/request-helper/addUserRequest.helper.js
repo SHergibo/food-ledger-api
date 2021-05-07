@@ -43,6 +43,10 @@ module.exports.createErrorTest = async (adminData, userData, testName) => {
     await invitationRequestNotif.save();
   }
 
+  if(testName === "otherHouseholdIsWaiting"){
+    await Household.findByIdAndUpdate(user.body.householdId, {isWaiting : true}, { override: true, upsert: true, new: true });
+  }
+
   if(testName === "sameHousehold"){
     await User.findByIdAndUpdate(user.body._id, {householdId : householdAdmin._id}, { override: true, upsert: true, new: true });
   }
