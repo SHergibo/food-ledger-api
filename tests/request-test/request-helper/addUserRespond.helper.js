@@ -178,3 +178,41 @@ module.exports.delegateWithoutOtherMember = async (adminTwo, householdOne, house
     isUserThreeInHouseholdOne
   };
 };
+
+module.exports.testTranformInviteNotif = async (adminOne, householdOne, userTwo, householdTwo) => {
+  let invitationRequestNotif = await new Notification({
+    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+    householdId: householdTwo._id,
+    userId: adminOne._id,
+    type: "invitation-household-to-user",
+    urlRequest: "add-user-respond"
+  });
+  await invitationRequestNotif.save();
+
+  const addUserNotification = await createAddUserRequestNotification(userTwo, householdOne._id);
+
+  const accessTokenAdminOne = await login(adminOneDataComplete.email, adminOneDataComplete.password);
+
+  const delegateResponse = await request(app)
+  .get(`/api/${api}/requests/add-user-respond/${addUserNotification._id}?acceptedRequest=yes`)
+  .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+
+  const notificationDeleted = await Notification.findById(addUserNotification._id);
+
+  const inviteNotifDeleted = await Notification.findById(invitationRequestNotif._id);
+
+  const tranformedNotification = await Notification.findOne({
+    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
+    householdId: householdTwo._id,
+    userId: adminOne._id,
+    type: "need-switch-admin",
+    urlRequest: "add-user-respond",
+  });
+
+  return { 
+    delegateResponse,
+    notificationDeleted, 
+    inviteNotifDeleted, 
+    tranformedNotification, 
+  };
+};
