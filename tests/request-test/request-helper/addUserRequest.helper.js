@@ -31,6 +31,17 @@ module.exports.createErrorTest = async (adminData, userData, testName) => {
     await Household.findByIdAndUpdate(householdAdmin._id, {isWaiting : true}, { override: true, upsert: true, new: true });
   }
 
+  if(testName === "spamNotification"){
+    let invitationRequestNotif = await new Notification({
+      message: `L'administrateur.trice de la famille ${householdAdmin.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+      householdId: householdAdmin._id,
+      userId: user.body._id,
+      type: "invitation-household-to-user",
+      urlRequest: "add-user-respond"
+    });
+    await invitationRequestNotif.save();
+  }
+
   const addUserResponse = await request(app)
     .post(`/api/${api}/requests/add-user-request`)
     .send(objectData)
