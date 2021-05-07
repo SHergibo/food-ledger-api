@@ -695,7 +695,7 @@ exports.addUserRespond = async (req, res, next) => {
         socketIoEmit(user._id, 
           [
               {name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}},
-              {name : "updateAllNotificationsReceived", data: userNotificationsReceived.tranform()},
+              {name : "updateAllNotificationsReceived", data: transformArray(userNotificationsReceived, "notification")},
           ]
         );
       }
