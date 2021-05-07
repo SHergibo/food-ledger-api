@@ -20,6 +20,13 @@ describe("Test addUserRequest controller", () => {
     expect(error.isBoom).toBe(true);
     expect(error.output.payload.message).toMatch("Code famille non valide!");
   });
+  it("Test3 ) send add user request to a household who is isWaiting", async () => {
+    const { statusCode, error } = await createErrorTest(adminOneDataComplete, adminTwoDataComplete, "householdIsWaiting");
+
+    expect(statusCode).toBe(400);
+    expect(error.isBoom).toBe(true);
+    expect(error.output.payload.message).toMatch("Vous ne pouvez pas envoyer une requête d'invitation à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!");
+  });
   it("Send addUser request from admin to user and test if notification is created", async () => {
     const { user, addUser, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
 
@@ -33,7 +40,7 @@ describe("Test addUserRequest controller", () => {
 // Test error
 // 1) OK => test code utilisateur
 // 2) OK => test code famille
-// 3) test famille est en isWaiting true
+// 3) Ok => test famille est en isWaiting true
 // 4) test anti spam requête d'invitation
 // 5) test si utilisateur est déjà dans la famille
 // 6) test blocage envoie d'invite pour une personne dans une famille sans admin
