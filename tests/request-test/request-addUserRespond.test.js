@@ -7,7 +7,7 @@ const request = require("supertest"),
       { login } = require('../login.helper'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRequestTest } = require('./request-helper/addUserRequest.helper'),
-      { createAddUserRespondTest, acceptAddUserRequest, delegateWithOtherMember, delegateWithoutOtherMember } = require('./request-helper/addUserRespond.helper'),
+      { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember, delegateWithoutOtherMember, testTranformInviteNotif } = require('./request-helper/addUserRespond.helper'),
       { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -222,5 +222,20 @@ describe("Test addUserRespond", () => {
     expect(userThreeAfterSwitch.householdId.toString()).toBe(householdThree._id.toString());
     expect(userThreeAfterSwitch.role).toMatch("admin");
     expect(isUserThreeInHouseholdOne.userData.toString()).toBe(userThree._id.toString());
+  });
+  it("Test 12) Test if invitation notification is transforming into need switch admin notification", async () => {
+    const { adminOne, householdOne, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+    const { 
+      delegateResponse,
+      notificationDeleted, 
+      inviteNotifDeleted, 
+      tranformedNotification,  
+    } = await testTranformInviteNotif(adminOne, householdOne, userTwo, householdTwo);
+
+    expect(delegateResponse.statusCode).toBe(204);
+    expect(notificationDeleted).toBeNull();
+    expect(inviteNotifDeleted).toBeNull();
+    expect(tranformedNotification.userId.toString()).toBe(adminOne._id.toString());
+    expect(tranformedNotification.type).toMatch("need-switch-admin");
   });
 });
