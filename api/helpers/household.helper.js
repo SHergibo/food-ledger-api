@@ -78,7 +78,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
 exports.noMoreAdmin = async (arrayMembers, householdId) => {
   try {
     for (const member of arrayMembers) {
-      let householdData = {};
+      let householdData;
       let userData;
       let oldHousehold = await Household.findOne({ userId: member.userData });
       if (oldHousehold) {
@@ -95,6 +95,7 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
             path: 'members.userData',
             select: 'firstname lastname usercode role'
           });
+          householdData = householdData.transform()
       }
       else {
         userData = await User.findByIdAndUpdate(member.userData, { householdId: null }, { override: true, upsert: true, new: true });
@@ -102,7 +103,7 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
 
       let deletedNotification = await Notification.findOneAndDelete({userId : member.userData, type: "last-chance-request-delegate-admin" });
 
-      let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData.transform(), householdData : householdData.transform() } }];
+      let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData.transform(), householdData : householdData } }];
 
       if(deletedNotification){
         arraySocketIo.push({ name : "deleteNotificationReceived", data: deletedNotification._id })
