@@ -2,6 +2,7 @@ const request = require("supertest");
 const app = require("../../../config/app.config");
 const { api } = require('../../../config/environment.config');
 const Household = require('../../../api/models/household.model');
+const User = require('../../../api/models/user.model');
 const Notification = require('../../../api/models/notification.model');
 const { login } = require('../../login.helper');
 
@@ -40,6 +41,10 @@ module.exports.createErrorTest = async (adminData, userData, testName) => {
       urlRequest: "add-user-respond"
     });
     await invitationRequestNotif.save();
+  }
+
+  if(testName === "sameHousehold"){
+    await User.findByIdAndUpdate(user.body._id, {householdId : householdAdmin._id}, { override: true, upsert: true, new: true });
   }
 
   const addUserResponse = await request(app)
