@@ -18,6 +18,13 @@ const createUsers = async (adminOneData, adminTwoData) => {
   return { adminOne, adminTwo };
 };
 
+const addUserRequest = async (objectData, accessToken) => {
+  return await request(app)
+  .post(`/api/${api}/requests/add-user-request`)
+  .send(objectData)
+  .set('Authorization', `Bearer ${accessToken}`);
+};
+
 module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) => {
   const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
 
@@ -57,10 +64,7 @@ module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) =>
     await User.findByIdAndUpdate(adminTwo.body._id, {householdId : householdAdminOne._id}, { override: true, upsert: true, new: true });
   }
 
-  const addUserResponse = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send(objectData)
-    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+  const addUserResponse = await addUserRequest(objectData, accessTokenAdminOne);
 
   return {statusCode : addUserResponse.statusCode, error : JSON.parse(addUserResponse.error.text)}
 };
@@ -72,14 +76,12 @@ module.exports.createAddUserRequestTestOne = async (adminOneData, adminTwoData) 
 
   const householdAdminOne = await Household.findById(adminOne.body.householdId);
 
-  const addUser = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send({
-      usercode : adminTwo.body.usercode,
-      type: "householdToUser",
-      householdCode: householdAdminOne.householdCode
-    })
-    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+  let objectData = {
+    usercode : adminTwo.body.usercode,
+    type: "householdToUser",
+    householdCode: householdAdminOne.householdCode
+  };
+  const addUser = await addUserRequest(objectData, accessTokenAdminOne);
 
   const notificationAddUser = await Notification.findOne({
     userId : adminTwo.body._id,
@@ -102,14 +104,12 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) 
 
   const householdAdminOne = await Household.findById(adminOne.body.householdId);
 
-  const addUser = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send({
-      usercode : adminTwo.body.usercode,
-      type: "householdToUser",
-      householdCode: householdAdminOne.householdCode
-    })
-    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+  let objectData = {
+    usercode : adminTwo.body.usercode,
+    type: "householdToUser",
+    householdCode: householdAdminOne.householdCode
+  };
+  const addUser = await addUserRequest(objectData, accessTokenAdminOne);
 
   const notificationAddUser = await Notification.findOne({
     userId : adminTwo.body._id,
@@ -127,14 +127,12 @@ module.exports.createAddUserRequestTestThree = async (adminOneData, adminTwoData
 
   const householdAdminOne = await Household.findById(adminOne.body.householdId);
 
-  const addUser = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send({
-      usercode : adminTwo.body.usercode,
-      type: "userToHousehold",
-      householdCode: householdAdminOne.householdCode
-    })
-    .set('Authorization', `Bearer ${accessTokenAdminTwo}`);
+  let objectData = {
+    usercode : adminTwo.body.usercode,
+    type: "userToHousehold",
+    householdCode: householdAdminOne.householdCode
+  };
+  const addUser = await addUserRequest(objectData, accessTokenAdminTwo);
 
   const notificationAddUser = await Notification.findOne({
     senderUserId : adminTwo.body._id,
