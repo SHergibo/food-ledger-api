@@ -6,91 +6,7 @@ const User = require('../../../api/models/user.model');
 const Notification = require('../../../api/models/notification.model');
 const { login } = require('../../login.helper');
 
-module.exports.createErrorTest = async (adminData, userData, testName) => {
-  const admin = await request(app)
-    .post(`/api/${api}/users`)
-    .send(adminData);
-
-  const user = await request(app)
-    .post(`/api/${api}/users`)
-    .send(userData);
-
-  const accessTokenAdmin = await login(adminData.email, adminData.password);
-
-  const householdAdmin = await Household.findById(admin.body.householdId);
-
-  let objectData = {
-    usercode : user.body.usercode,
-    type: "householdToUser",
-    householdCode: householdAdmin.householdCode
-  };
-
-  if(testName === "badUserCode") objectData.usercode = ""
-  if(testName === "badHouseholdCode") objectData.householdCode = "";
-
-  if(testName === "householdIsWaiting"){
-    await Household.findByIdAndUpdate(householdAdmin._id, {isWaiting : true}, { override: true, upsert: true, new: true });
-  }
-
-  if(testName === "spamNotification"){
-    let invitationRequestNotif = await new Notification({
-      message: `L'administrateur.trice de la famille ${householdAdmin.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
-      householdId: householdAdmin._id,
-      userId: user.body._id,
-      type: "invitation-household-to-user",
-      urlRequest: "add-user-respond"
-    });
-    await invitationRequestNotif.save();
-  }
-
-  if(testName === "otherHouseholdIsWaiting"){
-    await Household.findByIdAndUpdate(user.body.householdId, {isWaiting : true}, { override: true, upsert: true, new: true });
-  }
-
-  if(testName === "sameHousehold"){
-    await User.findByIdAndUpdate(user.body._id, {householdId : householdAdmin._id}, { override: true, upsert: true, new: true });
-  }
-
-  const addUserResponse = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send(objectData)
-    .set('Authorization', `Bearer ${accessTokenAdmin}`);
-
-  return {statusCode : addUserResponse.statusCode, error : JSON.parse(addUserResponse.error.text)}
-};
-
-module.exports.createAddUserRequestTestOne = async (adminData, userData) => {
-  const admin = await request(app)
-    .post(`/api/${api}/users`)
-    .send(adminData);
-
-  const user = await request(app)
-    .post(`/api/${api}/users`)
-    .send(userData);
-
-  const accessTokenAdmin = await login(adminData.email, adminData.password);
-
-  const householdAdmin = await Household.findById(admin.body.householdId);
-
-  const addUser = await request(app)
-    .post(`/api/${api}/requests/add-user-request`)
-    .send({
-      usercode : user.body.usercode,
-      type: "householdToUser",
-      householdCode: householdAdmin.householdCode
-    })
-    .set('Authorization', `Bearer ${accessTokenAdmin}`);
-
-  const notificationAddUser = await Notification.findOne({
-    userId : user.body._id,
-    householdId : householdAdmin._id,
-    type: "invitation-household-to-user"
-  });
-
-  return {addUser, admin: admin.body, user: user.body,  householdAdmin, notificationAddUser}
-};
-
-module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) => {
+const createUsers = async (adminOneData, adminTwoData) => {
   const adminOne = await request(app)
     .post(`/api/${api}/users`)
     .send(adminOneData);
@@ -99,6 +15,84 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) 
     .post(`/api/${api}/users`)
     .send(adminTwoData);
 
+  return { adminOne, adminTwo };
+};
+
+module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+
+  const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
+
+  const householdAdminOne = await Household.findById(adminOne.body.householdId);
+
+  let objectData = {
+    usercode : adminTwo.body.usercode,
+    type: "householdToUser",
+    householdCode: householdAdminOne.householdCode
+  };
+
+  if(testName === "badUserCode") objectData.usercode = ""
+  if(testName === "badHouseholdCode") objectData.householdCode = "";
+
+  if(testName === "householdIsWaiting"){
+    await Household.findByIdAndUpdate(householdAdminOne._id, {isWaiting : true}, { override: true, upsert: true, new: true });
+  }
+
+  if(testName === "spamNotification"){
+    let invitationRequestNotif = await new Notification({
+      message: `L'administrateur.trice de la famille ${householdAdminOne.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+      householdId: householdAdminOne._id,
+      userId: adminTwo.body._id,
+      type: "invitation-household-to-user",
+      urlRequest: "add-user-respond"
+    });
+    await invitationRequestNotif.save();
+  }
+
+  if(testName === "otherHouseholdIsWaiting"){
+    await Household.findByIdAndUpdate(adminTwo.body.householdId, {isWaiting : true}, { override: true, upsert: true, new: true });
+  }
+
+  if(testName === "sameHousehold"){
+    await User.findByIdAndUpdate(adminTwo.body._id, {householdId : householdAdminOne._id}, { override: true, upsert: true, new: true });
+  }
+
+  const addUserResponse = await request(app)
+    .post(`/api/${api}/requests/add-user-request`)
+    .send(objectData)
+    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+
+  return {statusCode : addUserResponse.statusCode, error : JSON.parse(addUserResponse.error.text)}
+};
+
+module.exports.createAddUserRequestTestOne = async (adminOneData, adminTwoData) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+
+  const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
+
+  const householdAdminOne = await Household.findById(adminOne.body.householdId);
+
+  const addUser = await request(app)
+    .post(`/api/${api}/requests/add-user-request`)
+    .send({
+      usercode : adminTwo.body.usercode,
+      type: "householdToUser",
+      householdCode: householdAdminOne.householdCode
+    })
+    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+
+  const notificationAddUser = await Notification.findOne({
+    userId : adminTwo.body._id,
+    householdId : householdAdminOne._id,
+    type: "invitation-household-to-user"
+  });
+
+  return {addUser, admin: adminOne.body, user: adminTwo.body,  householdAdmin : householdAdminOne, notificationAddUser}
+};
+
+module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+  
   const householdAdminTwo = await Household.findById(adminOne.body.householdId);
   let arrayMembers = householdAdminTwo.members;
   arrayMembers = [...arrayMembers, arrayMembers[1]];
@@ -127,14 +121,8 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) 
 };
 
 module.exports.createAddUserRequestTestThree = async (adminOneData, adminTwoData) => {
-  const adminOne = await request(app)
-    .post(`/api/${api}/users`)
-    .send(adminOneData);
-
-  const adminTwo = await request(app)
-    .post(`/api/${api}/users`)
-    .send(adminTwoData);
-
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+  
   const accessTokenAdminTwo = await login(adminTwoData.email, adminTwoData.password);
 
   const householdAdminOne = await Household.findById(adminOne.body.householdId);
