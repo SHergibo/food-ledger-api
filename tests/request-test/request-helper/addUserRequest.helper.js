@@ -59,7 +59,7 @@ module.exports.createErrorTest = async (adminData, userData, testName) => {
   return {statusCode : addUserResponse.statusCode, error : JSON.parse(addUserResponse.error.text)}
 };
 
-module.exports.createAddUserRequestTest = async (adminData, userData) => {
+module.exports.createAddUserRequestTestOne = async (adminData, userData) => {
   const admin = await request(app)
     .post(`/api/${api}/users`)
     .send(adminData);
@@ -87,5 +87,41 @@ module.exports.createAddUserRequestTest = async (adminData, userData) => {
     type: "invitation-household-to-user"
   });
 
-  return {admin: admin.body, user: user.body, addUser, householdAdmin, notificationAddUser}
+  return {addUser, admin: admin.body, user: user.body,  householdAdmin, notificationAddUser}
+};
+
+module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) => {
+  const adminOne = await request(app)
+    .post(`/api/${api}/users`)
+    .send(adminOneData);
+
+  const adminTwo = await request(app)
+    .post(`/api/${api}/users`)
+    .send(adminTwoData);
+
+  const householdAdminTwo = await Household.findById(adminOne.body.householdId);
+  let arrayMembers = householdAdminTwo.members;
+  arrayMembers = [...arrayMembers, arrayMembers[1]];
+  await Household.findByIdAndUpdate(adminTwo.body.householdId, {members : arrayMembers}, { override: true, upsert: true, new: true });
+
+  const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
+
+  const householdAdminOne = await Household.findById(adminOne.body.householdId);
+
+  const addUser = await request(app)
+    .post(`/api/${api}/requests/add-user-request`)
+    .send({
+      usercode : adminTwo.body.usercode,
+      type: "householdToUser",
+      householdCode: householdAdminOne.householdCode
+    })
+    .set('Authorization', `Bearer ${accessTokenAdminOne}`);
+
+  const notificationAddUser = await Notification.findOne({
+    userId : adminTwo.body._id,
+    householdId : householdAdminOne._id,
+    type: "need-switch-admin"
+  });
+
+  return {addUser, adminTwo: adminTwo.body, householdAdminOne, notificationAddUser}
 };
