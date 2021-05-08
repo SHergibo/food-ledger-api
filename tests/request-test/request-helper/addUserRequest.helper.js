@@ -125,3 +125,34 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) 
 
   return {addUser, adminTwo: adminTwo.body, householdAdminOne, notificationAddUser}
 };
+
+module.exports.createAddUserRequestTestThree = async (adminOneData, adminTwoData) => {
+  const adminOne = await request(app)
+    .post(`/api/${api}/users`)
+    .send(adminOneData);
+
+  const adminTwo = await request(app)
+    .post(`/api/${api}/users`)
+    .send(adminTwoData);
+
+  const accessTokenAdminTwo = await login(adminTwoData.email, adminTwoData.password);
+
+  const householdAdminOne = await Household.findById(adminOne.body.householdId);
+
+  const addUser = await request(app)
+    .post(`/api/${api}/requests/add-user-request`)
+    .send({
+      usercode : adminTwo.body.usercode,
+      type: "userToHousehold",
+      householdCode: householdAdminOne.householdCode
+    })
+    .set('Authorization', `Bearer ${accessTokenAdminTwo}`);
+
+  const notificationAddUser = await Notification.findOne({
+    senderUserId : adminTwo.body._id,
+    householdId : householdAdminOne._id,
+    type: "invitation-user-to-household"
+  });
+
+  return {addUser, adminTwo: adminTwo.body, householdAdminOne, notificationAddUser}
+};
