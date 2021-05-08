@@ -6,7 +6,7 @@ const request = require("supertest"),
       User = require('./../../api/models/user.model'),
       { login } = require('../login.helper'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
-      { createAddUserRequestTest } = require('./request-helper/addUserRequest.helper'),
+      { createAddUserRequestTestOne } = require('./request-helper/addUserRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember, delegateWithoutOtherMember, testTranformInviteNotif } = require('./request-helper/addUserRespond.helper'),
       { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data');
 
@@ -95,7 +95,7 @@ describe("Test addUserRespond", () => {
     expect(JSON.parse(res.error.text).output.payload.message).toMatch("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!");
   });
   it("Test 6) send addUser request from admin to user and the user reject the offer", async () => {
-    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
+    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
 
     const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
@@ -126,7 +126,7 @@ describe("Test addUserRespond", () => {
     expect(user._id.toString()).toBe(householdUser.userId.toString());
   });
   it("Test 7) send addUser request from admin to user and the user accept the offer", async () => {
-    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTest(adminOneDataComplete, adminTwoDataComplete);
+    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
 
     const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
