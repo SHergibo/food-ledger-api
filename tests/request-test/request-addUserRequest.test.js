@@ -1,4 +1,4 @@
-const { createErrorTest, createAddUserRequestTestOne, createAddUserRequestTestTwo } = require('./request-helper/addUserRequest.helper'),
+const { createErrorTest, createAddUserRequestTestOne, createAddUserRequestTestTwo, createAddUserRequestTestThree } = require('./request-helper/addUserRequest.helper'),
       { adminOneDataComplete, adminTwoDataComplete } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
@@ -48,7 +48,7 @@ describe("Test addUserRequest controller", () => {
     expect(error.isBoom).toBe(true);
     expect(error.output.payload.message).toMatch("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur.trice!");
   });
-  it("Test 7) Send addUser request from admin to user and test if invite household to user notification is created", async () => {
+  it("Test 7) Send addUser request from adminOne to adminTwo and test if invite household to user notification is created", async () => {
     const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
 
     expect(addUser.statusCode).toBe(204);
@@ -64,22 +64,12 @@ describe("Test addUserRequest controller", () => {
     expect(notificationAddUser.householdId.toString()).toBe(householdAdminOne._id.toString());
     expect(notificationAddUser.type).toBe("need-switch-admin");
   });
+  it("Test 9) Send addUser request from adminTwo to AdminOne and test if invitation user-to-household notification is created", async () => {
+    const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestThree(adminOneDataComplete, adminTwoDataComplete);
+
+    expect(addUser.statusCode).toBe(204);
+    expect(notificationAddUser.senderUserId.toString()).toBe(adminTwo._id.toString());
+    expect(notificationAddUser.householdId.toString()).toBe(householdAdminOne._id.toString());
+    expect(notificationAddUser.type).toBe("invitation-user-to-household");
+  });
 });
-
-// Test error
-// 1) OK => test code utilisateur
-// 2) OK => test code famille
-// 3) OK => test famille est en isWaiting true
-// 4) OK => test anti spam requête d'invitation
-// 5) OK => test si utilisateur est déjà dans la famille
-// 6) OK => test blocage envoie d'invite pour une personne dans une famille sans admin
-
-// création d'invitation
-// 1) OK création d'invitation household to user
-  // OK => test notification type household-to-user/need-switch-admin (en fonction du role de l'utilisateur user/admin et du n° de membres dans la famille si admin)
-  // OK => test message de la notification
-  // OK => test userId
-// 2) création d'invitation user to household
-  // => test notification type user-to-household
-  // => test message de la notification
-  // => test senderUserId
