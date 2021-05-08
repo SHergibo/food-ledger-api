@@ -219,31 +219,41 @@ exports.switchAdminRequest = async (req, res, next) => {
 */
 exports.switchAdminRights = async (req, res, next) => {
   try {
-    let searchNotification = await Notification.findOne({householdId : req.body.householdId, urlRequest: "switch-admin-rights-respond"});
-    if(searchNotification){
-      return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
-    }else{
-      let notification = await new Notification({
-        message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'administrateur.trice actuel.le, acceptez-vous cette requête?",
-        householdId: req.body.householdId,
-        userId: req.body.userId,
-        senderUserId: req.user._id,
-        type: "request-admin",
-        urlRequest: "switch-admin-rights-respond",
-      });
-      await notification.save();
-      socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
+    let searchNotification = await Notification.findOne({$or : 
+      [
+        {householdId : req.body.householdId, type: "request-admin"},
+        {householdId : req.body.householdId, type: "need-switch-admin"},
+      ]
+    });
+    let household = await Household.findById(req.body.householdId);
+    let user = await User.findById(req.body.userId);
 
-      let notifWithPopulate = await Notification.findById(notification._id)
-      .populate({
-        path: 'userId',
-        select: 'firstname lastname -_id'
-      });
+    if(!user) return next(Boom.notFound("Cet.te utilisateur.trice n'existe pas!"));
+    
+    if(!household) return next(Boom.notFound("Cette famille n'existe pas!"));
+    
+    if(searchNotification) return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
 
-      socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
+    let notification = await new Notification({
+      message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'administrateur.trice actuel.le, acceptez-vous cette requête?",
+      householdId: req.body.householdId,
+      userId: req.body.userId,
+      senderUserId: req.user._id,
+      type: "request-admin",
+      urlRequest: "switch-admin-rights-respond",
+    });
+    await notification.save();
+    socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
-      return res.status(204).send();
-    }
+    let notifWithPopulate = await Notification.findById(notification._id)
+    .populate({
+      path: 'userId',
+      select: 'firstname lastname -_id'
+    });
+
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
+
+    return res.status(204).send();
   } catch (error) {
     next(Boom.badImplementation(error.message));
   }
