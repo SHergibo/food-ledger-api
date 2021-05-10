@@ -80,10 +80,32 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(adminOneNotifTransformed.userId.toString()).toBe(adminOne._id.toString());
     expect(userTwoNotifTransformed.userId.toString()).toBe(userTwo._id.toString());
   });
+  it("Test 6) reject request admin notification", async () => {
+    const { checkNotification, adminOne, userTwo, householdOne } = await switchAdminRightsRequest();
+    const { 
+      statusCode, 
+      deletedNotification, 
+      adminOneAfterUpdate, 
+      userTwoAfterUpdate, 
+      householdOneAfterUpdate,
+      userTwoIndex,
+      adminOneNotifAfterUpdate,
+      userTwoNotifAfterUpdate,
+      adminOneNotifTransformed,
+      userTwoNotifTransformed,
+      informationNotif
+    } = await switchAdminRightsRespondRequest(checkNotification, adminOne, userTwo, householdOne, 'no');
+    
+    expect(statusCode).toBe(204);
+    expect(deletedNotification).toBeNull();
+    expect(adminOneAfterUpdate.role).toMatch("admin");
+    expect(userTwoAfterUpdate.role).toMatch("user");
+    expect(householdOneAfterUpdate.userId.toString()).toBe(adminOneAfterUpdate._id.toString());
+    expect(userTwoIndex).toBe(1);
+    expect(adminOneNotifAfterUpdate.userId.toString()).toBe(adminOne._id.toString());
+    expect(userTwoNotifAfterUpdate.userId.toString()).toBe(userTwo._id.toString());
+    expect(adminOneNotifTransformed).toBeNull()
+    expect(userTwoNotifTransformed).toBeNull();
+    expect(informationNotif.type).toMatch("information");
+  });
 });
-
-//Test request rejected
- // => test statusCode
- // => test request notification deleted
- // => test notification d'information du refus créer
-
