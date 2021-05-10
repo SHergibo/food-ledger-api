@@ -1,5 +1,5 @@
 const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
-      { adminOneDataComplete } = require('../test-data');
+      { adminOneDataComplete, notificationDelegateAdmin } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
 
@@ -17,6 +17,17 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.statusCode).toBe(404);
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Notification non trouvée!");
+  });
+  it("Test 2) send switchAdminRightsRespond request with a wrong notification id", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
   });
 });
 
