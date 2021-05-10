@@ -294,60 +294,64 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       arrayMembers.splice(indexUserToChange, 1);
       arrayMembers.unshift(AdminInfoMember);
 
-      const needSwitchAdminNotif = await Notification.findOne({userId : oldAdmin._id, type: "need-switch-admin"});
+      const needSwitchAdminNotif = await Notification.find({userId : oldAdmin._id, type: "need-switch-admin"});
 
-      if(needSwitchAdminNotif){
-        let invitationHousehold = await Household.findById(needSwitchAdminNotif.householdId);
-        let newNotification = await new Notification({
-          message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
-          householdId: invitationHousehold._id,
-          userId: oldAdmin._id,
-          type: "invitation-household-to-user",
-          urlRequest: "add-user-respond"
-        });
-        await newNotification.save();
-        await Notification.findByIdAndDelete(needSwitchAdminNotif._id);
+      if(needSwitchAdminNotif.length >= 1){
+        for (const notif of needSwitchAdminNotif) {
+          let invitationHousehold = await Household.findById(notif.householdId);
+          let newNotification = await new Notification({
+            message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+            householdId: invitationHousehold._id,
+            userId: oldAdmin._id,
+            type: "invitation-household-to-user",
+            urlRequest: "add-user-respond"
+          });
+          await newNotification.save();
+          await Notification.findByIdAndDelete(notif._id);
 
-        const newNotifSended = await Notification.findById(newNotification._id)
-        .populate({
-          path: 'userId',
-          select: 'firstname lastname -_id'
-        });  
-
-        socketIoEmit(invitationHousehold.userId, 
-          [
-            {name : "deleteNotificationSended", data: needSwitchAdminNotif._id},
-            {name : "updateNotificationSended", data: newNotifSended.tranform(true)},
-          ]
-        );
+          const newNotifSended = await Notification.findById(newNotification._id)
+          .populate({
+            path: 'userId',
+            select: 'firstname lastname -_id'
+          }); 
+  
+          socketIoEmit(oldAdmin._id, 
+            [
+              {name : "deleteNotificationSended", data: notif._id},
+              {name : "updateNotificationSended", data: newNotifSended.transform(true)},
+            ]
+          );
+        }
       }
 
-      const invitationNotif = await Notification.findOne({userId : notification.userId, type: "invitation-household-to-user"});
+      const invitationNotif = await Notification.find({userId : newAdmin._id, type: "invitation-household-to-user"});
 
-      if(invitationNotif){
-        let invitationHousehold = await Household.findById(invitationNotif.householdId);
-        let newNotification = await new Notification({
-          message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
-          householdId: invitationHousehold._id,
-          userId: newAdmin._id,
-          type: "need-switch-admin",
-          urlRequest: "add-user-respond"
-        });
-        await newNotification.save();
-        await Notification.findByIdAndDelete(invitationNotif._id);
-
-        const newNotifSended = await Notification.findById(newNotification._id)
-        .populate({
-          path: 'userId',
-          select: 'firstname lastname -_id'
-        });  
-
-        socketIoEmit(invitationHousehold.userId, 
-          [
-            {name : "deleteNotificationSended", data: invitationNotif._id},
-            {name : "updateNotificationSended", data: newNotifSended.transform(true)},
-          ]
-        );
+      if(invitationNotif.length >= 1){
+        for (const notif of invitationNotif) {
+          let invitationHousehold = await Household.findById(notif.householdId);
+          let newNotification = await new Notification({
+            message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
+            householdId: invitationHousehold._id,
+            userId: newAdmin._id,
+            type: "need-switch-admin",
+            urlRequest: "add-user-respond"
+          });
+          await newNotification.save();
+          await Notification.findByIdAndDelete(notif._id);
+  
+          const newNotifSended = await Notification.findById(newNotification._id)
+          .populate({
+            path: 'userId',
+            select: 'firstname lastname -_id'
+          });  
+  
+          socketIoEmit(newAdmin._id, 
+            [
+              {name : "deleteNotificationSended", data: notif._id},
+              {name : "updateNotificationSended", data: newNotifSended.transform(true)},
+            ]
+          );
+        }
       }
 
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers}, { override: true, upsert: true, new: true })
@@ -425,6 +429,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
