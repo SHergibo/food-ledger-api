@@ -317,7 +317,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
             select: 'firstname lastname -_id'
           }); 
   
-          socketIoEmit(oldAdmin._id, 
+          socketIoEmit(invitationHousehold.userId, 
             [
               {name : "deleteNotificationSended", data: notif._id},
               {name : "updateNotificationSended", data: newNotifSended.transform(true)},
@@ -347,7 +347,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
             select: 'firstname lastname -_id'
           });  
   
-          socketIoEmit(newAdmin._id, 
+          socketIoEmit(invitationHousehold.userId, 
             [
               {name : "deleteNotificationSended", data: notif._id},
               {name : "updateNotificationSended", data: newNotifSended.transform(true)},
