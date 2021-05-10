@@ -265,15 +265,19 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
   try {
     let notification = await Notification.findById(req.params.notificationId);
     if(!notification){
-      return next(Boom.notFound('Notification not found!'));
+      return next(Boom.notFound('Notification non trouvée!'));
+    }
+
+    if(notification.urlRequest !== 'switch-admin-rights-respond'){
+      return next(Boom.badRequest('Mauvaise notification!'));
     }
 
     if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest('Need a query'));
+      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
     }
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Invalid query'));
+      return next(Boom.badRequest('Paramètre de requête invalide!'));
     }
 
     await Notification.findByIdAndDelete(notification._id);
