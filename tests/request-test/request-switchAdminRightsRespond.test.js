@@ -1,5 +1,7 @@
 const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
-      { adminOneDataComplete, notificationDelegateAdmin, notificationRequestAdmin } = require('../test-data');
+      { adminOneDataComplete, notificationDelegateAdmin, notificationRequestAdmin } = require('../test-data'),
+      { switchAdminRightsRequest } = require('./request-helper/switchAdminRights.helper'),
+      { switchAdminRightsRespondRequest } = require('./request-helper/switchAdminRightsRespond.helper');
 
 const { dbManagement } = require('../db-management-utils');
 
@@ -52,23 +54,33 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
   });
+  it("Test 5) accept request admin notification", async () => {
+    const { checkNotification, adminOne, userTwo, householdOne } = await switchAdminRightsRequest();
+    const { 
+      statusCode, 
+      deletedNotification, 
+      adminOneAfterUpdate, 
+      userTwoAfterUpdate, 
+      householdOneAfterUpdate,
+      userTwoIndex,
+      adminOneNotifAfterUpdate,
+      userTwoNotifAfterUpdate,
+      adminOneNotifTransformed,
+      userTwoNotifTransformed
+    } = await switchAdminRightsRespondRequest(checkNotification, adminOne, userTwo, householdOne, 'yes');
+    
+    expect(statusCode).toBe(204);
+    expect(deletedNotification).toBeNull();
+    expect(adminOneAfterUpdate.role).toMatch("user");
+    expect(userTwoAfterUpdate.role).toMatch("admin");
+    expect(householdOneAfterUpdate.userId.toString()).toBe(userTwoAfterUpdate._id.toString());
+    expect(userTwoIndex).toBe(0);
+    expect(adminOneNotifAfterUpdate).toBeNull();
+    expect(userTwoNotifAfterUpdate).toBeNull();
+    expect(adminOneNotifTransformed.userId.toString()).toBe(adminOne._id.toString());
+    expect(userTwoNotifTransformed.userId.toString()).toBe(userTwo._id.toString());
+  });
 });
-
-//Test error
-  //OK => Notification non trouvée
-  //=> Mauvaise notification
-  //=> besoin de la query param acceptedRequest
-  //=> besoin de yes ou no dans la query param
-
-//Test request accepted
- // => test statusCode
- // => ancien admin devient user
- // => ancien user devient admin
- // => test transform notification need-switch-admin en invite normal pour l'ancien admin
- // => test transform notification invite normal en need-switch-admin pour le nouvel admin
- // => test nouvel userId dans household
- // => test nouvel admin en position une du tableau des membres de household
- // => test request notification deleted
 
 //Test request rejected
  // => test statusCode
