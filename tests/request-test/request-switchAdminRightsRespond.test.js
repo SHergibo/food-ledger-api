@@ -40,6 +40,18 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
   });
+  it("Test 4) send switchAdminRightsRespond request with a wrong acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationRequestAdmin,
+      '?acceptedRequest=oui'
+      );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
+  });
 });
 
 //Test error
