@@ -56,3 +56,12 @@ module.exports.notificationDelegateAdmin = {
   type: "need-switch-admin",
   urlRequest: "delegate-admin"
 };
+
+module.exports.notificationRequestAdmin = {
+  message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'administrateur.trice actuel.le, acceptez-vous cette requête?",
+  householdId: "606dad080ac1c22766b37a53",
+  userId: "606dad080ac1c22766b37a53",
+  senderUserId: "606dad080ac1c22766b37a53",
+  type: "request-admin",
+  urlRequest: "switch-admin-rights-respond",
+};
