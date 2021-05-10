@@ -1,5 +1,5 @@
 const { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
-      { adminOneDataComplete, notificationDelegateAdmin } = require('../test-data');
+      { adminOneDataComplete, notificationDelegateAdmin, notificationRequestAdmin } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
 
@@ -28,6 +28,17 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.statusCode).toBe(400);
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Mauvaise notification!");
+  });
+  it("Test 3) send switchAdminRightsRespond request without acceptedRequest query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationRequestAdmin
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Besoin d'un paramètre de requête!");
   });
 });
 
