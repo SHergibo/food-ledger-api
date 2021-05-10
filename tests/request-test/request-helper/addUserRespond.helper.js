@@ -4,41 +4,10 @@ const request = require("supertest"),
       { login } = require('../../login.helper'),
       Household = require('../../../api/models/household.model'),
       User = require('../../../api/models/user.model'),
-      Option = require('../../../api/models/option.model'),
       Notification = require('../../../api/models/notification.model'),
       cryptoRandomString = require('crypto-random-string'),
-      {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data');
-
-const createUser = async (userData) => {
-  let createdUser = await new User({
-    firstname: userData.firstname,
-    lastname: userData.lastname,
-    email: userData.email,
-    password: userData.password,
-    role: userData.role,
-    usercode: cryptoRandomString({length: 10, type: 'url-safe'}),
-  });
-  await createdUser.save();
-
-  let option = new Option({userId : createdUser._id});
-  await option.save();
-
-  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id }, { override: true, upsert: true, new: true });
-  return createdUser;
-};
-
-const createHousehold = async (userId, householdName) => {
-  let newHousehold = new Household({
-    members: [
-      {userData : userId, isFlagged: false}
-    ],
-    householdName: householdName,
-    userId: userId,
-    householdCode: cryptoRandomString({length: 10, type: 'url-safe'}),
-    lastChance : new Date(),
-  });
-  return await newHousehold.save();
-};
+      {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data'),
+      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper');
 
 const createHouseholdWithoutAdmin = async (userId, householdName) => {
   let newHousehold = new Household({
@@ -48,14 +17,6 @@ const createHouseholdWithoutAdmin = async (userId, householdName) => {
     householdCode: cryptoRandomString({length: 10, type: 'url-safe'})
   });
   return await newHousehold.save();
-};
-
-const updateUserHouseholdId = async (userId, householdId) => {
-  return await User.findByIdAndUpdate(userId, { householdId: householdId }, { override: true, upsert: true, new: true });
-};
-
-const updateHouseholdMembers = async (householdId, membersArray, userId) => {
-  return await Household.findByIdAndUpdate(householdId, { members: [...membersArray, {isFlagged : false, userData : userId}] }, { override: true, upsert: true, new: true });
 };
 
 const createAddUserRequestNotification = async (userData, householdId) => {
