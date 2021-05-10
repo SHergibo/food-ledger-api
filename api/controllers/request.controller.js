@@ -219,21 +219,20 @@ exports.switchAdminRequest = async (req, res, next) => {
 */
 exports.switchAdminRights = async (req, res, next) => {
   try {
+    let household = await Household.findById(req.body.householdId);
+    if(!household) return next(Boom.notFound("Cette famille n'existe pas!"));
+
     let searchNotification = await Notification.findOne({$or : 
       [
         {householdId : req.body.householdId, type: "request-admin"},
         {householdId : req.body.householdId, type: "need-switch-admin"},
       ]
     });
-    let household = await Household.findById(req.body.householdId);
-    let user = await User.findById(req.body.userId);
-
-    if(!user) return next(Boom.notFound("Cet.te utilisateur.trice n'existe pas!"));
-    
-    if(!household) return next(Boom.notFound("Cette famille n'existe pas!"));
-    
     if(searchNotification) return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
 
+    let user = await User.findById(req.body.userId);
+    if(!user) return next(Boom.notFound("Cet.te utilisateur.trice n'existe pas!"));
+    
     let notification = await new Notification({
       message: "Vous avez été désigné.e comme nouvel.le administrateur.trice de cette famille par l'administrateur.trice actuel.le, acceptez-vous cette requête?",
       householdId: req.body.householdId,
