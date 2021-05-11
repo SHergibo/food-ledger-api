@@ -14,29 +14,18 @@ exports.switchAdminRequest = async (req, res, next) => {
   try {
     const notification = await Notification.findById(req.params.notificationId);
 
-    if (!notification) {
-      return next(Boom.notFound('Notification non trouvée!'));
-    }
+    if (!notification) return next(Boom.notFound('Notification non trouvée!'));
 
-    if(notification.urlRequest !== 'delegate-admin'){
-      return next(Boom.badRequest('Mauvaise notification!'));
-    }
+    if (notification.urlRequest !== 'delegate-admin') return next(Boom.badRequest('Mauvaise notification!'));
 
-    if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
-    }
-
-    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Paramètre de requête invalide!'));
-    }
+    if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
+    
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") return next(Boom.badRequest('Paramètre de requête invalide!'));
 
     let otherMember;
     if(req.query.otherMember){
       otherMember = await User.findById(req.query.otherMember);
-
-      if (!otherMember) {
-        return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
-      }
+      if (!otherMember) return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
     }
     
     let user;
@@ -44,25 +33,19 @@ exports.switchAdminRequest = async (req, res, next) => {
     let arrayMembers = household.members;
     if (req.query.acceptedRequest === "yes") {
       let oldHousehold = await Household.findOne({ userId: notification.userId });
-      if (oldHousehold) {
-        await Helpers.removeHousehold(oldHousehold._id);
-      }
+      if (oldHousehold) await Helpers.removeHousehold(oldHousehold._id);
 
       for (const member of arrayMembers) {
-        if (member.isFlagged === true) {
-          member.isFlagged = false;
-        }
+        if (member.isFlagged === true) member.isFlagged = false;
+
         if (notification.type === "last-chance-request-delegate-admin") {
           await Notification.findOneAndDelete({ userId: member.userData, householdId: notification.householdId, type: "last-chance-request-delegate-admin" });
         }
       }
 
-      let indexUserToChange = arrayMembers.findIndex(member => member.userData.toString() === notification.userId.toString());
-      let AdminInfoMember = arrayMembers[indexUserToChange];
-      arrayMembers.splice(indexUserToChange, 1);
-      arrayMembers.unshift(AdminInfoMember);
+      arrayMembers.sort((a, member)=>{ if(member.userData.toString() === notification.userId.toString()) return 1;});
 
-      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } }, { override: true, upsert: true, new: true })
+      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } })
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'
