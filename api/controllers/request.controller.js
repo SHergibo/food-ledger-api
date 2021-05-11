@@ -51,7 +51,7 @@ exports.switchAdminRequest = async (req, res, next) => {
         select: 'firstname lastname usercode role'
       });
 
-      user = await User.findByIdAndUpdate(notification.userId, { role: "admin" }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(notification.userId, { role: "admin" });
 
       const newAdminNotificationsSended = await Notification.find(
         {$or : 
@@ -133,7 +133,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           let updatedArrayMembers = household.members;
           let indexMember = updatedArrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
           updatedArrayMembers[indexMember].isFlagged = true;
-          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: updatedArrayMembers }, { override: true, upsert: true, new: true })
+          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: updatedArrayMembers })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
@@ -270,8 +270,8 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
       let oldAdmin = await User.findById(household.userId);
-      oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"}, { override: true, upsert: true, new: true });
-      let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"}, { override: true, upsert: true, new: true });
+      oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"});
+      let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"});
 
       let arrayMembers = household.members;
       let indexUserToChange = arrayMembers.findIndex(member => member.userData.toString() === newAdmin._id.toString());
@@ -339,7 +339,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         }
       }
 
-      household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers}, { override: true, upsert: true, new: true })
+      household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers})
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'
@@ -647,11 +647,11 @@ exports.addUserRespond = async (req, res, next) => {
       let updatedOldHousehold;
       let updatedUser;
       if (user.role === "user") {
-        updatedUser = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id });
 
         if (oldHousehold) {
           oldMembersArray.splice(indexMember, 1);
-          updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray }, { override: true, upsert: true, new: true })
+          updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
@@ -661,10 +661,10 @@ exports.addUserRespond = async (req, res, next) => {
       }
 
       if (user.role === "admin" && oldMembersArray.length === 1) {
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
 
         oldMembersArray = [];
-        await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray }, { override: true, upsert: true, new: true });
+        await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray });
       }
 
       let requestSwitchAdmin = {};
@@ -674,18 +674,18 @@ exports.addUserRespond = async (req, res, next) => {
           return next(requestSwitchAdmin);
         }
 
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
       }
       
       if(user.role === "admin" && oldMembersArray.length > 1 && !req.query.otherMember){
         if (indexMember > -1) {
           oldMembersArray.splice(indexMember, 1);
         }
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id }, { override: true, upsert: true, new: true });
+        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
         await Helpers.noMoreAdmin(oldMembersArray, oldHousehold._id);
       }
 
-      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray }, { override: true, upsert: true, new: true })
+      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray })
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'

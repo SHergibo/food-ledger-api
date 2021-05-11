@@ -75,7 +75,7 @@ exports.chartData = async (req, res, next) => {
           await statistic.save();
         }
         if(statistic.isOutdated === true || !statistic.chartOne){
-          statistic = await Statistic.findByIdAndUpdate(statistic._id, {statistics : dataFinal, isOutdated : false}, { override: true, upsert: true, new: true });
+          statistic = await Statistic.findByIdAndUpdate(statistic._id, {statistics : dataFinal, isOutdated : false});
         }
       }
   
@@ -90,7 +90,7 @@ exports.chartData = async (req, res, next) => {
         currentYear[Moment(new Date(), "MMDDYYYY").isoWeek() - 1] = totalProduct;
         dataChartFour[new Date().getFullYear()] = currentYear;
   
-        statistic = await Statistic.findByIdAndUpdate(statistic._id, {"statistics.chartFour" : dataChartFour}, { override: true, upsert: true, new: true });
+        statistic = await Statistic.findByIdAndUpdate(statistic._id, {"statistics.chartFour" : dataChartFour});
       }
 
       return res.json(statistic.transform());

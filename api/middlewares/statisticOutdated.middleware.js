@@ -15,18 +15,18 @@ exports.outdatedStatistics = async (req, res, next) => {
     if(statistic && !statistic.isOutdated){
       if(req.baseUrl.includes('products')){
         if(req.method === "POST" || req.method === "DELETE"){
-          statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true}, { override: true, upsert: true, new: true });
+          statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true});
         }
         if(req.method === "PATCH"){
           if(product.number != req.body.number || product.kcal != req.body.kcal || product.type.value != req.body.type.value){
-            statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true}, { override: true, upsert: true, new: true });
+            statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true});
           }
         }
       }
       if(req.baseUrl.includes('historics')){
         if(req.method === "PATCH"){
           if(req.body.number >= 1){
-            statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true}, { override: true, upsert: true, new: true });
+            statistic = await Statistic.findByIdAndUpdate(statistic._id, {isOutdated : true});
           }
         }
       }

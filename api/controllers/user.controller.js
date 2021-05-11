@@ -75,7 +75,7 @@ exports.add = async (req, res, next) => {
       await user.save();
       let option = new Option({userId : user._id});
       await option.save();
-      user = await User.findByIdAndUpdate(user._id, { optionId: option._id }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(user._id, { optionId: option._id });
     }
 
     if (req.body.householdName) {
@@ -83,7 +83,7 @@ exports.add = async (req, res, next) => {
         householdName: req.body.householdName,
         userId: user._id
       });
-      user = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id }, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id });
 
 
       if (req.body.othermember) {
@@ -141,7 +141,7 @@ exports.findOne = async (req, res, next) => {
 */
 exports.update = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.userId, req.body, { override: true, upsert: true, new: true });
+    const user = await User.findByIdAndUpdate(req.params.userId, req.body);
     return res.json(user.transform());
   } catch (error) {
     next(User.checkDuplicateEmail(err));
@@ -172,7 +172,7 @@ exports.remove = async (req, res, next) => {
           }
         }
       } else if (user.role === "user") {
-        household = await Household.findByIdAndUpdate(household._id, { members: arrayMembers }, { override: true, upsert: true, new: true });
+        household = await Household.findByIdAndUpdate(household._id, { members: arrayMembers });
 
         socketIoEmit(household.userId, [{name : "updateFamilly", data: household.transform()}]);
 

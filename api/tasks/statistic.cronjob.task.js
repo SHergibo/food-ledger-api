@@ -45,7 +45,7 @@ exports.statisticChartFour = async () => {
           currentYear[Moment(new Date(), "MMDDYYYY").isoWeek() - 1] = totalProduct;
           dataChartFour[getYear] = currentYear;
 
-          statistic = await Statistic.findByIdAndUpdate(statistic._id, {"statistics.chartFour" : dataChartFour}, { override: true, upsert: true, new: true });
+          statistic = await Statistic.findByIdAndUpdate(statistic._id, {"statistics.chartFour" : dataChartFour});
         }
       }
     });

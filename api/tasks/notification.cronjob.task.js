@@ -22,7 +22,7 @@ exports.notification = async () => {
 
           let indexMember = membersArray.findIndex(member => member.userData.toString() === user._id.toString());
           membersArray[indexMember].isFlagged = true;
-          await Household.findByIdAndUpdate(notif.householdId, { members: membersArray }, { override: true, upsert: true, new: true });
+          await Household.findByIdAndUpdate(notif.householdId, { members: membersArray });
 
           let newArrayMembers = membersArray.filter(member => member.isFlagged !== true);
 
@@ -52,7 +52,7 @@ exports.notification = async () => {
                 await lastChanceNotification.save();
                 socketIoEmit(member.userData, [{ name : "updateNotificationReceived", data: lastChanceNotification.transform() }]);
               }
-              await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() }, { override: true, upsert: true, new: true });
+              await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() });
             }
           }
           await Notification.findByIdAndDelete(notif._id);

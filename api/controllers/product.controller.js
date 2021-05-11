@@ -88,7 +88,7 @@ exports.update = async (req, res, next) => {
         });
         await shoppingList.save();
       }else{
-        await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)}, { override: true, upsert: true, new: true });
+        await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)});
       }
 
 
@@ -107,7 +107,7 @@ exports.update = async (req, res, next) => {
       req.body.slugLocation = Slugify.slugUrl(req.body.location);
 
       let newBody = await SortExpDateHelper.sortExpDate(req.body);
-      let updatedProduct = await Product.findByIdAndUpdate(req.params.productId, newBody, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
+      let updatedProduct = await Product.findByIdAndUpdate(req.params.productId, newBody).populate('brand', 'brandName');
 
       if(product.number > req.body.number){
         let numberShoppingList = product.number - req.body.number;
@@ -119,13 +119,13 @@ exports.update = async (req, res, next) => {
           });
           await shoppingList.save();
         }else{
-          await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)}, { override: true, upsert: true, new: true });
+          await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)});
         }
       }else{
         if(shopping){
           let numberShoppingList = req.body.number - product.number;
           if(req.body.number > product.number && shopping.numberProduct > req.body.number){
-            await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)}, { override: true, upsert: true, new: true });
+            await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)});
           }else if (req.body.number > product.number && shopping.numberProduct <= req.body.number){
             await ShoppingList.findByIdAndDelete(shopping._id);
           }

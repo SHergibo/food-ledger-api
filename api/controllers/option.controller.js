@@ -19,7 +19,7 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const option = await Option.findOne({userId : req.params.userId})
-    const optionPatched = await Option.findByIdAndUpdate(option._id, req.body, { override: true, upsert: true, new: true });
+    const optionPatched = await Option.findByIdAndUpdate(option._id, req.body);
     return res.json(optionPatched.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));

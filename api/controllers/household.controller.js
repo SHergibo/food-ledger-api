@@ -15,7 +15,7 @@ exports.add = async (req, res, next) => {
         householdName: req.body.householdName,
         userId: req.user._id
       });
-      let user = await User.findByIdAndUpdate(req.user._id, {role: "admin", householdId: household._id }, { override: true, upsert: true, new: true });
+      let user = await User.findByIdAndUpdate(req.user._id, {role: "admin", householdId: household._id });
       return res.json({householdData : household.transform(), userData: user.transform()})
     }else{
      return next(Boom.forbidden("Vous ne pouvez pas créer de famille si vous en avez déjà une!"))
@@ -48,7 +48,7 @@ exports.findOne = async (req, res, next) => {
 */
 exports.update = async (req, res, next) => {
   try {
-    const household = await Household.findByIdAndUpdate(req.params.householdId, req.body, { override: true, upsert: true, new: true })
+    const household = await Household.findByIdAndUpdate(req.params.householdId, req.body)
     .populate({
       path: 'members.userData',
       select: 'firstname lastname usercode role'
@@ -67,7 +67,7 @@ exports.kickUser = async (req, res, next) => {
   try {
     let household = await Household.findById(req.params.householdId);
     let updatedArrayMembers = household.members.filter(member => member.userData.toString() !== req.body.userId);
-    household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers }, { override: true, upsert: true, new: true })
+    household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers })
     .populate({
       path: 'members.userData',
       select: 'firstname lastname usercode role'
@@ -116,21 +116,21 @@ exports.kickUser = async (req, res, next) => {
     let oldHousehold = await Household.findOne({userId : req.body.userId});
     let user;
     if(oldHousehold){
-      user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdId : oldHousehold._id}, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(req.body.userId, {role : "admin", householdId : oldHousehold._id});
       let oldArrayMembers = oldHousehold.members;
       let newMemberObject = {
         userData : user._id,
         isFlagged : false
       }
       oldArrayMembers = [...oldArrayMembers, newMemberObject];
-      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldArrayMembers }, { override: true, upsert: true, new: true })
+      oldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldArrayMembers })
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'
       });
       oldHousehold = oldHousehold.transform()
     }else{
-      user = await User.findByIdAndUpdate(req.body.userId, {householdId : null}, { override: true, upsert: true, new: true });
+      user = await User.findByIdAndUpdate(req.body.userId, {householdId : null});
       oldHousehold = undefined;
     }
 

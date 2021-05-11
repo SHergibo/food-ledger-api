@@ -46,7 +46,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
         if (indexMember > -1) {
             arrayMembers.splice(indexMember, 1);
         }
-        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, members: arrayMembers }, { override: true, upsert: true, new: true })
+        household = await Household.findByIdAndUpdate(household._id, { isWaiting: true, members: arrayMembers })
         .populate({
           path: 'members.userData',
           select: 'firstname lastname usercode role'
@@ -87,10 +87,10 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
               member.isFlagged = false;
           }
           
-          userData = await User.findByIdAndUpdate(member.userData, {role : "admin", householdId: oldHousehold._id }, { override: true, upsert: true, new: true });
+          userData = await User.findByIdAndUpdate(member.userData, {role : "admin", householdId: oldHousehold._id });
           let addMember = oldHousehold.members;
           addMember.push(member);
-          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember }, { override: true, upsert: true, new: true })
+          householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
@@ -98,7 +98,7 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
           householdData = householdData.transform()
       }
       else {
-        userData = await User.findByIdAndUpdate(member.userData, { householdId: null }, { override: true, upsert: true, new: true });
+        userData = await User.findByIdAndUpdate(member.userData, { householdId: null });
       }
 
       let deletedNotification = await Notification.findOneAndDelete({userId : member.userData, type: "last-chance-request-delegate-admin" });

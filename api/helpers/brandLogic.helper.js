@@ -6,9 +6,9 @@ exports.brandLogicWhenCreate = async (req, type) => {
   let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   if (brandDB) {
     if (type === "product") {
-      await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
+      await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
     } else if (type === "historic") {
-      await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 }, { override: true, upsert: true, new: true });
+      await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
     }
   } else {
     let brandObject = {
@@ -42,9 +42,9 @@ exports.brandLogicWhenSwitching = async (req, type) => {
   let brandDB = await Brand.findById(productBrand.brand._id);
 
   if (type === "product") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1, numberOfHistoric: brandDB.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1, numberOfHistoric: brandDB.numberOfHistoric - 1 });
   } else if (type === "historic") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1, numberOfHistoric: brandDB.numberOfHistoric + 1 }, { override: true, upsert: true, new: true });
+    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1, numberOfHistoric: brandDB.numberOfHistoric + 1 });
   }
 
   return;
@@ -73,19 +73,19 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
   if (brandDB) {
     if (!switching) {
       if (type === "product") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       } else if (type === "historic") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 }, { override: true, upsert: true, new: true });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }
     } else {
       if (type === "product") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 }, { override: true, upsert: true, new: true });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       } else if (type === "historic") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 }, { override: true, upsert: true, new: true });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }
     }
   } else {
@@ -96,17 +96,17 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
 
     if (type === "product") {
       if(switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }else if(!switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }
       brandObject.numberOfProduct = 1;
       brandObject.numberOfHistoric = 0;
     } else if (type === "historic") {
       if(switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }else if(!switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }
       brandObject.numberOfProduct = 0;
       brandObject.numberOfHistoric = 1;
@@ -130,9 +130,9 @@ exports.brandLogicWhenDelete = async (req, type) => {
   let brandDB = await Brand.findById(productBrand.brand);
 
   if (type === "product") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1 }, { override: true, upsert: true, new: true });
+    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1 });
   } else if (type === "historic") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric - 1 }, { override: true, upsert: true, new: true });
+    await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric - 1 });
   }
 
   return;

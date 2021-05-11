@@ -42,7 +42,7 @@ module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) =>
   if(testName === "badHouseholdCode") objectData.householdCode = "";
 
   if(testName === "householdIsWaiting"){
-    await Household.findByIdAndUpdate(householdAdminOne._id, {isWaiting : true}, { override: true, upsert: true, new: true });
+    await Household.findByIdAndUpdate(householdAdminOne._id, {isWaiting : true});
   }
 
   if(testName === "spamNotification"){
@@ -57,11 +57,11 @@ module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) =>
   }
 
   if(testName === "otherHouseholdIsWaiting"){
-    await Household.findByIdAndUpdate(adminTwo.body.householdId, {isWaiting : true}, { override: true, upsert: true, new: true });
+    await Household.findByIdAndUpdate(adminTwo.body.householdId, {isWaiting : true});
   }
 
   if(testName === "sameHousehold"){
-    await User.findByIdAndUpdate(adminTwo.body._id, {householdId : householdAdminOne._id}, { override: true, upsert: true, new: true });
+    await User.findByIdAndUpdate(adminTwo.body._id, {householdId : householdAdminOne._id});
   }
 
   const addUserResponse = await addUserRequest(objectData, accessTokenAdminOne);
@@ -98,7 +98,7 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) 
   const householdAdminTwo = await Household.findById(adminOne.body.householdId);
   let arrayMembers = householdAdminTwo.members;
   arrayMembers = [...arrayMembers, arrayMembers[1]];
-  await Household.findByIdAndUpdate(adminTwo.body.householdId, {members : arrayMembers}, { override: true, upsert: true, new: true });
+  await Household.findByIdAndUpdate(adminTwo.body.householdId, {members : arrayMembers});
 
   const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
 

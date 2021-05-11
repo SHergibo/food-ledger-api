@@ -83,7 +83,7 @@ exports.update = async (req, res, next) => {
         if(req.body.number >= shopping.numberProduct){
           await ShoppingList.findByIdAndDelete(shopping._id);
         }else{
-          await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)}, { override: true, upsert: true, new: true });
+          await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)});
         }
       }
 
@@ -102,7 +102,7 @@ exports.update = async (req, res, next) => {
       req.body.slugName = Slugify.slugUrl(req.body.name);
       req.body.slugLocation = Slugify.slugUrl(req.body.location);
 
-      let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body, { override: true, upsert: true, new: true }).populate('brand', 'brandName');
+      let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body).populate('brand', 'brandName');
       response = res.json(updatedHistoric.transform());
     }
 

@@ -23,7 +23,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           }else{
             arraySocketId = [...arraySocketId, socketId];
           }
-          await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId }, { override: true, upsert: true, new: true });
+          await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId });
         }else{
           const newSocketIoDb = new SocketIoModel({
             userId : userId,
@@ -48,7 +48,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           if(arraySocketId.length > 1){
             const indexSocketId = arraySocketId.findIndex(socketId => socketId === socket.id); 
             arraySocketId.splice(indexSocketId, 1);
-            await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId }, { override: true, upsert: true, new: true });
+            await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId });
           }else{
             await SocketIoModel.findOneAndDelete({
               socketId : socket.id,

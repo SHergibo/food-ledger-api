@@ -22,7 +22,7 @@ exports.findAll = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     //TODO faire attention à l'objet brandName et label et value en slugify
-    const brand = await Brand.findByIdAndUpdate(req.params.brandId, req.body, { override: true, upsert: true, new: true });
+    const brand = await Brand.findByIdAndUpdate(req.params.brandId, req.body);
     return res.json(brand.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));

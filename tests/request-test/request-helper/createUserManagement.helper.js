@@ -17,7 +17,7 @@ module.exports.createUser = async (userData) => {
   let option = new Option({userId : createdUser._id});
   await option.save();
 
-  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id }, { override: true, upsert: true, new: true });
+  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id });
   return createdUser;
 };
 
@@ -35,9 +35,9 @@ module.exports.createHousehold = async (userId, householdName) => {
 };
 
 module.exports.updateUserHouseholdId = async (userId, householdId) => {
-  return await User.findByIdAndUpdate(userId, { householdId: householdId }, { override: true, upsert: true, new: true });
+  return await User.findByIdAndUpdate(userId, { householdId: householdId });
 };
 
 module.exports.updateHouseholdMembers = async (householdId, membersArray, userId) => {
-  return await Household.findByIdAndUpdate(householdId, { members: [...membersArray, {isFlagged : false, userData : userId}] }, { override: true, upsert: true, new: true });
+  return await Household.findByIdAndUpdate(householdId, { members: [...membersArray, {isFlagged : false, userData : userId}] });
 };

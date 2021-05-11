@@ -12,7 +12,7 @@ exports.launch = async (req, res, next) => {
 
     users.forEach(async (user) => {
       let household = await Household.findOne({householdCode: user.householdCode});
-      await User.findByIdAndUpdate(user._id, { householdId: household._id, $unset: { householdCode: 1 } }, { override: true, upsert: true, new: true });
+      await User.findByIdAndUpdate(user._id, { householdId: household._id, $unset: { householdCode: 1 } });
     });
 
     return res.status(204).send();
@@ -38,7 +38,7 @@ exports.householdMember = async (req, res, next) => {
         }
         members = [...members, objectMember];
       });
-      await Household.findByIdAndUpdate(household._id, { members: members, $unset: { member: 1 } }, { override: true, upsert: true, new: true });
+      await Household.findByIdAndUpdate(household._id, { members: members, $unset: { member: 1 } });
     });
 
     return res.status(204).send();
