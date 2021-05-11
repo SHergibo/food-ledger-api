@@ -43,6 +43,8 @@ exports.switchAdminRequest = async (req, res, next) => {
         }
       }
 
+      user = await User.findByIdAndUpdate(notification.userId, { role: "admin" });
+      
       arrayMembers.sort((a, member)=>{ if(member.userData.toString() === notification.userId.toString()) return 1;});
 
       let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } })
@@ -50,8 +52,6 @@ exports.switchAdminRequest = async (req, res, next) => {
         path: 'members.userData',
         select: 'firstname lastname usercode role'
       });
-
-      user = await User.findByIdAndUpdate(notification.userId, { role: "admin" });
 
       const newAdminNotificationsSended = await Notification.find(
         {$or : 
@@ -80,6 +80,7 @@ exports.switchAdminRequest = async (req, res, next) => {
         [
           {name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : updatedHousehold.transform()}},
           {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
+          {name : "deleteNotificationReceived", data: notification._id}
         ]
       );
 
@@ -195,6 +196,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
