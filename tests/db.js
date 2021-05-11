@@ -17,6 +17,8 @@ module.exports.connect = async () => {
     poolSize: 10
   };
 
+  mongoose.set('returnOriginal', false);
+
   await mongoose.connect(uri, mongooseOpts);
 }
 
