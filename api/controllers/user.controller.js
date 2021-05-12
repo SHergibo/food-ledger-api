@@ -7,7 +7,8 @@ const User = require('./../models/user.model'),
       TokenAuth = require('./../models/token-auth.model'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
 
 /**
 * Post one user
@@ -177,42 +178,7 @@ exports.remove = async (req, res, next) => {
         socketIoEmit(household.userId, [{name : "updateFamilly", data: household.transform()}]);
 
         if(household.members.length === 1){
-          let needSwitchAdminNotification = await Notification.find({userId : household.userId, type: "need-switch-admin"});
-          if(needSwitchAdminNotification.length >= 1){
-            for (const notif of needSwitchAdminNotification) {
-              const otherHousehold = await Household.findById(notif.householdId);
-              let inviteNotification = await new Notification({
-                message: `L'administrateur.trice de la famille ${otherHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
-                householdId: notif.householdId,
-                userId: notif.userId,
-                type: "invitation-household-to-user",
-                urlRequest: "add-user-respond",
-              });
-              await inviteNotification.save(); 
-    
-              await Notification.findByIdAndDelete(notif._id);
-    
-              socketIoEmit(notif.userId, 
-                [
-                  {name : "deleteNotificationReceived", data: notif._id},
-                  {name : "updateNotificationReceived", data: inviteNotification.transform()},
-                ]
-              );
-    
-              let notificationSended = await Notification.findById(inviteNotification._id)
-              .populate({
-                path: 'userId',
-                select: 'firstname lastname -_id'
-              });
-    
-              socketIoEmit(otherHousehold.userId, 
-                [
-                  {name : "deleteNotificationSended", data: notif._id},
-                  {name : "updateNotificationSended", data: notificationSended.transform(true)},
-                ]
-              ); 
-            }
-          }
+          await transformNeedSwitchAdminToInviteNotif(household.userId);
         }
   
         let olderHousehold = await Household.findOne({ userId: user._id });
