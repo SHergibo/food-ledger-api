@@ -28,13 +28,21 @@ exports.switchAdminRequest = async (req, res, next) => {
       if (!otherMember) return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
     }
 
+    let household = await Household.findById(notification.householdId);
+    let arrayMembers = household.members;
+    if(req.query.acceptedRequest === "no" && !req.query.otherMember && notification.type === "request-delegate-admin"){
+      let indexMember = arrayMembers.findIndex(member => member.isFlagged === false && member.userData.toString() !== notification.userId.toString());
+
+      if (indexMember >= 0) {
+        return next(Boom.badRequest("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!"));
+      }
+    }
+
     if(notification.type !== "last-chance-request-delegate-admin"){
       await Notification.findByIdAndDelete(notification._id);
     }
     
     let user;
-    let household = await Household.findById(notification.householdId);
-    let arrayMembers = household.members;
     if (req.query.acceptedRequest === "yes") {
       let oldHousehold = await Household.findOne({ userId: notification.userId });
       if (oldHousehold) await Helpers.removeHousehold(oldHousehold._id);
@@ -163,14 +171,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           );
 
         } else if (!req.query.otherMember) {
-          arrayMembers = household.members;
-          let indexMember = arrayMembers.findIndex(member => member.isFlagged === false && member.userData.toString() !== notification.userId.toString());
-
-          if (indexMember >= 0) {
-            return next(Boom.badRequest("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!"));
-          } else if (indexMember === -1) {
-            await Helpers.noMoreAdmin(arrayMembers, household._id);
-          }
+          await Helpers.noMoreAdmin(arrayMembers, household._id);
         }
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
       }
