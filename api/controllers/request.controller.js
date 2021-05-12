@@ -404,53 +404,40 @@ exports.addUserRequest = async (req, res, next) => {
 */
 exports.addUserRespond = async (req, res, next) => {
   try {
-    let notification = await Notification.findById(req.params.notificationId);
-    if(!notification){
-      return next(Boom.notFound('Notification non trouvée!'));
-    }
-    if(notification.urlRequest !== 'add-user-respond'){
-      return next(Boom.badRequest('Mauvaise notification!'));
-    }
+    const notification = await Notification.findById(req.params.notificationId);
+    if(!notification) return next(Boom.notFound('Notification non trouvée!'));
 
-    if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
-    }
+    if(notification.urlRequest !== 'add-user-respond') return next(Boom.badRequest('Mauvaise notification!'));
 
-    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Paramètre de requête invalide!'));
-    }
+    if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
+
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") return next(Boom.badRequest('Paramètre de requête invalide!'));
     
     if(notification.type === "need-switch-admin"){
-      let notificationRequestAdmin = await Notification.findOne({type: "request-admin", senderUserId : req.user._id});
-      if(notificationRequestAdmin){
-        return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!"));
-      }
+      const notificationRequestAdmin = await Notification.findOne({type: "request-admin", senderUserId : req.user._id});
+      if(notificationRequestAdmin) return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!"));
     }
 
-    let oldNotification = await Notification.findByIdAndDelete(notification._id);
+    const oldNotification = await Notification.findByIdAndDelete(notification._id);
 
-    if(oldNotification.senderUserId){
-      socketIoEmit(oldNotification.senderUserId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
-    }else if (oldNotification.householdId){
-      let household = await Household.findById(oldNotification.householdId);
+    if(oldNotification.senderUserId) socketIoEmit(oldNotification.senderUserId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
+    
+    if (oldNotification.householdId){
+      const household = await Household.findById(oldNotification.householdId);
       socketIoEmit(household.userId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
     }
 
-    let newHousehold = await Household.findById(notification.householdId);
+    const newHousehold = await Household.findById(notification.householdId);
     let user;
-    if (notification.type === "invitation-user-to-household") {
-      user = await User.findById(notification.senderUserId);
-    } else {
-      user = await User.findById(notification.userId);
-    }
+
+    if (notification.type === "invitation-user-to-household") user = await User.findById(notification.senderUserId);
+    if (notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin") user = await User.findById(notification.userId);
 
     if (req.query.acceptedRequest === "yes") {
       
-      let oldHousehold = await Household.findById(user.householdId);
+      const oldHousehold = await Household.findById(user.householdId);
       let oldMembersArray = [];
-      if (oldHousehold) {
-        oldMembersArray = oldHousehold.members;
-      }
+      if (oldHousehold) oldMembersArray = oldHousehold.members;
 
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMembersArray.length > 1) {
         let newNotification = await new Notification({
@@ -464,9 +451,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
 
-        let idUser;
-        notification.type !== "invitation-user-to-household" ? idUser = notification.userId : idUser = newHousehold.userId;
-        socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
+        socketIoEmit(newHousehold.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
         return res.status(204).send();
       }
@@ -478,20 +463,11 @@ exports.addUserRespond = async (req, res, next) => {
 
       let indexMember = oldMembersArray.findIndex(member => member.userData.toString() === user._id.toString());
 
-      if (oldHousehold) {
-        newMembersArray.push(oldMembersArray[indexMember]);
-      } else {
-        newMembersArray.push({
-          userData: user._id,
-          isFlagged: false,
-        });
-      }
+      if (oldHousehold) newMembersArray = [...newMembersArray, oldMembersArray[indexMember]];
+      if(!oldHousehold) newMembersArray = [...newMembersArray, {userData: user._id,isFlagged: false}];
 
       let updatedOldHousehold;
-      let updatedUser;
       if (user.role === "user") {
-        updatedUser = await User.findByIdAndUpdate(user._id, { householdId: newHousehold._id });
-
         if (oldHousehold) {
           oldMembersArray.splice(indexMember, 1);
           updatedOldHousehold = await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray })
@@ -500,43 +476,36 @@ exports.addUserRespond = async (req, res, next) => {
             select: 'firstname lastname usercode role'
           });
         }
-
       }
 
       if (user.role === "admin" && oldMembersArray.length === 1) {
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
-
         oldMembersArray = [];
         await Household.findByIdAndUpdate(oldHousehold._id, { members: oldMembersArray });
       }
 
-      let requestSwitchAdmin = {};
       if (user.role === "admin" && oldMembersArray.length > 1 && req.query.otherMember) {
-        requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
+        const requestSwitchAdmin = await Helpers.requestSwitchAdmin(user._id, req.query.otherMember);
         if (requestSwitchAdmin) {
           return next(requestSwitchAdmin);
         }
-
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
       }
       
       if(user.role === "admin" && oldMembersArray.length > 1 && !req.query.otherMember){
-        if (indexMember > -1) {
-          oldMembersArray.splice(indexMember, 1);
-        }
-        updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
+        oldMembersArray.splice(indexMember, 1);
         await Helpers.noMoreAdmin(oldMembersArray, oldHousehold._id);
       }
 
-      let updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray })
+      const updatedUser = await User.findByIdAndUpdate(user._id, { role: "user", householdId: newHousehold._id });
+
+      const updatedNewHousehold = await Household.findByIdAndUpdate(newHousehold._id, { members: newMembersArray })
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'
       });
     
-      if(user.role === "user"){
-        socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}}]);
-      }else{
+      if(user.role === "user") socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}}]);
+
+      if(user.role === "admin"){
         const userNotificationsReceived = await Notification.find({userId : user._id});
         socketIoEmit(user._id, 
           [
@@ -565,7 +534,9 @@ exports.addUserRespond = async (req, res, next) => {
         }
       }
       
-    }else if(req.query.acceptedRequest === "no"){
+    }
+
+    if(req.query.acceptedRequest === "no"){
       let notificationObject = {
         message: "",
         type: "information"
@@ -574,10 +545,11 @@ exports.addUserRespond = async (req, res, next) => {
 
       if(notification.type === "invitation-user-to-household"){
         userId = user._id;
-        let householdAdmin = await User.findById(newHousehold.userId);
+        const householdAdmin = await User.findById(newHousehold.userId);
         notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.userId = user._id;
-      }else if(notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin"){
+      }
+      if(notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin"){
         userId = newHousehold.userId;
         notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.householdId = newHousehold._id;
