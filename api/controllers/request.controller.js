@@ -162,7 +162,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 */
 exports.switchAdminRights = async (req, res, next) => {
   try {
-    let household = await Household.findById(req.body.householdId);
+    const household = await Household.findById(req.body.householdId);
     if(!household) return next(Boom.notFound("Cette famille n'existe pas!"));
 
     let searchNotification = await Notification.findOne({$or : 
@@ -173,7 +173,7 @@ exports.switchAdminRights = async (req, res, next) => {
     });
     if(searchNotification) return next(Boom.badRequest('Vous avez déjà une demande de délégation de droits administrateurs en attente! Supprimez votre ancienne demande pour pouvoir en effectuer une nouvelle.'));
 
-    let user = await User.findById(req.body.userId);
+    const user = await User.findById(req.body.userId);
     if(!user) return next(Boom.notFound("Cet.te utilisateur.trice n'existe pas!"));
     
     let notification = await new Notification({
@@ -187,7 +187,7 @@ exports.switchAdminRights = async (req, res, next) => {
     await notification.save();
     socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
-    let notifWithPopulate = await Notification.findById(notification._id)
+    const notifWithPopulate = await Notification.findById(notification._id)
     .populate({
       path: 'userId',
       select: 'firstname lastname -_id'
