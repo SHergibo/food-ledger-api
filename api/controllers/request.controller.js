@@ -6,7 +6,7 @@ const Household = require('./../models/household.model'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray, transformObject } = require('../helpers/transformJsonData.helper'),
-      { transformInviteToNeedSwitchAdminNotif } = require('../helpers/transformNotification.helper');
+      { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -225,35 +225,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       let arrayMembers = household.members;
       arrayMembers.sort((a, member)=>{ if(member.userData.toString() === newAdmin._id.toString()) return 1;});
 
-      const needSwitchAdminNotif = await Notification.find({userId : oldAdmin._id, type: "need-switch-admin"});
-
-      if(needSwitchAdminNotif.length >= 1){
-        for (const notif of needSwitchAdminNotif) {
-          let invitationHousehold = await Household.findById(notif.householdId);
-          let newNotification = await new Notification({
-            message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
-            householdId: invitationHousehold._id,
-            userId: oldAdmin._id,
-            type: "invitation-household-to-user",
-            urlRequest: "add-user-respond"
-          });
-          await newNotification.save();
-          await Notification.findByIdAndDelete(notif._id);
-
-          const newNotifSended = await Notification.findById(newNotification._id)
-          .populate({
-            path: 'userId',
-            select: 'firstname lastname -_id'
-          }); 
-  
-          socketIoEmit(invitationHousehold.userId, 
-            [
-              {name : "deleteNotificationSended", data: notif._id},
-              {name : "updateNotificationSended", data: newNotifSended.transform(true)},
-            ]
-          );
-        }
-      }
+      await transformNeedSwitchAdminToInviteNotif(oldAdmin._id);
 
       const invitationNotif = await Notification.find({userId : newAdmin._id, type: "invitation-household-to-user"});
 
