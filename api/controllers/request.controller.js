@@ -110,10 +110,9 @@ exports.switchAdminRequest = async (req, res, next) => {
       user = await User.findById(notification.userId);
       if (notification.type === "request-delegate-admin") {
         if (req.query.otherMember) {
-          let updatedArrayMembers = household.members;
-          let indexMember = updatedArrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
-          updatedArrayMembers[indexMember].isFlagged = true;
-          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: updatedArrayMembers })
+          let indexMember = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
+          arrayMembers[indexMember].isFlagged = true;
+          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: arrayMembers })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
@@ -137,34 +136,23 @@ exports.switchAdminRequest = async (req, res, next) => {
               {name : "updateNotificationReceived", data: newNotification.transform()}
             ]
           );
-
-        } else if (!req.query.otherMember) {
-          await Helpers.noMoreAdmin(arrayMembers, household._id);
         }
+        if (!req.query.otherMember) await Helpers.noMoreAdmin(arrayMembers, household._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
       }
 
       if(notification.type === "last-chance-request-delegate-admin"){
-        let arrayLastChanceNotif = [];
         await Notification.findByIdAndDelete(notification._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
+        
+        let otherLastChanceNotifExist = await Notification.find({householdId : household._id, type : "last-chance-request-delegate-admin"});
 
-        for (const member of arrayMembers) {
-          let lastChanceNotif = await Notification.findOne({userId : member.userData, householdId : household._id, type : "last-chance-request-delegate-admin"});
-          if(lastChanceNotif){
-            arrayLastChanceNotif.push(lastChanceNotif);
-          }
-        }
-
-        if(arrayLastChanceNotif.length === 0){
-          await Helpers.noMoreAdmin(arrayMembers, household._id);
-        }
+        if(otherLastChanceNotifExist.length === 0) await Helpers.noMoreAdmin(arrayMembers, household._id);
       }
     }
 
     return res.status(204).send();
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
