@@ -29,10 +29,10 @@ exports.switchAdminRequest = async (req, res, next) => {
       if (!otherMember) return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
     }
 
-    let household = await Household.findById(notification.householdId);
+    const household = await Household.findById(notification.householdId);
     let arrayMembers = household.members;
     if(req.query.acceptedRequest === "no" && !req.query.otherMember && notification.type === "request-delegate-admin"){
-      let indexMember = arrayMembers.findIndex(member => member.isFlagged === false && member.userData.toString() !== notification.userId.toString());
+      const indexMember = arrayMembers.findIndex(member => member.isFlagged === false && member.userData.toString() !== notification.userId.toString());
 
       if (indexMember >= 0) {
         return next(Boom.badRequest("Un.e ou plusieurs autres membres sont encore éligibles pour la délégation des droits d'administrations!"));
@@ -45,7 +45,7 @@ exports.switchAdminRequest = async (req, res, next) => {
     
     let user;
     if (req.query.acceptedRequest === "yes") {
-      let oldHousehold = await Household.findOne({ userId: notification.userId });
+      const oldHousehold = await Household.findOne({ userId: notification.userId });
       if (oldHousehold) await Helpers.removeHousehold(oldHousehold._id);
 
       for (const member of arrayMembers) {
@@ -60,7 +60,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       
       arrayMembers.sort((a, member)=>{ if(member.userData.toString() === notification.userId.toString()) return 1;});
 
-      let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } })
+      const updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } })
       .populate({
         path: 'members.userData',
         select: 'firstname lastname usercode role'
@@ -110,9 +110,9 @@ exports.switchAdminRequest = async (req, res, next) => {
       user = await User.findById(notification.userId);
       if (notification.type === "request-delegate-admin") {
         if (req.query.otherMember) {
-          let indexMember = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
+          const indexMember = arrayMembers.findIndex(member => member.userData.toString() === user._id.toString());
           arrayMembers[indexMember].isFlagged = true;
-          let updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: arrayMembers })
+          const updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { members: arrayMembers })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
@@ -145,7 +145,7 @@ exports.switchAdminRequest = async (req, res, next) => {
         await Notification.findByIdAndDelete(notification._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
         
-        let otherLastChanceNotifExist = await Notification.find({householdId : household._id, type : "last-chance-request-delegate-admin"});
+        const otherLastChanceNotifExist = await Notification.find({householdId : household._id, type : "last-chance-request-delegate-admin"});
 
         if(otherLastChanceNotifExist.length === 0) await Helpers.noMoreAdmin(arrayMembers, household._id);
       }
