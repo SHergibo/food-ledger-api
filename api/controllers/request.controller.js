@@ -207,35 +207,23 @@ exports.switchAdminRights = async (req, res, next) => {
 exports.switchAdminRightsRespond = async (req, res, next) => {
   try {
     let notification = await Notification.findById(req.params.notificationId);
-    if(!notification){
-      return next(Boom.notFound('Notification non trouvée!'));
-    }
+    if(!notification) return next(Boom.notFound('Notification non trouvée!'));
 
-    if(notification.urlRequest !== 'switch-admin-rights-respond'){
-      return next(Boom.badRequest('Mauvaise notification!'));
-    }
+    if(notification.urlRequest !== 'switch-admin-rights-respond') return next(Boom.badRequest('Mauvaise notification!'));
 
-    if (!req.query.acceptedRequest) {
-      return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
-    }
+    if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
 
-    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") {
-      return next(Boom.badRequest('Paramètre de requête invalide!'));
-    }
+    if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") return next(Boom.badRequest('Paramètre de requête invalide!'));
 
     await Notification.findByIdAndDelete(notification._id);
 
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
-      let oldAdmin = await User.findById(household.userId);
-      oldAdmin = await User.findByIdAndUpdate(oldAdmin._id, {role : "user"});
+      let oldAdmin = await User.findByIdAndUpdate(household.userId, {role : "user"});
       let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"});
 
       let arrayMembers = household.members;
-      let indexUserToChange = arrayMembers.findIndex(member => member.userData.toString() === newAdmin._id.toString());
-      let AdminInfoMember = arrayMembers[indexUserToChange];
-      arrayMembers.splice(indexUserToChange, 1);
-      arrayMembers.unshift(AdminInfoMember);
+      arrayMembers.sort((a, member)=>{ if(member.userData.toString() === newAdmin._id.toString()) return 1;});
 
       const needSwitchAdminNotif = await Notification.find({userId : oldAdmin._id, type: "need-switch-admin"});
 
