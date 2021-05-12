@@ -206,7 +206,7 @@ exports.switchAdminRights = async (req, res, next) => {
 */
 exports.switchAdminRightsRespond = async (req, res, next) => {
   try {
-    let notification = await Notification.findById(req.params.notificationId);
+    const notification = await Notification.findById(req.params.notificationId);
     if(!notification) return next(Boom.notFound('Notification non trouvée!'));
 
     if(notification.urlRequest !== 'switch-admin-rights-respond') return next(Boom.badRequest('Mauvaise notification!'));
@@ -219,43 +219,14 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
-      let oldAdmin = await User.findByIdAndUpdate(household.userId, {role : "user"});
-      let newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"});
+      const oldAdmin = await User.findByIdAndUpdate(household.userId, {role : "user"});
+      const newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"});
 
       let arrayMembers = household.members;
       arrayMembers.sort((a, member)=>{ if(member.userData.toString() === newAdmin._id.toString()) return 1;});
 
       await transformNeedSwitchAdminToInviteNotif(oldAdmin._id);
-
-      const invitationNotif = await Notification.find({userId : newAdmin._id, type: "invitation-household-to-user"});
-
-      if(invitationNotif.length >= 1){
-        for (const notif of invitationNotif) {
-          let invitationHousehold = await Household.findById(notif.householdId);
-          let newNotification = await new Notification({
-            message: `L'administrateur.trice de la famille ${invitationHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
-            householdId: invitationHousehold._id,
-            userId: newAdmin._id,
-            type: "need-switch-admin",
-            urlRequest: "add-user-respond"
-          });
-          await newNotification.save();
-          await Notification.findByIdAndDelete(notif._id);
-  
-          const newNotifSended = await Notification.findById(newNotification._id)
-          .populate({
-            path: 'userId',
-            select: 'firstname lastname -_id'
-          });  
-  
-          socketIoEmit(invitationHousehold.userId, 
-            [
-              {name : "deleteNotificationSended", data: notif._id},
-              {name : "updateNotificationSended", data: newNotifSended.transform(true)},
-            ]
-          );
-        }
-      }
+      await transformInviteToNeedSwitchAdminNotif(newAdmin._id);
 
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers})
       .populate({
@@ -315,7 +286,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     }
 
     if(req.query.acceptedRequest === "no"){
-      let user = await User.findById(notification.userId);
+      const user = await User.findById(notification.userId);
       let newNotification = await new Notification({
         message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration!`,
         type: 'information',
@@ -332,7 +303,6 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
