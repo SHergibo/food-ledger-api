@@ -66,6 +66,10 @@ exports.switchAdminRequest = async (req, res, next) => {
         select: 'firstname lastname usercode role'
       });
 
+      if(updatedHousehold.members.length > 1){
+        await transformInviteToNeedSwitchAdminNotif(user._id);
+      }
+
       const newAdminNotificationsSended = await Notification.find(
         {$or : 
           [
@@ -100,10 +104,6 @@ exports.switchAdminRequest = async (req, res, next) => {
         if(member.userData.toString() !== user._id.toString()){
           socketIoEmit(member.userData, [{name : "updateFamilly", data: updatedHousehold.transform()}]);
         }
-      }
-
-      if(updatedHousehold.members.length > 1){
-       await transformInviteToNeedSwitchAdminNotif(user._id);
       }
     }
     if (req.query.acceptedRequest === "no") {
@@ -542,12 +542,6 @@ exports.addUserRespond = async (req, res, next) => {
       if (oldHousehold) {
         oldMembersArray = oldHousehold.members;
       }
-      
-      let newMembersArray = newHousehold.members;
-
-      if(newMembersArray.length === 1){
-        await transformInviteToNeedSwitchAdminNotif(newHousehold.userId);
-      }
 
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMembersArray.length > 1) {
         let newNotification = await new Notification({
@@ -566,6 +560,11 @@ exports.addUserRespond = async (req, res, next) => {
         socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
         return res.status(204).send();
+      }
+
+      let newMembersArray = newHousehold.members;
+      if(newMembersArray.length === 1){
+        await transformInviteToNeedSwitchAdminNotif(newHousehold.userId);
       }
 
       let indexMember = oldMembersArray.findIndex(member => member.userData.toString() === user._id.toString());
