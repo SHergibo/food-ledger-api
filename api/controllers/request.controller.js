@@ -27,6 +27,10 @@ exports.switchAdminRequest = async (req, res, next) => {
       otherMember = await User.findById(req.query.otherMember);
       if (!otherMember) return next(Boom.notFound('Code utilisateur du/de la délégué.e non trouvé!'));
     }
+
+    if(notification.type !== "last-chance-request-delegate-admin"){
+      await Notification.findByIdAndDelete(notification._id);
+    }
     
     let user;
     let household = await Household.findById(notification.householdId);
@@ -79,8 +83,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       socketIoEmit(notification.userId, 
         [
           {name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : updatedHousehold.transform()}},
-          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
-          {name : "deleteNotificationReceived", data: notification._id}
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}}
         ]
       );
 
@@ -188,10 +191,6 @@ exports.switchAdminRequest = async (req, res, next) => {
           await Helpers.noMoreAdmin(arrayMembers, household._id);
         }
       }
-    }
-
-    if(notification.type !== "last-chance-request-delegate-admin"){
-      await Notification.findByIdAndDelete(notification._id);
     }
 
     return res.status(204).send();
