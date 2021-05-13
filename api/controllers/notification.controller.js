@@ -3,6 +3,7 @@ const Notification = require('./../models/notification.model'),
       Household = require('./../models/household.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
+      { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -31,7 +32,13 @@ exports.findAll = async (req, res, next) => {
           { householdId : user.householdId, type: "invitation-user-to-household" },
           { householdId : user.householdId, type: "information" },
         ]
+      }).populate({
+        path: 'householdId',
+        select: 'householdName -_id'
       });
+
+      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "need-switch-admin");
+
       let notificationsSendedPopulated = await Notification.find(
       {$or : 
         [
@@ -45,17 +52,22 @@ exports.findAll = async (req, res, next) => {
       });  
       notificationsSended = [...notificationsSendedPopulated, ...notificationsSendedLeaned];
     }else if(user.role === "user"){
-      notificationsReceived = await Notification.find({ userId: req.params.userId });
+      notificationsReceived = await Notification.find({ userId: req.params.userId })
+      .populate({
+        path: 'householdId',
+        select: 'householdName -_id'
+      });
+
+      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "invitation-household-to-user");
       notificationsSended = notificationsSendedLeaned;
     } 
     
     let objectNotification ={
-      notificationsReceived : transformArray(notificationsReceived, 'notification'),
+      notificationsReceived : transformArray(notificationsReceived, 'notificationHouseholdId'),
       notificationsSended : transformArray(notificationsSended, 'notificationUserId')
     }
     return res.json(objectNotification);
   } catch (error) {
-    console.log(error);
     next(Boom.badImplementation(error.message));
   }
 };
