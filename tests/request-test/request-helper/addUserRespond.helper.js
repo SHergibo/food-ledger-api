@@ -76,7 +76,7 @@ module.exports.acceptAddUserRequest = async (adminTwo, householdOne) => {
   .set('Authorization', `Bearer ${accessTokenAdminOne}`);
 
   const notificationDelegateUser = await Notification.findOne({
-    message: "L'administrateur.trice a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
+    message: "L'administrateur.trice de la famille {householdName} a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
     userId : adminTwo._id,
     householdId : householdOne._id,
     type: "need-switch-admin",
@@ -142,7 +142,7 @@ module.exports.delegateWithoutOtherMember = async (adminTwo, householdOne, house
 
 module.exports.testTranformInviteNotif = async (adminOne, householdOne, userTwo, householdTwo) => {
   let invitationRequestNotif = await new Notification({
-    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+    message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
     householdId: householdTwo._id,
     userId: adminOne._id,
     type: "invitation-household-to-user",
@@ -163,7 +163,7 @@ module.exports.testTranformInviteNotif = async (adminOne, householdOne, userTwo,
   const inviteNotifDeleted = await Notification.findById(invitationRequestNotif._id);
 
   const tranformedNotification = await Notification.findOne({
-    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
+    message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
     householdId: householdTwo._id,
     userId: adminOne._id,
     type: "need-switch-admin",
