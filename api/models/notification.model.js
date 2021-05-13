@@ -37,11 +37,15 @@ let schema = new Schema({
     }
 });
 
-schema.methods.transform = function(withUserId = false) {
+schema.methods.transform = function({withUserId, withHouseholdId} = {}) {
     let fields = ['_id', 'message', 'type', 'urlRequest', 'expirationDate'];
 
     if(withUserId){
        fields = [...fields, 'userId'];
+    }
+
+    if(withHouseholdId){
+        fields = [...fields, 'householdId'];
     }
 
     const object = {};
