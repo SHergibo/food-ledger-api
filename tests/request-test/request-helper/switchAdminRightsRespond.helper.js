@@ -25,7 +25,7 @@ const createNotificationToTransform = async (adminOneId, userTwoId ) => {
   adminTwo = await updateUserHouseholdId(adminTwo._id, householdTwo._id);
 
   const adminOneNotif = await createNotif({
-    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
+    message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`,
     householdId: householdTwo._id,
     userId: adminOneId,
     type: "need-switch-admin",
@@ -33,7 +33,7 @@ const createNotificationToTransform = async (adminOneId, userTwoId ) => {
   });
 
   const userTwoNotif = await createNotif({
-    message: `L'administrateur.trice de la famille ${householdTwo.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+    message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
     householdId: householdTwo._id,
     userId: userTwoId,
     type: "invitation-household-to-user",
