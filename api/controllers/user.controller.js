@@ -8,7 +8,7 @@ const User = require('./../models/user.model'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
+      { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper');
 
 /**
 * Post one user
@@ -90,14 +90,21 @@ exports.add = async (req, res, next) => {
       if (req.body.othermember) {
         for (const otherUser of searchUserArray) {
           let notification = await new Notification({
-            message: `L'administrateur.trice de la famille ${newHousehold.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+            message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
             userId: otherUser._id,
             type: "invitation-household-to-user",
             urlRequest: "add-user-respond"
           });
           await notification.save();
-          socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
+
+          notification = await Notification.findById(notification._id)
+          .populate({
+            path: 'householdId',
+            select: 'householdName -_id'
+          });
+
+          socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: injectHouseholdName(notification.transform({withHouseholdId: true}))}]);
         }
         searchUserArray = [];
       }
