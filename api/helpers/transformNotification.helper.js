@@ -57,7 +57,7 @@ const transformNotification = async (userId, type) => {
       });
 
       const otherHousehold = await Household.findById(notif.householdId);
-      
+
       socketIoEmit(otherHousehold.userId, 
         [
           {name : "deleteNotificationSended", data: notif._id},
@@ -78,4 +78,13 @@ module.exports.transformNeedSwitchAdminToInviteNotif = async (userId) => {
 
 module.exports.injectHouseholdName = (notification) => {
   return injectHouseholdNameNotification(notification);
+};
+
+module.exports.injectHouseholdNameInNotifArray = (notificationArray, type) => {
+  notificationArray.forEach((notif, index) => {
+    if(notif.type === type){
+      notificationArray[index] = injectHouseholdNameNotification(notif);
+    }
+  });
+  return notificationArray;
 };
