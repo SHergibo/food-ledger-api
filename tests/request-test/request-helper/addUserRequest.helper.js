@@ -47,7 +47,7 @@ module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) =>
 
   if(testName === "spamNotification"){
     let invitationRequestNotif = await new Notification({
-      message: `L'administrateur.trice de la famille ${householdAdminOne.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
+      message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
       householdId: householdAdminOne._id,
       userId: adminTwo.body._id,
       type: "invitation-household-to-user",
