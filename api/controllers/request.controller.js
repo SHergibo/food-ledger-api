@@ -6,7 +6,7 @@ const Household = require('./../models/household.model'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray, transformObject } = require('../helpers/transformJsonData.helper'),
-      { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
+      { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif, injectHouseholdName, injectHouseholdNameInNotifArray } = require('../helpers/transformNotification.helper');
 
 /**
 * Switch familly and delegate admin request
@@ -193,7 +193,7 @@ exports.switchAdminRights = async (req, res, next) => {
       select: 'firstname lastname -_id'
     });
 
-    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform(true)}]);
+    socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform({withUserId : true})}]);
 
     return res.status(204).send();
   } catch (error) {
@@ -234,7 +234,14 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         select: 'firstname lastname usercode role'
       });
       
-      const oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id});
+      const oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id})
+      .populate({
+        path: 'householdId',
+        select: 'householdName -_id'
+      });
+
+      oldAdminNotificationsReceived = injectHouseholdNameInNotifArray(oldAdminNotificationsReceived, "invitation-household-to-user");
+
       const oldAdminNotificationsSended = await Notification.find({senderUserId: oldAdmin._id})
       .populate({
         path: 'userId',
@@ -244,7 +251,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       socketIoEmit(oldAdmin._id, 
         [
           {name : "updateUserAndFamillyData", data: {userData : oldAdmin.transform(), householdData : household.transform()}},
-          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(oldAdminNotificationsReceived, "notification"), notificationsSended : transformArray(oldAdminNotificationsSended, "notificationUserId")}},
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(oldAdminNotificationsReceived, "notificationHouseholdId"), notificationsSended : transformArray(oldAdminNotificationsSended, "notificationUserId")}},
         ]
       );
 
@@ -275,12 +282,17 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
             { householdId : household._id, type: "information" },
           ]
         }
-      );
+      ).populate({
+        path: 'householdId',
+        select: 'householdName -_id'
+      });
+
+      newAdminNotificationsReceived = injectHouseholdNameInNotifArray(newAdminNotificationsReceived, "need-switch-admin");
 
       socketIoEmit(notification.userId, 
         [
           {name : "updateUserAndFamillyData", data: {userData : newAdmin.transform(), householdData : household.transform()}},
-          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notification"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
+          {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notificationHouseholdId"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
         ]
       );
     }
@@ -352,10 +364,10 @@ exports.addUserRequest = async (req, res, next) => {
       const householdSender = await Household.findById(user.householdId);
       if(user.role === "user" || (user.role === "admin" && householdSender.members.length === 1)){
         notificationObject.type = "invitation-household-to-user";
-        notificationObject.message = `L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
+        notificationObject.message = `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`;
       }
       if(user.role === "admin" && householdSender.members.length > 1){
-        notificationObject.message = `L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`;
+        notificationObject.message = `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`;
         notificationObject.type = "need-switch-admin";
       }
       notificationObject.userId = user._id;
@@ -370,9 +382,18 @@ exports.addUserRequest = async (req, res, next) => {
     let notification = await new Notification(notificationObject);
     await notification.save();
 
+    notification = await Notification.findById(notification._id)
+    .populate({
+      path: 'householdId',
+      select: 'householdName -_id'
+    });
+
+    if(req.body.type === "userToHousehold") notification = notification.transform();
+    if(req.body.type === "householdToUser") notification = injectHouseholdName(notification.transform({withHouseholdId : true}));
+
     let idUser;
     notification.type !== "invitation-user-to-household" ? idUser = notificationObject.userId : idUser = household.userId;
-    socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification.transform()}]);
+    socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification}]);
     
     let notificationSended;
     if(req.body.type === "userToHousehold"){
@@ -441,7 +462,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       if (notification.type === "invitation-user-to-household" && user.role === "admin" && oldMembersArray.length > 1) {
         let newNotification = await new Notification({
-          message: "L'administrateur.trice a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
+          message: "L'administrateur.trice de la famille {householdName} a accepté.e votre demande pour rejoindre sa famille, mais avant cela, il faut déléguer vos droits d'administration à un.e autre membre de votre famille.",
           householdId: newHousehold._id,
           userId: user._id,
           type: "need-switch-admin",
@@ -449,7 +470,13 @@ exports.addUserRespond = async (req, res, next) => {
         });
         await newNotification.save();
 
-        socketIoEmit(user._id, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
+        newNotification = await Notification.findById(newNotification._id)
+        .populate({
+          path: 'householdId',
+          select: 'householdName -_id'
+        });
+
+        socketIoEmit(user._id, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId : true}))}]);
 
         socketIoEmit(newHousehold.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
@@ -506,11 +533,19 @@ exports.addUserRespond = async (req, res, next) => {
       if(user.role === "user") socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}}]);
 
       if(user.role === "admin"){
-        const userNotificationsReceived = await Notification.find({userId : user._id});
+        await transformNeedSwitchAdminToInviteNotif(user._id);
+        const userNotificationsReceived = await Notification.find({userId : user._id})
+        .populate({
+          path: 'householdId',
+          select: 'householdName -_id'
+        });
+
+        userNotificationsReceived = injectHouseholdNameInNotifArray(userNotificationsReceived, "invitation-household-to-user");
+
         socketIoEmit(user._id, 
           [
               {name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}},
-              {name : "updateAllNotificationsReceived", data: transformArray(userNotificationsReceived, "notification")},
+              {name : "updateAllNotificationsReceived", data: transformArray(userNotificationsReceived, "notificationHouseholdId")},
           ]
         );
       }
@@ -539,26 +574,32 @@ exports.addUserRespond = async (req, res, next) => {
     if(req.query.acceptedRequest === "no"){
       let notificationObject = {
         message: "",
-        type: "information"
+        type: "information",
+        householdId: newHousehold._id
       }
       let userId;
 
       if(notification.type === "invitation-user-to-household"){
         userId = user._id;
-        const householdAdmin = await User.findById(newHousehold.userId);
-        notificationObject.message = `L'administrateur.trice ${householdAdmin.firstname} ${householdAdmin.lastname} de la famille ${newHousehold.householdName} n'a pas accepté.e votre requête d'invitation!`;
+        notificationObject.message = `L'administrateur.trice de la famille {householdName} n'a pas accepté.e votre requête d'invitation!`;
         notificationObject.userId = user._id;
       }
       if(notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin"){
         userId = newHousehold.userId;
         notificationObject.message = `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invitation!`;
-        notificationObject.householdId = newHousehold._id;
       }
 
       let newNotification = await new Notification(notificationObject);
       await newNotification.save();
 
-      socketIoEmit(userId, [{name : "updateNotificationReceived", data: newNotification.transform()}]);
+      newNotification = await Notification.findById(newNotification._id)
+        .populate({
+          path: 'householdId',
+          select: 'householdName -_id'
+        });
+
+
+      socketIoEmit(userId, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId: true}))}]);
     }
 
     let idUser;
