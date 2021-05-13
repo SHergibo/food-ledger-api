@@ -234,7 +234,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
         select: 'firstname lastname usercode role'
       });
       
-      const oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id})
+      let oldAdminNotificationsReceived = await Notification.find({userId : oldAdmin._id})
       .populate({
         path: 'householdId',
         select: 'householdName -_id'
@@ -274,7 +274,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           select: 'firstname lastname -_id'
         }); 
 
-      const newAdminNotificationsReceived = await Notification.find(
+      let newAdminNotificationsReceived = await Notification.find(
         {$or : 
           [
             {userId : notification.userId},
@@ -534,7 +534,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       if(user.role === "admin"){
         await transformNeedSwitchAdminToInviteNotif(user._id);
-        const userNotificationsReceived = await Notification.find({userId : user._id})
+        let userNotificationsReceived = await Notification.find({userId : user._id})
         .populate({
           path: 'householdId',
           select: 'householdName -_id'
