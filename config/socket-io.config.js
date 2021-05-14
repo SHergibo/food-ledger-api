@@ -14,7 +14,6 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
     socket.on('setUserRoom', async ({userId}) => {
       try {
         socket.join(userId);
-        console.log(io.sockets.adapter.rooms);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`setSocketId in socket-io.config error: ${error}`);
