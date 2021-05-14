@@ -1,5 +1,4 @@
 const sio = require('socket.io'),
-      SocketIoModel = require('./../api/models/socketIo.model'),
       { loggerError } = require('./logger.config'),
       { env, environments } = require('./environment.config');
 
@@ -12,52 +11,13 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
     }
   });
   io.on('connection', function(socket) {
-    socket.on('setSocketId', async ({userId, socketId, oldSocketId}) => {
+    socket.on('setUserRoom', async ({userId}) => {
       try {
-        let socketIoDb = await SocketIoModel.findOne({userId : userId});
-        if(socketIoDb){
-          let arraySocketId = socketIoDb.socketId;
-          const indexSocketId = arraySocketId.findIndex(socketId => socketId === oldSocketId);
-          if(indexSocketId !== -1){
-            arraySocketId[indexSocketId] = socketId;
-          }else{
-            arraySocketId = [...arraySocketId, socketId];
-          }
-          await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId });
-        }else{
-          const newSocketIoDb = new SocketIoModel({
-            userId : userId,
-            socketId: [socketId]
-          });
-          await newSocketIoDb.save();
-        }
+        socket.join(userId);
+        console.log(io.sockets.adapter.rooms);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`setSocketId in socket-io.config error: ${error}`);
-        }else{
-          console.log(error);
-        }
-      }
-    });
-  
-    socket.on('disconnect', async () => {
-      try {
-        let socketIoDb = await SocketIoModel.findOne({socketId : socket.id});
-        if(socketIoDb){
-          let arraySocketId = socketIoDb.socketId;
-          if(arraySocketId.length > 1){
-            const indexSocketId = arraySocketId.findIndex(socketId => socketId === socket.id); 
-            arraySocketId.splice(indexSocketId, 1);
-            await SocketIoModel.findByIdAndUpdate(socketIoDb._id, { socketId: arraySocketId });
-          }else{
-            await SocketIoModel.findOneAndDelete({
-              socketId : socket.id,
-            });
-          }
-        }
-      } catch (error) {
-        if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`disconnect in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
