@@ -16,10 +16,6 @@ let memberSchema = new Schema({
   });
 
 let schema = new Schema({
-    member : {
-        type : Array,
-        required: true
-    },
     members : {
         type : [memberSchema],
         required: true
