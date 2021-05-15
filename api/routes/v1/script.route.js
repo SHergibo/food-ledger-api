@@ -9,4 +9,8 @@ router
   .route('/householdMember')
   .get(ScriptController.householdMember);
 
+router
+  .route('/testNotifSocketIo')
+  .get(ScriptController.testNotifSocketIo);
+
 module.exports = router;
