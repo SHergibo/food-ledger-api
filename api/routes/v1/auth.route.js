@@ -3,10 +3,6 @@ const router = require('express').Router(),
       { authorize, ADMIN, LOGGED_USER } = require('../../middlewares/auth.middleware');
 
 router
-  .route('/register')
-    .post(AuthController.register);
-
-router
   .route('/login')
     .post(AuthController.login);
 
