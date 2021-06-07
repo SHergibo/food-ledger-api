@@ -1,5 +1,4 @@
-const HttpStatus = require('http-status'),
-      User = require('./../models/user.model'),
+const User = require('./../models/user.model'),
       RefreshToken = require('./../models/refresh-token.model'),
       Moment = require('moment-timezone');
 
@@ -22,28 +21,6 @@ const _generateTokenResponse = function (user, accessToken) {
   const refreshToken = RefreshToken.generate(user);
   const expiresIn = Moment().add(jwtExpirationInterval, 'minutes');
   return { tokenType, accessToken, refreshToken, expiresIn };
-};
-
-/**
- * Create and save a new user
- *
- * @param {Object} req
- * @param {Object} res
- * @param {Function} next
- * 
- * @return JWT|next
- * 
- * @public
- */
-exports.register = async (req, res, next) => {
-  try {
-    const user = await (new User(req.body)).save();
-    const token = _generateTokenResponse(user, user.token());
-    res.status(HttpStatus.CREATED);
-    return res.json({ token, user: user.transform() });
-  } catch (error) {
-    return next(User.checkDuplicateEmail(err));
-  }
 };
 
 /**
