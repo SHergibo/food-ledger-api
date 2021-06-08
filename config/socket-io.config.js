@@ -11,7 +11,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
     }
   });
   io.on('connection', function(socket) {
-    socket.on('setUserRoom', async ({userId}) => {
+    socket.on('setUserRoom', ({userId}) => {
       try {
         socket.join(userId);
       } catch (error) {
@@ -22,7 +22,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('setProductRoom', async ({householdId, type}) => {
+    socket.on('enterProductRoom', ({householdId, type}) => {
       try {
         socket.join(`${householdId}-${type}`);
         //console.log(io.sockets.adapter.rooms);
@@ -34,23 +34,34 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('productIsEdited', async ({householdId, type, productId}) => {
+    socket.on('leaveProductRoom', ({householdId, type}) => {
       try {
-        io.to(`${householdId}-${type}`).emit("productIsEdited", productId);
+        socket.leave(`${householdId}-${type}`);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`setProductRoom in socket-io.config error: ${error}`);
+          loggerError.error(`leaveProductRoom in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
       }
     });
-    socket.on('productIsNotEdited', async ({householdId, type, productId}) => {
+    socket.on('productIsEdited', ({householdId, type, productId}) => {
+      try {
+        io.to(`${householdId}-${type}`).emit("productIsEdited", productId);
+      } catch (error) {
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`productIsEdited in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
+      }
+    });
+    socket.on('productIsNotEdited', ({householdId, type, productId}) => {
       try {
         io.to(`${householdId}-${type}`).emit("productIsNotEdited", productId);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`setProductRoom in socket-io.config error: ${error}`);
+          loggerError.error(`productIsNotEdited in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
