@@ -93,13 +93,18 @@ let schema = new Schema({
     required: true,
     type: Schema.Types.ObjectId,
     ref: 'Household',
+  },
+  isBeingEdited: {
+    required: true,
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
 });
 
 schema.methods.transform = function () {
-  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock'];
+  const fields = ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock', 'isBeingEdited'];
   const object = {};
   fields.forEach((field) => {
     object[field] = this[field];
