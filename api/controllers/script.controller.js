@@ -1,23 +1,25 @@
-const Household = require('./../models/household.model'),
-      User = require('./../models/user.model'),
-      Notification = require('./../models/notification.model'),
+const Product = require('./../models/product.model'),
+      Historic = require('./../models/historic.model'),
       Boom = require('@hapi/boom');
-
 
 /**
 * Trigger launch script
 */
 exports.launch = async (req, res, next) => {
-  // try {
-  //   const users = await User.find({}).lean();
+  try {
+    const products = await Product.find({});
+    const historics = await Historic.find({});
 
-  //   users.forEach(async (user) => {
-  //     let household = await Household.findOne({householdCode: user.householdCode});
-  //     await User.findByIdAndUpdate(user._id, { householdId: household._id, $unset: { householdCode: 1 } });
-  //   });
+    products.forEach(async (product) => {
+      await Product.findByIdAndUpdate(product._id, { isBeingEdited: false });
+    });
 
-  //   return res.status(204).send();
-  // } catch (error) {
-  //   next(Boom.badImplementation(error.message));
-  // }
+    historics.forEach(async (historic) => {
+      await Historic.findByIdAndUpdate(historic._id, { isBeingEdited: false });
+    });
+
+    return res.status(204).send();
+  } catch (error) {
+    next(Boom.badImplementation(error.message));
+  }
 };
