@@ -1,6 +1,8 @@
 const sio = require('socket.io'),
       { loggerError } = require('./logger.config'),
-      { env, environments } = require('./environment.config');
+      { env, environments } = require('./environment.config'),
+      Product = require('./../api/models/product.model'),
+      Historic = require('./../api/models/historic.model');
 
 let io = null;
 
@@ -25,7 +27,6 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
     socket.on('enterProductRoom', ({householdId, type}) => {
       try {
         socket.join(`${householdId}-${type}`);
-        //console.log(io.sockets.adapter.rooms);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`setProductRoom in socket-io.config error: ${error}`);
@@ -45,8 +46,13 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('productIsEdited', ({householdId, type, productId}) => {
+    socket.on('productIsEdited', async ({householdId, type, productId}) => {
       try {
+        if(!type || !householdId || !productId) return;
+        let model;
+        if(type === "produit") model = Product;
+        if(type === "historique") model = Historic;
+        await model.findByIdAndUpdate(productId, { isBeingEdited: true });
         io.to(`${householdId}-${type}`).emit("productIsEdited", productId);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
@@ -56,8 +62,13 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('productIsNotEdited', ({householdId, type, productId}) => {
+    socket.on('productIsNotEdited', async ({householdId, type, productId}) => {
       try {
+        if(!type || !householdId || !productId) return;
+        let model;
+        if(type === "produit") model = Product;
+        if(type === "historique") model = Historic;
+        await model.findByIdAndUpdate(productId, { isBeingEdited: false });
         io.to(`${householdId}-${type}`).emit("productIsNotEdited", productId);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
