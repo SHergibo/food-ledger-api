@@ -6,6 +6,7 @@ const Historic = require('./../models/historic.model'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
       ProductLogHelper = require('./../helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
+      { socketIoTo } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -19,6 +20,11 @@ exports.add = async (req, res, next) => {
     req.body.brand = brand._id;
     const historic = new Historic(req.body);
     await historic.save();
+
+    let historicWithBrand = await Historic.findById(historic._id)
+    .populate('brand', 'brandName');
+    socketIoTo(`${historic.householdId}-historique`, "addedProduct", historicWithBrand.transform());
+
     return res.json(historic.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -90,6 +96,11 @@ exports.update = async (req, res, next) => {
       await Historic.findByIdAndDelete(req.params.historicId);
       
       response = res.json(product.transform());
+      socketIoTo(`${product.householdId}-historique`, "deletedProduct", historic._id);
+
+      let productWithBrand = await Product.findById(product._id)
+      .populate('brand', 'brandName');
+      socketIoTo(`${product.householdId}-produit`, "addedProduct", productWithBrand.transform());
     }else{
 
       if (req.body.brand.value !== historic.brand.brandName.value) {
@@ -103,7 +114,9 @@ exports.update = async (req, res, next) => {
       req.body.slugLocation = Slugify.slugUrl(req.body.location);
 
       let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body).populate('brand', 'brandName');
+      
       response = res.json(updatedHistoric.transform());
+      socketIoTo(`${updatedHistoric.householdId}-historique`, "updatedProduct", updatedHistoric.transform());
     }
 
     if(req.body.number !== historic.number){
@@ -127,6 +140,7 @@ exports.remove = async (req, res, next) => {
     if(shopping){
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
+    socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
     return res.json(historic.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -148,6 +162,7 @@ exports.removePagination = async (req, res, next) => {
 
     const finalObject = await FindByQueryHelper.finalObject(req, historic.householdId, Historic);
 
+    socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
     return res.json(finalObject);
   } catch (error) {
     next(Boom.badImplementation(error.message));
