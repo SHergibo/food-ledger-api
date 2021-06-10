@@ -46,33 +46,18 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('productIsEdited', async ({householdId, type, productId}) => {
+    socket.on('productIsEdited', async ({householdId, type, productId, isEdited}) => {
       try {
         if(!type || !householdId || !productId) return;
+        if(typeof isEdited !== 'boolean') return;
         let model;
         if(type === "produit") model = Product;
         if(type === "historique") model = Historic;
-        await model.findByIdAndUpdate(productId, { isBeingEdited: true });
+        await model.findByIdAndUpdate(productId, { isBeingEdited: isEdited });
         io.to(`${householdId}-${type}`).emit("productIsEdited", productId);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`productIsEdited in socket-io.config error: ${error}`);
-        }else{
-          console.log(error);
-        }
-      }
-    });
-    socket.on('productIsNotEdited', async ({householdId, type, productId}) => {
-      try {
-        if(!type || !householdId || !productId) return;
-        let model;
-        if(type === "produit") model = Product;
-        if(type === "historique") model = Historic;
-        await model.findByIdAndUpdate(productId, { isBeingEdited: false });
-        io.to(`${householdId}-${type}`).emit("productIsNotEdited", productId);
-      } catch (error) {
-        if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`productIsNotEdited in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
