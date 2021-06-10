@@ -15,3 +15,14 @@ exports.socketIoEmit = async (userId, arrayEmitData) => {
     return error;
   }
 };
+
+exports.socketIoTo = async (roomName, emitName, data) => {
+  try {
+    const io = socketIo.getSocketIoInstance();
+    if(!roomName || !emitName || !data) return;
+    io.to(roomName).emit(emitName, data);
+    return;
+  } catch (error) {
+    return error;
+  }
+};
