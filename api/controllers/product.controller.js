@@ -7,6 +7,7 @@ const Product = require('./../models/product.model'),
       { transformDate } = require('./../helpers/transformDate.helper'),
       Slugify = require('./../utils/slugify'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
+      { socketIoTo } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -22,6 +23,11 @@ exports.add = async (req, res, next) => {
     const product = new Product(newBody);
     await product.save();
     await ProductLogHelper.productLogAdd(product, req.user);
+
+    let productWithBrand = await Product.findById(product._id)
+    .populate('brand', 'brandName');
+    socketIoTo(`${product.householdId}-produit`, "addedProduct", productWithBrand.transform());
+
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -95,6 +101,12 @@ exports.update = async (req, res, next) => {
       await Product.findByIdAndDelete(req.params.productId);
 
       response = res.json(historic.transform());
+      socketIoTo(`${historic.householdId}-produit`, "deletedProduct", product._id);
+
+      let historicWithBrand = await Historic.findById(historic._id)
+      .populate('brand', 'brandName');
+
+      socketIoTo(`${historic.householdId}-historique`, "addedProduct", historicWithBrand.transform());
     } else {
       if (req.body.brand.value !== product.brand.brandName.value) {
         brand = await BrandLogic.brandLogicWhenUpdate(req, "product", false);
@@ -133,6 +145,7 @@ exports.update = async (req, res, next) => {
       }
       
       response = res.json(updatedProduct.transform());
+      socketIoTo(`${updatedProduct.householdId}-produit`, "updatedProduct", updatedProduct.transform());
     }
 
     if(req.body.number !== product.number){
@@ -157,6 +170,7 @@ exports.remove = async (req, res, next) => {
     if(shopping){
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
+    socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
     return res.json(product.transform());
   } catch (error) {
     next(Boom.badImplementation(error.message));
@@ -179,6 +193,7 @@ exports.removePagination = async (req, res, next) => {
     }
 
     const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
+    socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
     return res.json(finalObject);
     
   } catch (error) {
