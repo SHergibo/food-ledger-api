@@ -53,13 +53,27 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         let model;
         if(type === "produit") model = Product;
         if(type === "historique") model = Historic;
+        if(isEdited) socket.join(`${productId}-${type}Id`);
+        if(!isEdited) socket.leave(`${productId}-${type}Id`);
         await model.findByIdAndUpdate(productId, { isBeingEdited: isEdited });
-        io.to(`${householdId}-${type}`).emit("productIsEdited", productId);
+        io.to(`${householdId}-${type}`).emit("productIsEdited", {productId : productId, isEdited: isEdited});
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`productIsEdited in socket-io.config error: ${error}`);
         }else{
           console.log(error);
+        }
+      }
+    });
+    socket.on('disconnecting', async () => {
+      for (const key of socket.rooms){
+        if(key.includes('produitId') || key.includes('historiqueId')) {
+          let model;
+          let type;
+          key.includes('produitId') ? model = Product : model = Historic;
+          key.includes('produitId') ? type = "produit" : type = 'historique';
+          let product = await model.findByIdAndUpdate(key.split('-')[0], { isBeingEdited: false });
+          io.to(`${product.householdId}-${type}`).emit("productIsEdited", {productId : key.split('-')[0], isEdited: false});
         }
       }
     });
