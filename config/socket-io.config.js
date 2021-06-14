@@ -53,10 +53,23 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         let model;
         if(type === "produit") model = Product;
         if(type === "historique") model = Historic;
+
+        let editProduct = true;
+        if(isEdited && io.sockets.adapter.rooms.get(`${productId}-${type}Id`)){
+          editProduct = false;
+          io.to(`${productId}-${type}Id`).emit("kickProductIsEdited");
+          io.socketsLeave(`${productId}-${type}Id`);
+        }
+        
         if(isEdited) socket.join(`${productId}-${type}Id`);
-        if(!isEdited) socket.leave(`${productId}-${type}Id`);
-        await model.findByIdAndUpdate(productId, { isBeingEdited: isEdited });
-        io.to(`${householdId}-${type}`).emit("productIsEdited", {productId : productId, isEdited: isEdited});
+
+        if(editProduct && socket.rooms.has(`${productId}-${type}Id`)){
+          await model.findByIdAndUpdate(productId, { isBeingEdited: isEdited });
+          io.to(`${householdId}-${type}`).emit("productIsEdited", {productId : productId, isEdited: isEdited});
+        }
+
+        if(!isEdited && socket.rooms.has(`${productId}-${type}Id`)) socket.leave(`${productId}-${type}Id`);
+
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`productIsEdited in socket-io.config error: ${error}`);
