@@ -5,11 +5,12 @@ const router = require('express').Router(),
       { isWaiting } = require('../../middlewares/isWaiting.middleware');
 
 router
-  .route('/:householdId')
+  .route('/pagination/:householdId')
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findAll)
 
 router
   .route('/:brandId')
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.findOne)
     .patch(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.update)
     .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.remove);
 
