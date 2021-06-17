@@ -5,7 +5,7 @@ exports.transformArray = (dataArray, fieldName) => {
     notificationUserId: ['_id', 'message', 'type', 'urlRequest', 'expirationDate', 'userId'],
     notificationHouseholdId: ['_id', 'message', 'type', 'urlRequest', 'expirationDate', 'householdId'],
     product: ['_id', 'name', 'brand', 'type', 'weight', 'kcal', 'expirationDate', 'location', 'number', 'minimumInStock', 'isBeingEdited'],
-    brand: ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric"],
+    brand: ['_id', 'brandName', 'numberOfProduct', "numberOfHistoric", "isBeingEdited"],
     productLog: ['_id', 'productName', 'productBrand', 'productWeight', 'infoProduct', 'numberProduct', 'householdId', 'user', 'createdAt'],
     shoppingList: ['_id', 'product', 'historic', 'numberProduct', 'createdAt']
   }
