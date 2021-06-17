@@ -3,6 +3,7 @@ const sio = require('socket.io'),
       { env, environments } = require('./environment.config'),
       Product = require('./../api/models/product.model'),
       Historic = require('./../api/models/historic.model');
+      Brand = require('./../api/models/brand.model');
 
 let io = null;
 
@@ -24,28 +25,31 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
-    socket.on('enterProductRoom', ({householdId, type}) => {
+
+    socket.on('enterEditedRoom', ({householdId, type}) => {
       try {
         socket.join(`${householdId}-${type}`);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`setProductRoom in socket-io.config error: ${error}`);
+          loggerError.error(`enterEditedRoom in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
       }
     });
-    socket.on('leaveProductRoom', ({householdId, type}) => {
+
+    socket.on('leaveEditedRoom', ({householdId, type}) => {
       try {
         socket.leave(`${householdId}-${type}`);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`leaveProductRoom in socket-io.config error: ${error}`);
+          loggerError.error(`leaveEditedRoom in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
       }
     });
+
     socket.on('productIsEdited', async ({householdId, type, productId, isEdited}) => {
       try {
         if(!type || !householdId || !productId) return;
@@ -78,6 +82,36 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         }
       }
     });
+
+    socket.on('brandIsEdited', async ({householdId, brandId, isEdited}) => {
+      try {
+        if(!householdId || !brandId) return;
+        if(typeof isEdited !== 'boolean') return;
+
+        let editBrand = true;
+        if(isEdited && io.sockets.adapter.rooms.get(`${brandId}-brandId`)){
+          editBrand = false;
+          io.to(`${brandId}-brandId`).emit("kickBrandIsEdited");
+          io.socketsLeave(`${brandId}-brandId`);
+        }
+        
+        if(isEdited) socket.join(`${brandId}-brandId`);
+
+        if(editBrand && socket.rooms.has(`${brandId}-brandId`)){
+          await Brand.findByIdAndUpdate(brandId, { isBeingEdited: isEdited });
+          io.to(`${householdId}-brand`).emit("brandIsEdited", {brandId : brandId, isEdited: isEdited});
+        }
+
+        if(!isEdited && socket.rooms.has(`${brandId}-brandId`)) socket.leave(`${brandId}-brandId`);
+
+      } catch (error) {
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`brandIsEdited in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
+      }
+    });
     socket.on('disconnecting', async () => {
       for (const key of socket.rooms){
         if(key.includes('produitId') || key.includes('historiqueId')) {
@@ -87,6 +121,10 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
           key.includes('produitId') ? type = "produit" : type = 'historique';
           let product = await model.findByIdAndUpdate(key.split('-')[0], { isBeingEdited: false });
           io.to(`${product.householdId}-${type}`).emit("productIsEdited", {productId : key.split('-')[0], isEdited: false});
+        }
+        if(key.includes('brandId')) {
+          let brand = await Brand.findByIdAndUpdate(key.split('-')[0], { isBeingEdited: false });
+          io.to(`${brand.householdId}-brand`).emit("brandIsEdited", {brandId : key.split('-')[0], isEdited: false});
         }
       }
     });
