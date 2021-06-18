@@ -5,7 +5,7 @@ const router = require('express').Router(),
       { isWaiting } = require('../../middlewares/isWaiting.middleware');
 
 router
-  .route('/pagination/:householdId')
+  .route('/find-all/:householdId')
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findAll)
 
 router
