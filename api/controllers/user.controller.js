@@ -71,7 +71,11 @@ exports.add = async (req, res, next) => {
       req.body.usercode = userCode;
       if(req.query.householdCode){
         req.body.householdId = null;
+        req.body.role = "user";
       }
+
+      if(req.body.householdName) req.body.role = "admin";
+      
       user = new User(req.body);
       await user.save();
       let option = new Option({userId : user._id});
@@ -128,6 +132,7 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
+    console.log(error)
     next(User.checkDuplicateEmail(error));
   }
 };
