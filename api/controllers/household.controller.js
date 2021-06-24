@@ -1,5 +1,6 @@
 const Household = require('./../models/household.model'),
       User = require('./../models/user.model'),
+      Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
@@ -97,7 +98,12 @@ exports.kickUser = async (req, res, next) => {
       oldHousehold = undefined;
     }
 
-    socketIoEmit(req.body.userId, [{name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : oldHousehold}}]);
+    let deletedNotificationOldHousehold = await Notification.findOneAndDelete({householdId : household._id, userId: user._id});
+
+    socketIoEmit(req.body.userId, [
+      {name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : oldHousehold}},
+      {name : "deleteNotificationReceived", data: deletedNotificationOldHousehold._id},
+    ]);
 
     return res.json(household.transform());
   } catch (error) {
