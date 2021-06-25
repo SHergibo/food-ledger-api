@@ -2,7 +2,7 @@
   "name": "preppers-api",
   "version": "1.0.0",
   "description": "api for preppers app",
-  "main": "app.bootstrap.js",
+  "main": "prepper-app.bootstrap.js",
   "scripts": {
     "start": "node prepper-app.bootstrap.js -production",
     "dev": "nodemon prepper-app.bootstrap.js -development",
