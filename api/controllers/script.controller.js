@@ -26,6 +26,6 @@ exports.launch = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

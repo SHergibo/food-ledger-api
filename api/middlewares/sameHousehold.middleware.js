@@ -40,7 +40,7 @@ exports.checkSameHousehold = async (req, res, next) => {
       return next(Boom.unauthorized("Vous n'avez pas accès à cette donnée car elle n'appartient pas à votre famille!"));
     }
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 
 };

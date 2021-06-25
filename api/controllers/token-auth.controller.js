@@ -14,7 +14,7 @@ exports.createNewToken = async (req, res, next) => {
     TokenAuth.generate(user);
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 }
 
@@ -32,6 +32,6 @@ exports.updateUsedToken = async (req, res, next) => {
       return res.json(user.transform());
     }
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 }

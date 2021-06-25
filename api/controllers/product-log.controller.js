@@ -11,7 +11,7 @@ exports.findPaginate = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObjectProductLog(req, req.params.householdId, ProductLog);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -24,7 +24,7 @@ exports.removePagination = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObjectProductLog(req, productLog.householdId, ProductLog);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -36,6 +36,6 @@ exports.removeAll = async (req, res, next) => {
     await ProductLog.deleteMany({householdId : req.params.householdId});
     return res.status(200).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

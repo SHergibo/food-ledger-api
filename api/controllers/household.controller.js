@@ -23,7 +23,7 @@ exports.add = async (req, res, next) => {
     }
 
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -39,7 +39,7 @@ exports.findOne = async (req, res, next) => {
     }); 
     return res.json(household.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -56,7 +56,7 @@ exports.update = async (req, res, next) => {
     
     return res.json(household.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -107,6 +107,6 @@ exports.kickUser = async (req, res, next) => {
 
     return res.json(household.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

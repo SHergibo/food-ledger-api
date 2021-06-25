@@ -153,7 +153,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -197,7 +197,7 @@ exports.switchAdminRights = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -315,7 +315,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -416,7 +416,7 @@ exports.addUserRequest = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -608,6 +608,6 @@ exports.addUserRespond = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

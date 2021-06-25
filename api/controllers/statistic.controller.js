@@ -98,6 +98,6 @@ exports.chartData = async (req, res, next) => {
       return res.json({statistics:{}});
     }
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

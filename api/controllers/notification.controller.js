@@ -68,7 +68,7 @@ exports.findAll = async (req, res, next) => {
     }
     return res.json(objectNotification);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -99,6 +99,6 @@ exports.remove = async (req, res, next) => {
 
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

@@ -13,7 +13,7 @@ exports.findOne = async (req, res, next) => {
 
     return res.json(brand.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -27,7 +27,7 @@ exports.findAll = async (req, res, next) => {
 
     return res.json(transformArray(brands, 'brand'));
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -41,7 +41,7 @@ exports.update = async (req, res, next) => {
     socketIoTo(`${brand.householdId}-brand`, "addedBrand", brand.transform());
     return res.json(brand.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -54,6 +54,6 @@ exports.remove = async (req, res, next) => {
     socketIoTo(`${brand.householdId}-brand`, "deletedBrand", brand._id);
     return res.json(brand.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

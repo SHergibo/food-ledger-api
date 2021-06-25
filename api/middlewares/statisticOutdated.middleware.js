@@ -35,7 +35,7 @@ exports.outdatedStatistics = async (req, res, next) => {
     return next();
 
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 
 };

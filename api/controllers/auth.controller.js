@@ -47,7 +47,7 @@ exports.login = async (req, res, next) => {
     
   } catch (error) {
     //console.log("controller login------------", error);
-    return next(error);
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -76,7 +76,7 @@ exports.refresh = async (req, res, next) => {
     return res.json(response);
   } catch (error) {
     //console.log("refresh", error);
-    return next(error);
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -101,6 +101,6 @@ exports.logout = async (req, res, next) =>{
     });
     return res.json(response);
   } catch (error) {
-    return next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 }

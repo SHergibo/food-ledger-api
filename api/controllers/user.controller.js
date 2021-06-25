@@ -132,8 +132,7 @@ exports.add = async (req, res, next) => {
     await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
-    console.log(error)
-    next(User.checkDuplicateEmail(error));
+    next({error: error, boom: User.checkDuplicateEmail(error)});
   }
 };
 
@@ -145,7 +144,7 @@ exports.findOne = async (req, res, next) => {
     const user = await User.findById(req.params.userId);
     return res.json(user.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -157,7 +156,7 @@ exports.update = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(req.params.userId, req.body);
     return res.json(user.transform());
   } catch (error) {
-    next(User.checkDuplicateEmail(err));
+    next({error: error, boom: User.checkDuplicateEmail(error)});
   }
 };
 
@@ -228,6 +227,6 @@ exports.remove = async (req, res, next) => {
     await Option.findByIdAndDelete(user.optionId);
     return res.json(user.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

@@ -64,7 +64,7 @@ schema.pre('save', async function(next){
         this.password = hash;
         return next();
     } catch (error) {
-        next(Boom.badImplementation(error.message));
+        next({error: error, boom: Boom.badImplementation(error.message)});
     }
 });
 

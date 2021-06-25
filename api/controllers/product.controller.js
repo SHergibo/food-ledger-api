@@ -30,7 +30,7 @@ exports.add = async (req, res, next) => {
 
     return res.json(product.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -43,7 +43,7 @@ exports.findPaginate = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObject(req, req.params.householdId, Product);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -55,7 +55,7 @@ exports.findOne = async (req, res, next) => {
     const product = await Product.findById(req.params.productId).populate('brand', "brandName");
     return res.json(product.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -154,7 +154,7 @@ exports.update = async (req, res, next) => {
 
     return response;
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -173,7 +173,7 @@ exports.remove = async (req, res, next) => {
     socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
     return res.json(product.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -197,7 +197,7 @@ exports.removePagination = async (req, res, next) => {
     return res.json(finalObject);
     
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -234,6 +234,6 @@ exports.download = async (req, res, next) => {
 
     return res.json(finalProductList);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

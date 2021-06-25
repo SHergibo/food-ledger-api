@@ -11,7 +11,7 @@ exports.findPaginate = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, req.params.householdId, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -24,7 +24,7 @@ exports.removePagination = async (req, res, next) => {
     const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, shopping.householdId, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -36,7 +36,7 @@ exports.removeAll = async (req, res, next) => {
     await ShoppingList.deleteMany({householdId : req.params.householdId});
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -93,7 +93,7 @@ exports.download = async (req, res, next) => {
 
     return res.json(finalShoppingList);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -166,6 +166,6 @@ exports.sendMail = async (req, res, next) => {
     }
     return res.status(204).send();
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

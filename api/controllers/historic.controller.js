@@ -27,7 +27,7 @@ exports.add = async (req, res, next) => {
 
     return res.json(historic.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -40,7 +40,7 @@ exports.findPaginate = async (req, res, next) => {
 
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -52,7 +52,7 @@ exports.findOne = async (req, res, next) => {
     const historic = await Historic.findById(req.params.historicId).populate('brand', "brandName");
     return res.json(historic.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -125,7 +125,7 @@ exports.update = async (req, res, next) => {
     
     return response;
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -143,7 +143,7 @@ exports.remove = async (req, res, next) => {
     socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
     return res.json(historic.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -165,7 +165,7 @@ exports.removePagination = async (req, res, next) => {
     socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
     return res.json(finalObject);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -191,6 +191,6 @@ exports.download = async (req, res, next) => {
 
     return res.json(finaleHistoricList);
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };

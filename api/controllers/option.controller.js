@@ -9,7 +9,7 @@ exports.findOne = async (req, res, next) => {
     const option = await Option.findOne({userId : req.params.userId});
     return res.json(option.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
@@ -22,6 +22,6 @@ exports.update = async (req, res, next) => {
     const optionPatched = await Option.findByIdAndUpdate(option._id, req.body);
     return res.json(optionPatched.transform());
   } catch (error) {
-    next(Boom.badImplementation(error.message));
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
