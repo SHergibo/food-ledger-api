@@ -4,7 +4,6 @@ const User = require('./../models/user.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      TokenAuth = require('./../models/token-auth.model'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
@@ -129,7 +128,6 @@ exports.add = async (req, res, next) => {
       return next(Boom.badRequest('Need a household name or a household code'));
     }
 
-    await TokenAuth.generate(user);
     return res.json(user.transform());
   } catch (error) {
     next({error: error, boom: User.checkDuplicateEmail(error)});
