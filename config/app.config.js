@@ -3,6 +3,7 @@ const Express = require('express'),
   Cors = require('cors'),
   Helmet = require('helmet'),
   Compression = require('compression'),
+  mongoSanitize = require('express-mongo-sanitize'),
   Router = require('./../api/routes/v1'),
   Passport = require('passport'),
   Strategies = require('./passport.config'),
@@ -20,6 +21,8 @@ app.use(Express.static('public'));
 
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
+
+app.use(mongoSanitize());
 
 app.use(Cors({
   origin: CorsOrigin
