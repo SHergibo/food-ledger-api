@@ -2,7 +2,7 @@ const Brand = require('./../models/brand.model'),
       Product = require('./../models/product.model'),
       Historic = require('./../models/historic.model');
 
-exports.brandLogicWhenCreate = async (req, type) => {
+exports.brandLogicWhenCreating = async (req, type) => {
   let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   if (brandDB) {
     if (type === "product") {
@@ -50,8 +50,7 @@ exports.brandLogicWhenSwitching = async (req, type) => {
   return;
 };
 
-exports.brandLogicWhenUpdate = async (req, type, switching) => {
-  console.log(req.body);
+exports.brandLogicWhenUpdating = async (req, type, switching) => {
   let productBrand;
   if (switching) {
     if (type === "product") {
@@ -68,7 +67,7 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
   }
 
 
-  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value});
+  let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   let oldBrand = await Brand.findById(productBrand.brand);
   if (brandDB) {
     if (!switching) {
@@ -91,7 +90,7 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
   } else {
     let brandObject = {
       brandName: req.body.brand,
-      householdId: req.params.householdId
+      householdId: req.body.householdId
     }
 
     if (type === "product") {
@@ -119,7 +118,7 @@ exports.brandLogicWhenUpdate = async (req, type, switching) => {
   return brandDB;
 };
 
-exports.brandLogicWhenDelete = async (req, type) => {
+exports.brandLogicWhenDeleting = async (req, type) => {
   let productBrand;
   if (type === "product") {
     productBrand = await Product.findById(req.params.productId);
