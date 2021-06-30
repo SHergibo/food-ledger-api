@@ -14,7 +14,7 @@ const Historic = require('./../models/historic.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    let brand = await BrandLogic.brandLogicWhenCreate(req, "historic");
+    let brand = await BrandLogic.brandLogicWhenCreating(req, "historic");
     req.body.slugName = Slugify.slugUrl(req.body.name);
     req.body.slugLocation = Slugify.slugUrl(req.body.location);
     req.body.brand = brand._id;
@@ -69,7 +69,7 @@ exports.update = async (req, res, next) => {
     if (req.body.number >= 1) {
       let oldHistoric;
       if(req.body.brand.value !== historic.brand.brandName.value){
-        brand = await BrandLogic.brandLogicWhenUpdate(req, "product", true);
+        brand = await BrandLogic.brandLogicWhenUpdating(req, "product", true);
         req.body.brand = brand._id;
       }else if (req.body.brand.value === historic.brand.brandName.value){
         await BrandLogic.brandLogicWhenSwitching(req, "product");
@@ -104,7 +104,7 @@ exports.update = async (req, res, next) => {
     }else{
 
       if (req.body.brand.value !== historic.brand.brandName.value) {
-        brand = await BrandLogic.brandLogicWhenUpdate(req, "historic", false);
+        brand = await BrandLogic.brandLogicWhenUpdating(req, "historic", false);
         req.body.brand = brand._id;
       }else if(req.body.brand.value === historic.brand.brandName.value){
         req.body.brand = historic.brand._id;
@@ -134,7 +134,7 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenDelete(req, "historic");
+    await BrandLogic.brandLogicWhenDeleting(req, "historic");
     const historic = await Historic.findByIdAndDelete(req.params.historicId);
     const shopping = await ShoppingList.findOne({historic : historic._id});
     if(shopping){
@@ -152,7 +152,7 @@ exports.remove = async (req, res, next) => {
 */
 exports.removePagination = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenDelete(req, "historic");
+    await BrandLogic.brandLogicWhenDeleting(req, "historic");
     const historic = await Historic.findByIdAndRemove(req.params.historicId);
 
     const shopping = await ShoppingList.findOne({historic : historic._id});

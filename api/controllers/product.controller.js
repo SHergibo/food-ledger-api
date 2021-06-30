@@ -15,7 +15,7 @@ const Product = require('./../models/product.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    let brand = await BrandLogic.brandLogicWhenCreate(req, "product");
+    let brand = await BrandLogic.brandLogicWhenCreating(req, "product");
     let newBody = await SortExpDateHelper.sortExpDate(req.body);
     newBody.slugName = Slugify.slugUrl(newBody.name);
     newBody.slugLocation = Slugify.slugUrl(newBody.location);
@@ -73,7 +73,7 @@ exports.update = async (req, res, next) => {
     if (req.body.number == 0) {
       let oldProduct;
       if(req.body.brand.value !== product.brand.brandName.value){
-        brand = await BrandLogic.brandLogicWhenUpdate(req, "historic", true);
+        brand = await BrandLogic.brandLogicWhenUpdating(req, "historic", true);
         req.body.brand = brand._id;
       }else if (req.body.brand.value === product.brand.brandName.value){
         await BrandLogic.brandLogicWhenSwitching(req, "historic");
@@ -109,7 +109,7 @@ exports.update = async (req, res, next) => {
       socketIoTo(`${historic.householdId}-historique`, "addedProduct", historicWithBrand.transform());
     } else {
       if (req.body.brand.value !== product.brand.brandName.value) {
-        brand = await BrandLogic.brandLogicWhenUpdate(req, "product", false);
+        brand = await BrandLogic.brandLogicWhenUpdating(req, "product", false);
         req.body.brand = brand._id;
       }else if(req.body.brand.value === product.brand.brandName.value){
         req.body.brand = product.brand._id;
@@ -163,7 +163,7 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenDelete(req, "product");
+    await BrandLogic.brandLogicWhenDeleting(req, "product");
     const product = await Product.findByIdAndDelete(req.params.productId);
     await ProductLogHelper.productLogDelete(product, req.user);
     const shopping = await ShoppingList.findOne({product : product._id});
@@ -182,7 +182,7 @@ exports.remove = async (req, res, next) => {
 */
 exports.removePagination = async (req, res, next) => {
   try {
-    await BrandLogic.brandLogicWhenDelete(req, "product");
+    await BrandLogic.brandLogicWhenDeleting(req, "product");
     const product = await Product.findByIdAndRemove(req.params.productId);
 
     await ProductLogHelper.productLogDelete(product, req.user);
