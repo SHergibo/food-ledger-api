@@ -33,7 +33,8 @@ let schema = new Schema({
     required: 'You must specify an email',
     trim: true,
     lowercase: true,
-    unique: true
+    unique: true,
+    match: [/^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/, 'Please fill a valid email address']
   },
   password: {
     type: String,
