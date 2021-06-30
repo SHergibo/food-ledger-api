@@ -1,4 +1,5 @@
-const Mongoose = require('mongoose');
+const Mongoose = require('mongoose'),
+      DomPurify = require('isomorphic-dompurify');
 
 let Schema = Mongoose.Schema;
 
@@ -6,12 +7,18 @@ let brand = new Schema({
   label: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    set: function (val) {
+      return DomPurify.sanitize(val);
+    }
   },
   value: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    set: function (val) {
+      return DomPurify.sanitize(val);
+    }
   }
 }, { 
   _id : false 
