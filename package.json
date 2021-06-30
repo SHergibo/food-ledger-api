@@ -26,7 +26,6 @@
     "es6-promisify": "^6.1.1",
     "express": "^4.17.1",
     "express-mongo-sanitize": "^2.1.0",
-    "express-validator": "^6.9.1",
     "googleapis": "^64.0.0",
     "helmet": "^4.3.1",
     "isomorphic-dompurify": "^0.14.0",
