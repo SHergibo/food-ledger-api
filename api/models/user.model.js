@@ -8,6 +8,7 @@ const Mongoose = require('mongoose'),
 const { env, jwtSecret, jwtExpirationInterval } = require('../../config/environment.config');
 
 const roles = ['admin', 'user', 'ghost'];
+const [MINLENGTH_PASSWORD, MAXLENGTH_PASSWORD] = [6, 128];
 
 let Schema = Mongoose.Schema;
 
@@ -39,8 +40,8 @@ let schema = new Schema({
   password: {
     type: String,
     required: true,
-    minlength: 6,
-    maxlength: 128
+    minlength: MINLENGTH_PASSWORD,
+    maxlength: MAXLENGTH_PASSWORD
   },
   role: {
     type: String,
@@ -70,6 +71,23 @@ schema.pre('save', async function (next) {
     let salt = env === 'staging' ? 1 : 10;
     let hash = await Bcrypt.hash(this.password, salt);
     this.password = hash;
+    return next();
+  } catch (error) {
+    next({ error: error, boom: Boom.badImplementation(error.message) });
+  }
+});
+
+schema.pre('findOneAndUpdate', async function (next) {
+  try {
+    const userUpdate = this.getUpdate();
+    if(userUpdate.actualPassword && userUpdate.newPassword){
+      let user = await this.model.findOne(this.getQuery());
+      if (await Bcrypt.compare(userUpdate.actualPassword, user.password) === false) return next(Boom.unauthorized('Mauvais mot de passe!'));
+      let salt = env === 'staging' ? 1 : 10;
+      if(userUpdate.newPassword.length < MINLENGTH_PASSWORD || userUpdate.newPassword.length > MAXLENGTH_PASSWORD) return next(Boom.badRequest('Nouveau mot de passe invalide! Le mot de passe doit avoir entre 6 et 128 caractères!'));
+      let hash = await Bcrypt.hash(userUpdate.newPassword, salt);
+      userUpdate.password = hash;
+    }
     return next();
   } catch (error) {
     next({ error: error, boom: Boom.badImplementation(error.message) });
@@ -120,7 +138,6 @@ schema.statics.get = async function (id) {
 
 schema.statics.findAndGenerateToken = async function (options) {
   const { email, password, refreshObject } = options;
-  //console.log(options);
 
   if (!email) throw Boom.badRequest('An email is required to generate a token');
   if (!refreshObject) {
