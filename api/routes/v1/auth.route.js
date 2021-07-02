@@ -14,4 +14,8 @@ router
   .route('/logout')
     .post(authorize([ADMIN, LOGGED_USER]), AuthController.logout);
 
+router
+  .route('/logoutAndRefresh')
+    .post(authorize([ADMIN, LOGGED_USER]), AuthController.logoutAndRefresh);
+
 module.exports = router;
