@@ -1,5 +1,6 @@
 const User = require('./../models/user.model'),
       RefreshToken = require('./../models/refresh-token.model'),
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
       Moment = require('moment-timezone');
 
 const { jwtExpirationInterval } = require('./../../config/environment.config');
@@ -79,6 +80,15 @@ exports.refresh = async (req, res, next) => {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
+const disconnect = async (req) => {
+  const { email, token } = req.body;
+  if(!email || !token) return next(Boom.badRequest('An email or a token is required to logout !'));
+  let response = await RefreshToken.findOneAndDelete({
+    token : token,
+    userEmail : email
+  });
+  return response;
+}
 
 /**
  * logout user and delete token
@@ -93,12 +103,30 @@ exports.refresh = async (req, res, next) => {
  */
 exports.logout = async (req, res, next) =>{
   try {
-    const { email, token } = req.body;
-    if(!email || !token) return next(Boom.badRequest('An email or a token is required to logout !'));
-    let response = await RefreshToken.findOneAndDelete({
-      token : token,
-      userEmail : email
-    });
+    const response = await disconnect(req);
+    //TODO rajouter emit pour logout toutes les instances du user
+    return res.json(response);
+  } catch (error) {
+    next({error: error, boom: Boom.badImplementation(error.message)});
+  }
+}
+
+/**
+ * logout user, delete token and emit socket disconnect
+ * 
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * 
+ * @return JWT|next
+ * 
+ * @public
+ */
+ exports.logoutAndRefresh = async (req, res, next) =>{
+  try {
+    const user = await User.findOne({email : req.body.email});
+    socketIoEmit(user._id, [{name : "refreshData"}]);
+    const response = await disconnect(req);
     return res.json(response);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
