@@ -103,8 +103,9 @@ const disconnect = async (req) => {
  */
 exports.logout = async (req, res, next) =>{
   try {
+    const user = await User.findOne({email : req.body.email});
+    socketIoEmit(user._id, [{name : "logoutSameNavigator"}]);
     const response = await disconnect(req);
-    //TODO rajouter emit pour logout toutes les instances du user
     return res.json(response);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
