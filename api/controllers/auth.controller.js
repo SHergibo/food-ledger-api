@@ -1,4 +1,5 @@
 const User = require('./../models/user.model'),
+      Bcrypt = require('bcrypt'),
       RefreshToken = require('./../models/refresh-token.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       Moment = require('moment-timezone');
@@ -37,14 +38,40 @@ const _generateTokenResponse = function (user, accessToken) {
  */
 exports.login = async (req, res, next) => {
   try {
-    const checkRole = await User.findOne({email : req.body.email});
-    if(checkRole.role !== "ghost"){
+    const user = await User.findOne({email : req.body.email});
+    if(user){
       const { user, accessToken } = await User.findAndGenerateToken(req.body);
       const token = _generateTokenResponse(user, accessToken);
       return res.json({ token, user: user.transform() });
     }else{
-      return next(Boom.forbidden('Please, verify your account first'));
+      return next(Boom.unauthorized("This email doesn't exist!"));
     }
+    
+  } catch (error) {
+    //console.log("controller login------------", error);
+    next({error: error, boom: Boom.badImplementation(error.message)});
+  }
+};
+
+/**
+ * Check if user has provided a good email and password
+ * 
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * 
+ * @return JWT|next
+ * 
+ * @public
+ */
+ exports.checkCredential = async (req, res, next) => {
+  try {
+    const user = await User.findOne({email : req.body.email});
+    if(!user) return next(Boom.unauthorized("This email doesn't exist!"));
+
+    if(await Bcrypt.compare(req.body.password, user.password) === false) return next(Boom.unauthorized("Wrong password!"));
+    
+    return res.status(204).send();
     
   } catch (error) {
     //console.log("controller login------------", error);
