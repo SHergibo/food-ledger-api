@@ -5,6 +5,10 @@ const router = require('express').Router(),
 router
   .route('/login')
     .post(AuthController.login);
+  
+router
+  .route('/check-credential')
+    .post(AuthController.checkCredential);
 
 router
   .route('/refresh-token')
