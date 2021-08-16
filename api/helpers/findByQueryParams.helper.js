@@ -1,13 +1,13 @@
 const Brand = require('./../models/brand.model'),
       { transformArray } = require('./../helpers/transformJsonData.helper');
 
+const LIMIT = 12;
+
 exports.finalObject = async (req, householdId, model) => {
   let queryObject = req.query;
   let queryWithSort = false;
   let querySortObject = {};
   let page = req.query.page || 0;
-  let limit = 14;
-
 
   let findObject = { householdId: householdId };
   let totalProduct = await model.countDocuments({householdId: householdId});
@@ -51,14 +51,14 @@ exports.finalObject = async (req, householdId, model) => {
   if (queryWithSort) {
     products = await model.find(findObject)
       .populate('brand', 'brandName')
-      .skip(page * limit)
-      .limit(limit)
+      .skip(page * LIMIT)
+      .limit(LIMIT)
       .sort(querySortObject);
   } else {
     products = await model.find(findObject)
       .populate('brand', 'brandName')
-      .skip(page * limit)
-      .limit(limit);
+      .skip(page * LIMIT)
+      .limit(LIMIT);
   }
 
   if (Object.keys(findObject).length >= 2) {
@@ -71,15 +71,14 @@ exports.finalObject = async (req, householdId, model) => {
 
 exports.finalObjectProductLog = async (req, householdId, model) => {
   let page = req.query.page || 0;
-  let limit = 14;
 
   let findObject = { householdId: householdId };
   let totalProductLog = await model.countDocuments({householdId: householdId});
 
   let productLog = await model.find(findObject)
       .populate('user', "firstname")
-      .skip(page * limit)
-      .limit(limit)
+      .skip(page * LIMIT)
+      .limit(LIMIT)
       .sort({createdAt : -1});
   
   return {arrayData : transformArray(productLog, 'productLog'), totalProductLog};
@@ -87,7 +86,6 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
 
 exports.finalObjectShoppingList = async (req, householdId, model) => {
   let page = req.query.page || 0;
-  let limit = 14;
 
   let findObject = { householdId: householdId };
   let totalShoppingList = await model.countDocuments({householdId: householdId});
@@ -115,8 +113,8 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
           weight: 1,
         }
       })
-      .skip(page * limit)
-      .limit(limit);
+      .skip(page * LIMIT)
+      .limit(LIMIT);
 
   return {arrayData : transformArray(shoppingList, 'shoppingList'), totalShoppingList}
 };
