@@ -88,7 +88,6 @@ let schema = new Schema({
   },
   slugLocation: {
     type: String,
-    required: true,
     trim: true,
     set: function (val) {
       return DomPurify.sanitize(val);
