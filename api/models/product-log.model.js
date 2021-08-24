@@ -17,7 +17,6 @@ let schema = new Schema({
   },
   productWeight: {
     type: String,
-    required: true,
     trim: true,
   },
   infoProduct: {
