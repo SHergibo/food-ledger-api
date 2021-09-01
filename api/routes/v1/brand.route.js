@@ -6,7 +6,15 @@ const router = require('express').Router(),
 
 router
   .route('/find-all/:householdId')
-    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findAll)
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findAll);
+
+router
+  .route('/pagination/:householdId')
+    .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findPaginate);
+
+router
+  .route('/delete-pagination/:brandId')
+    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.removePagination);
 
 router
   .route('/:brandId')
