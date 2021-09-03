@@ -4,6 +4,7 @@ const Notification = require('./../models/notification.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -67,6 +68,32 @@ exports.findAll = async (req, res, next) => {
       notificationsSended : transformArray(notificationsSended, 'notificationUserId')
     }
     return res.json(objectNotification);
+  } catch (error) {
+    next({error: error, boom: Boom.badImplementation(error.message)});
+  }
+};
+
+/**
+* GET received notification list with pagination
+*/
+exports.findPaginateNotifReceived = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    const finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, user, Notification);
+    return res.json(finalObject);
+  } catch (error) {
+    next({error: error, boom: Boom.badImplementation(error.message)});
+  }
+};
+
+/**
+* GET sended notification list with pagination
+*/
+exports.findPaginateNotifSended = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    const finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req, user, Notification);
+    return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
