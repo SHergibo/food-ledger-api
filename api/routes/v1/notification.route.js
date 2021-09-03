@@ -7,6 +7,14 @@ router
     .get(authorize([ADMIN, LOGGED_USER]), NotificationController.findAll);
 
 router
+  .route('/pagination-notification-received/:userId')
+    .get(authorize([ADMIN, LOGGED_USER]), NotificationController.findPaginateNotifReceived);
+
+router
+  .route('/pagination-notification-sended/:userId')
+    .get(authorize([ADMIN, LOGGED_USER]), NotificationController.findPaginateNotifSended);
+
+router
   .route('/:notificationId')
     .delete(authorize([ADMIN, LOGGED_USER]), NotificationController.remove);
 
