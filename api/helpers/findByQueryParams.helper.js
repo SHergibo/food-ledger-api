@@ -1,5 +1,7 @@
 const Brand = require('./../models/brand.model'),
-      { transformArray } = require('./../helpers/transformJsonData.helper');
+      Household = require('./../models/household.model'),
+      { transformArray } = require('./../helpers/transformJsonData.helper'),
+      { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper');
 
 const LIMIT = 12;
 
@@ -131,5 +133,102 @@ exports.finalObjectBrandList = async (req, householdId, model) => {
       .sort({createdAt : -1});
   
   return {arrayData : transformArray(brand, 'brand'), totalBrand};
+};
+
+exports.finalObjectNotifReceivedList = async (req, user, model) => {
+  let page = req.query.page || 0;
+
+  let findObject = { userId: user._id };
+
+  if(user.role === "admin"){
+    findObject = {$or : 
+      [
+        { userId: user._id },
+        { householdId : user.householdId, type: "invitation-user-to-household" },
+        { householdId : user.householdId, type: "information" },
+      ]
+    };
+  }
+
+  let totalNotifReceived = await model.countDocuments(findObject);
+
+  let notificationsReceived = await model.find(findObject)
+    .populate({
+      path: 'householdId',
+      select: 'householdName -_id'
+    })
+    .skip(page * LIMIT)
+    .limit(LIMIT);
+
+  if(user.role === "admin"){
+    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "need-switch-admin");
+  }
+
+  if(user.role === "user"){
+    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "invitation-household-to-user");
+  }
+  
+  return {arrayData : transformArray(notificationsReceived, 'notificationHouseholdId'), totalNotifReceived};
+};
+
+exports.finalObjectNotifSendedList = async (req, user, model) => {
+  let page = req.query.page || 0;
+
+  let findObject = { senderUserId: user._id };
+
+  if(user.role === "admin"){
+    findObject = {$or : 
+      [
+        { senderUserId: user._id },
+        { householdId : user.householdId, type: "invitation-household-to-user" },
+        { householdId : user.householdId, type: "need-switch-admin" }
+      ]
+    };
+  }
+
+  
+  let totalNotifSended = await model.countDocuments(findObject);
+
+  let notificationsSended = [];
+  
+  if(user.role === "admin"){
+    notificationsSended = await model.find(findObject)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      })
+      .skip(page * LIMIT)
+      .limit(LIMIT)
+      .lean();
+
+    for(let notif of notificationsSended){
+      if(notif.senderUserId){
+        let otherHousehold = await Household.findById(notif.householdId)
+        .populate({
+          path: 'userId',
+          select: 'firstname lastname -_id'
+        });
+        notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
+      }
+    }
+  }
+
+  if(user.role === "user"){
+    notificationsSended = await Notification.find({senderUserId: user._id})    
+      .skip(page * LIMIT)
+      .limit(LIMIT)
+      .lean();
+    
+    for(let notif of notificationsSended){
+      let otherHousehold = await Household.findById(notif.householdId)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+      notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
+    }
+  }
+  
+  return {arrayData : transformArray(notificationsSended, 'notificationUserId'), totalNotifSended};
 };
 
