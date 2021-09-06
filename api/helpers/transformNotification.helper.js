@@ -80,11 +80,9 @@ module.exports.injectHouseholdName = (notification) => {
   return injectHouseholdNameNotification(notification);
 };
 
-module.exports.injectHouseholdNameInNotifArray = (notificationArray, type) => {
+module.exports.injectHouseholdNameInNotifArray = (notificationArray) => {
   notificationArray.forEach((notif, index) => {
-    if(notif.type === type){
-      notificationArray[index] = injectHouseholdNameNotification(notif);
-    }
+    notificationArray[index] = injectHouseholdNameNotification(notif);
   });
   return notificationArray;
 };
