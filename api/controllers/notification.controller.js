@@ -31,14 +31,14 @@ exports.findAll = async (req, res, next) => {
         [
           { userId: req.params.userId },
           { householdId : user.householdId, type: "invitation-user-to-household" },
-          { householdId : user.householdId, type: "information" },
+          { householdId : user.householdId, type: "information", userId: { $exists: false } },
         ]
       }).populate({
         path: 'householdId',
         select: 'householdName -_id'
       });
 
-      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "need-switch-admin");
+      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
 
       let notificationsSendedPopulated = await Notification.find(
       {$or : 
@@ -59,7 +59,7 @@ exports.findAll = async (req, res, next) => {
         select: 'householdName -_id'
       });
 
-      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "invitation-household-to-user");
+      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
       notificationsSended = notificationsSendedLeaned;
     } 
     
@@ -104,10 +104,12 @@ exports.findPaginateNotifSended = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
+    // if (!req.query.type) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
+
+    if (req.query.type !== "received" && req.query.type !== "sended") return next(Boom.badRequest('Paramètre de requête invalide!'));
+
     let notification = await Notification.findById(req.params.notificationId);
-    if(notification.type === "request-delegate-admin"){
-      return next(Boom.forbidden('Vous ne pouvez pas supprimer cette notification!'));
-    }
+    if(notification.type === "request-delegate-admin") return next(Boom.forbidden('Vous ne pouvez pas supprimer cette notification!'));
 
     const notificationDeleted = await Notification.findByIdAndRemove(req.params.notificationId);
     let idUser = notificationDeleted.userId;
@@ -124,7 +126,20 @@ exports.remove = async (req, res, next) => {
     let socketIoEmitName = notificationDeleted.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
     socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notificationDeleted._id}]);
 
-    return res.status(204).send();
+    let finalObject = [];
+    if(req.query.type === "received"){
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+    }
+
+    if(req.query.type === "sended"){
+      finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req, req.user, Notification);
+    }
+
+    if(!req.query.type){
+      return res.status(204).send();
+    }else{
+      return res.json(finalObject);
+    }
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
