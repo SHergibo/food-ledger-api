@@ -88,7 +88,7 @@ exports.switchAdminRequest = async (req, res, next) => {
           [
             {userId : notification.userId},
             { householdId : household._id, type: "invitation-user-to-household" },
-            { householdId : household._id, type: "information" },
+            { householdId : household._id, type: "information", userId: { $exists: false } },
           ]
         }
       );
@@ -279,7 +279,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           [
             {userId : notification.userId},
             { householdId : household._id, type: "invitation-user-to-household" },
-            { householdId : household._id, type: "information" },
+            { householdId : household._id, type: "information", userId: { $exists: false } },
           ]
         }
       ).populate({
@@ -540,7 +540,7 @@ exports.addUserRespond = async (req, res, next) => {
           select: 'householdName -_id'
         });
 
-        userNotificationsReceived = injectHouseholdNameInNotifArray(userNotificationsReceived, "invitation-household-to-user");
+        userNotificationsReceived = injectHouseholdNameInNotifArray(userNotificationsReceived);
 
         socketIoEmit(user._id, 
           [
