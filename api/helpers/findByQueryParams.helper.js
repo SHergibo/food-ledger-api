@@ -145,7 +145,7 @@ exports.finalObjectNotifReceivedList = async (req, user, model) => {
       [
         { userId: user._id },
         { householdId : user.householdId, type: "invitation-user-to-household" },
-        { householdId : user.householdId, type: "information" },
+        { householdId : user.householdId, type: "information", userId: { $exists: false } },
       ]
     };
   }
@@ -161,11 +161,11 @@ exports.finalObjectNotifReceivedList = async (req, user, model) => {
     .limit(LIMIT);
 
   if(user.role === "admin"){
-    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "need-switch-admin");
+    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
   }
 
   if(user.role === "user"){
-    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived, "invitation-household-to-user");
+    notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
   }
   
   return {arrayData : transformArray(notificationsReceived, 'notificationHouseholdId'), totalNotifReceived};
