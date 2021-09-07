@@ -6,8 +6,8 @@ const Household = require('./../models/household.model'),
       Moment = require('moment-timezone'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray, transformObject } = require('../helpers/transformJsonData.helper'),
-      { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif, injectHouseholdName, injectHouseholdNameInNotifArray } = require('../helpers/transformNotification.helper');
-
+      { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif, injectHouseholdName, injectHouseholdNameInNotifArray } = require('../helpers/transformNotification.helper'),
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper');
 /**
 * Switch familly and delegate admin request
 */
@@ -209,6 +209,10 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
     const notification = await Notification.findById(req.params.notificationId);
     if(!notification) return next(Boom.notFound('Notification non trouvée!'));
 
+    if(req.query.type){
+      if (req.query.type !== "received") return next(Boom.badRequest('Paramètre de requête invalide!'));
+    }
+
     if(notification.urlRequest !== 'switch-admin-rights-respond') return next(Boom.badRequest('Mauvaise notification!'));
 
     if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
@@ -313,7 +317,17 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
     }
 
-    return res.status(204).send();
+    let finalObject = [];
+    if(req.query.type === "received"){
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+    }
+
+    if(!req.query.type){
+      return res.status(204).send();
+    }else{
+      return res.json(finalObject);
+    }
+
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
@@ -433,6 +447,10 @@ exports.addUserRespond = async (req, res, next) => {
     if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") return next(Boom.badRequest('Paramètre de requête invalide!'));
+
+    if(req.query.type){
+      if (req.query.type !== "received") return next(Boom.badRequest('Paramètre de requête invalide!'));
+    }
     
     if(notification.type === "need-switch-admin"){
       const notificationRequestAdmin = await Notification.findOne({type: "request-admin", senderUserId : req.user._id});
@@ -606,7 +624,17 @@ exports.addUserRespond = async (req, res, next) => {
     notification.type !== "invitation-user-to-household" ? idUser = notification.userId : idUser = newHousehold.userId;
     socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
-    return res.status(204).send();
+    let finalObject = [];
+    if(req.query.type === "received"){
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+    }
+
+    if(!req.query.type){
+      return res.status(204).send();
+    }else{
+      return res.json(finalObject);
+    }
+
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
