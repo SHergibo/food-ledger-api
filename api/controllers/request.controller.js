@@ -17,6 +17,10 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     if (!notification) return next(Boom.notFound('Notification non trouvée!'));
 
+    if(req.query.type){
+      if (req.query.type !== "received") return next(Boom.badRequest('Paramètre de requête invalide!'));
+    }
+
     if (notification.urlRequest !== 'delegate-admin') return next(Boom.badRequest('Mauvaise notification!'));
 
     if (!req.query.acceptedRequest) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
@@ -151,7 +155,17 @@ exports.switchAdminRequest = async (req, res, next) => {
       }
     }
 
-    return res.status(204).send();
+    let finalObject = [];
+    if(req.query.type === "received"){
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+    }
+
+    if(!req.query.type){
+      return res.status(204).send();
+    }else{
+      return res.json(finalObject);
+    }
+
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
