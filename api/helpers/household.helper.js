@@ -65,7 +65,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
         socketIoEmit(delegate._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
 
         for (const member of household.members){
-          socketIoEmit(member.userData, [{name : "updateFamilly", data: household.transform()}]);
+          socketIoEmit(member.userData._id, [{name : "updateFamilly", data: household.transform()}]);
         }
 
         return;
