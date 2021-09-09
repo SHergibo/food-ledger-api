@@ -50,6 +50,30 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
       }
     });
 
+    socket.on('enterNotificationRoom', ({userId, type, pageIndex}) => {
+      try {
+        socket.join(`${userId}-${type}-${pageIndex}`);
+      } catch (error) {
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`enterNotificationRoom in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
+      }
+    });
+
+    socket.on('leaveNotificationRoom', ({userId, type, pageIndex}) => {
+      try {
+        socket.leave(`${userId}-${type}-${pageIndex}`);
+      } catch (error) {
+        if(env.toUpperCase() === environments.PRODUCTION){
+          loggerError.error(`leaveNotificationRoom in socket-io.config error: ${error}`);
+        }else{
+          console.log(error);
+        }
+      }
+    });
+
     socket.on('productIsEdited', async ({householdId, type, productId, isEdited}) => {
       try {
         if(!type || !householdId || !productId) return;
