@@ -1,10 +1,11 @@
 const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { socketIoEmit, socketIoTo } = require('./../helpers/socketIo.helper'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
+      socketIo = require('./../../config/socket-io.config');
       Boom = require('@hapi/boom');
 
 /**
@@ -111,20 +112,65 @@ exports.remove = async (req, res, next) => {
     let notification = await Notification.findById(req.params.notificationId);
     if(notification.type === "request-delegate-admin") return next(Boom.forbidden('Vous ne pouvez pas supprimer cette notification!'));
 
-    const notificationDeleted = await Notification.findByIdAndRemove(req.params.notificationId);
-    let idUser = notificationDeleted.userId;
-    
-    if(notificationDeleted.type === "invitation-user-to-household"){
-      const household = await Household.findById(notificationDeleted.householdId);
+    let idUser = notification.userId;;
+    if(notification.type === "invitation-user-to-household"){
+      const household = await Household.findById(notification.householdId);
       idUser = household.userId;
     }
 
-    if(notificationDeleted.type !== "information"){
-      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notificationDeleted._id}]);
+    if(req.query.type === "sended"){
+      const io = socketIo.getSocketIoInstance();
+      let socketRooms = io.sockets.adapter.rooms;
+
+      let userRoomName;
+
+      for (let key of socketRooms.keys()) {
+        if (key.includes(`${idUser}-notificationReceived`)) {
+          userRoomName = key;
+          break;
+        }
+      }
+
+      if(userRoomName){
+        let pageIndex = parseInt(userRoomName.split('-')[2]);
+  
+        let user = await User.findById(idUser);
+        let findObject = { userId: user._id };
+  
+        if(user.role === "admin"){
+          findObject = {$or : 
+            [
+              { userId: user._id },
+              { householdId : user.householdId, type: "invitation-user-to-household" },
+              { householdId : user.householdId, type: "information", userId: { $exists: false } },
+            ]
+          };
+        }
+  
+        let allNotifReceived = await Notification.find(findObject);
+        let indexNotifToDelete = allNotifReceived.findIndex((notif) => notif._id.toString() === notification._id.toString());
+        await Notification.findByIdAndRemove(req.params.notificationId);
+
+        if(indexNotifToDelete >= ((pageIndex * 12) - 12) && indexNotifToDelete < pageIndex * 12){
+          let updatedNotifReceivedArray = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+          socketIoTo(userRoomName, "updateNotifArray", updatedNotifReceivedArray);
+        }else{
+          let totalNotifReceived = await Notification.countDocuments(findObject);
+          socketIoTo(userRoomName, "updatePageCount", {totalNotifReceived});
+        }
+      }
     }
 
-    let socketIoEmitName = notificationDeleted.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
-    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notificationDeleted._id}]);
+    if(req.query.type === "received"){
+      await Notification.findByIdAndRemove(req.params.notificationId);
+    }
+    
+    if(notification.type !== "information"){
+      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
+    }
+
+    let socketIoEmitName = notification.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
+    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notification._id}]);
 
     let finalObject = [];
     if(req.query.type === "received"){
