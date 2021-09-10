@@ -7,7 +7,8 @@ const Household = require('./../models/household.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
       { transformArray, transformObject } = require('../helpers/transformJsonData.helper'),
       { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif, injectHouseholdName, injectHouseholdNameInNotifArray } = require('../helpers/transformNotification.helper'),
-      FindByQueryHelper = require('./../helpers/findByQueryParams.helper');
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
+      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
 /**
 * Switch familly and delegate admin request
 */
@@ -157,7 +158,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received"){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
     }
 
     if(!req.query.type){
@@ -333,7 +334,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received"){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
     }
 
     if(!req.query.type){
@@ -422,7 +423,9 @@ exports.addUserRequest = async (req, res, next) => {
     let idUser;
     notification.type !== "invitation-user-to-household" ? idUser = notificationObject.userId : idUser = household.userId;
     socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification}]);
-    
+
+    await sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
+
     let notificationSended;
     if(req.body.type === "userToHousehold"){
       notificationSended = await Notification.findById(notification._id).lean();
@@ -471,13 +474,13 @@ exports.addUserRespond = async (req, res, next) => {
       if(notificationRequestAdmin) return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!"));
     }
 
-    const oldNotification = await Notification.findByIdAndDelete(notification._id);
+    await Notification.findByIdAndDelete(notification._id);
 
-    if(oldNotification.senderUserId) socketIoEmit(oldNotification.senderUserId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
+    if(notification.senderUserId) socketIoEmit(notification.senderUserId, [{name : "deleteNotificationSended", data: notification._id}]);
     
-    if (oldNotification.householdId){
-      const household = await Household.findById(oldNotification.householdId);
-      socketIoEmit(household.userId, [{name : "deleteNotificationSended", data: oldNotification._id}]);
+    if (notification.householdId){
+      const household = await Household.findById(notification.householdId);
+      socketIoEmit(household.userId, [{name : "deleteNotificationSended", data: notification._id}]);
     }
 
     const newHousehold = await Household.findById(notification.householdId);
@@ -640,7 +643,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received"){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
     }
 
     if(!req.query.type){
