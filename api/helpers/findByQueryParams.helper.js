@@ -135,8 +135,8 @@ exports.finalObjectBrandList = async (req, householdId, model) => {
   return {arrayData : transformArray(brand, 'brand'), totalBrand};
 };
 
-exports.finalObjectNotifReceivedList = async (req, user, model) => {
-  let page = req.query.page || 0;
+exports.finalObjectNotifReceivedList = async (pageIndex, user, model) => {
+  let page = pageIndex || 0;
 
   let findObject = { userId: user._id };
 
@@ -171,8 +171,8 @@ exports.finalObjectNotifReceivedList = async (req, user, model) => {
   return {arrayData : transformArray(notificationsReceived, 'notificationHouseholdId'), totalNotifReceived};
 };
 
-exports.finalObjectNotifSendedList = async (req, user, model) => {
-  let page = req.query.page || 0;
+exports.finalObjectNotifSendedList = async (pageIndex, user, model) => {
+  let page = pageIndex || 0;
 
   let findObject = { senderUserId: user._id };
 
