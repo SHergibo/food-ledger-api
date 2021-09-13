@@ -119,7 +119,7 @@ exports.remove = async (req, res, next) => {
     }
 
     if(req.query.type === "sended"){
-      await sendNotifToSocket({userId : idUser, notificationId : notification._id, deleteNotif: true, type : "received"});
+      sendNotifToSocket({userId : idUser, notificationId : notification._id, deleteNotif: true, type : "received"});
     }
 
     if(req.query.type === "received"){

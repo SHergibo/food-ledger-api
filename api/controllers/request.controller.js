@@ -424,7 +424,7 @@ exports.addUserRequest = async (req, res, next) => {
     notification.type !== "invitation-user-to-household" ? idUser = notificationObject.userId : idUser = household.userId;
     socketIoEmit(idUser, [{name : "updateNotificationReceived", data: notification}]);
 
-    await sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
+    sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
 
     let notificationSended;
     if(req.body.type === "userToHousehold"){
@@ -512,7 +512,7 @@ exports.addUserRespond = async (req, res, next) => {
         });
 
         socketIoEmit(user._id, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId : true}))}]);
-        await sendNotifToSocket({userId : user._id, notificationId : newNotification._id, type : "received"});
+        sendNotifToSocket({userId : user._id, notificationId : newNotification._id, type : "received"});
 
         socketIoEmit(newHousehold.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
@@ -636,7 +636,7 @@ exports.addUserRespond = async (req, res, next) => {
 
 
       socketIoEmit(userId, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId: true}))}]);
-      await sendNotifToSocket({userId : userId, notificationId : newNotification._id, type : "received"});
+      sendNotifToSocket({userId : userId, notificationId : newNotification._id, type : "received"});
     }
 
     let idUser;
