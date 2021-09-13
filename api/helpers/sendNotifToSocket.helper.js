@@ -9,23 +9,20 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
   const io = socketIo.getSocketIoInstance();
   let socketRooms = io.sockets.adapter.rooms;
 
-  let userRoomName;
+  let userRoomNameArray = [];
   let includesType = `${userId}-notificationReceived`;
   if (type === "sended") includesType = `${userId}-notificationSended`;
 
-  console.log(includesType)
-  
   for (let key of socketRooms.keys()) {
     if (key.includes(includesType)) {
-      userRoomName = key;
+      userRoomNameArray = [...userRoomNameArray, key];
       break;
     }
   }
 
 
-  if(userRoomName){
-    let pageIndex = parseInt(userRoomName.split('-')[2]);
-
+  if(userRoomNameArray.length >= 1){
+    
     let user = await User.findById(userId);
 
     let findObject;
@@ -65,17 +62,17 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
       await Notification.findByIdAndRemove(notificationId);
     }
 
-    if(indexNotif >= (pageIndex * 12) && indexNotif < (((pageIndex + 1 ) * 12))){
-      let finalObject = "finalObjectNotifReceivedList";
-      if(type === "sended") finalObject = "finalObjectNotifSendedList";
-      console.log(finalObject)
-      let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
-      console.log(updatedNotifByType)
-      console.log(userRoomName)
-      socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
-    }else{
-      let totalNotif = await Notification.countDocuments(findObject);
-      socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+    for( userRoomName of userRoomNameArray ){
+      let pageIndex = parseInt(userRoomName.split('-')[2]);
+      if(indexNotif >= (pageIndex * 12) && indexNotif < (((pageIndex + 1 ) * 12))){
+        let finalObject = "finalObjectNotifReceivedList";
+        if(type === "sended") finalObject = "finalObjectNotifSendedList";
+        let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
+        socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
+      }else{
+        let totalNotif = await Notification.countDocuments(findObject);
+        socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+      }
     }
   }
   return;
