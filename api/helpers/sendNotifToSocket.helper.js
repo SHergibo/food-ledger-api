@@ -5,7 +5,6 @@ const Notification = require('./../models/notification.model'),
       socketIo = require('./../../config/socket-io.config');
 
 exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) => {
-  console.log(notificationId)
   const io = socketIo.getSocketIoInstance();
   let socketRooms = io.sockets.adapter.rooms;
 
