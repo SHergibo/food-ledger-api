@@ -474,8 +474,6 @@ exports.addUserRespond = async (req, res, next) => {
       if(notificationRequestAdmin) return next(Boom.badRequest("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!"));
     }
 
-    await Notification.findByIdAndDelete(notification._id);
-
     if(notification.senderUserId) socketIoEmit(notification.senderUserId, [{name : "deleteNotificationSended", data: notification._id}]);
     
     if (notification.householdId){
@@ -488,6 +486,8 @@ exports.addUserRespond = async (req, res, next) => {
 
     if (notification.type === "invitation-user-to-household") user = await User.findById(notification.senderUserId);
     if (notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin") user = await User.findById(notification.userId);
+    await sendNotifToSocket({userId : user._id, notificationId : notification._id, deleteNotif: true, type : "sended"});
+    await Notification.findByIdAndDelete(notification._id);
 
     if (req.query.acceptedRequest === "yes") {
       
@@ -512,6 +512,7 @@ exports.addUserRespond = async (req, res, next) => {
         });
 
         socketIoEmit(user._id, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId : true}))}]);
+        await sendNotifToSocket({userId : user._id, notificationId : newNotification._id, type : "received"});
 
         socketIoEmit(newHousehold.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
@@ -635,6 +636,7 @@ exports.addUserRespond = async (req, res, next) => {
 
 
       socketIoEmit(userId, [{name : "updateNotificationReceived", data: injectHouseholdName(newNotification.transform({withHouseholdId: true}))}]);
+      await sendNotifToSocket({userId : userId, notificationId : newNotification._id, type : "received"});
     }
 
     let idUser;
