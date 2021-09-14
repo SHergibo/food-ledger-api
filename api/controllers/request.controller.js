@@ -44,10 +44,20 @@ exports.switchAdminRequest = async (req, res, next) => {
       }
     }
 
-    if(notification.type !== "last-chance-request-delegate-admin"){
+    if (req.query.acceptedRequest === "yes" || req.query.acceptedRequest === "no") {
+      if(req.query.type === "received" && !req.query.page){
+        await sendNotifToSocket({userId : notification.userId, notificationId : notification._id, deleteNotif: true, type : "received"});
+      }
+  
+      if(req.query.type === "sended" && !req.query.page){
+        sendNotifToSocket({userId : notification.userId, type : "sended"});
+      }
+    }
+
+    if(notification.type !== "last-chance-request-delegate-admin" && req.query.page){
       await Notification.findByIdAndDelete(notification._id);
     }
-    
+
     let user;
     if (req.query.acceptedRequest === "yes") {
       const oldHousehold = await Household.findOne({ userId: notification.userId });
@@ -141,13 +151,15 @@ exports.switchAdminRequest = async (req, res, next) => {
               {name : "updateNotificationReceived", data: newNotification.transform()}
             ]
           );
+          sendNotifToSocket({userId : otherMember._id, notificationId : newNotification._id, type : "received"});
         }
         if (!req.query.otherMember) await Helpers.noMoreAdmin(arrayMembers, household._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
       }
 
       if(notification.type === "last-chance-request-delegate-admin"){
-        await Notification.findByIdAndDelete(notification._id);
+        let isNotifDeleted = await sendNotifToSocket({userId : notification.userId, notificationId : notification._id, deleteNotif: true, type : "received"});
+        if(!isNotifDeleted) await Notification.findByIdAndDelete(notification._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
         
         const otherLastChanceNotifExist = await Notification.find({householdId : household._id, type : "last-chance-request-delegate-admin"});
@@ -157,7 +169,7 @@ exports.switchAdminRequest = async (req, res, next) => {
     }
 
     let finalObject = [];
-    if(req.query.type === "received"){
+    if(req.query.type === "received" && req.query.page){
       finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
     }
 
@@ -483,15 +495,20 @@ exports.addUserRespond = async (req, res, next) => {
       socketIoEmit(userSended, [{name : "deleteNotificationSended", data: notification._id}]);
     }
     
-    if(userSended) await sendNotifToSocket({userId : userSended, notificationId : notification._id, deleteNotif: true, type : "sended"});
+    let isNotifDeletedOne = false;
+    if(userSended){
+      isNotifDeletedOne = await sendNotifToSocket({userId : userSended, notificationId : notification._id, deleteNotif: true, type : "sended"});
+    } 
 
     const newHousehold = await Household.findById(notification.householdId);
     let user;
 
     if (notification.type === "invitation-user-to-household") user = await User.findById(notification.senderUserId);
     if (notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin") user = await User.findById(notification.userId);
-    await sendNotifToSocket({userId : user._id, notificationId : notification._id, deleteNotif: true, type : "sended"});
-    await Notification.findByIdAndDelete(notification._id);
+    let isNotifDeletedTwo = await sendNotifToSocket({userId : user._id, notificationId : notification._id, deleteNotif: !isNotifDeletedOne, type : "sended"});
+    if(!isNotifDeletedOne && !isNotifDeletedTwo){
+      await Notification.findByIdAndDelete(notification._id);
+    }
 
     if (req.query.acceptedRequest === "yes") {
       
