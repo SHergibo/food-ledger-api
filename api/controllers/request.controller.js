@@ -213,6 +213,7 @@ exports.switchAdminRights = async (req, res, next) => {
     });
     await notification.save();
     socketIoEmit(req.body.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
+    sendNotifToSocket({userId : req.body.userId, notificationId : notification._id, type : "received"});
 
     const notifWithPopulate = await Notification.findById(notification._id)
     .populate({
@@ -221,6 +222,7 @@ exports.switchAdminRights = async (req, res, next) => {
     });
 
     socketIoEmit(req.user._id, [{name : "updateNotificationSended", data: notifWithPopulate.transform({withUserId : true})}]);
+    sendNotifToSocket({userId : req.user._id, notificationId : notification._id, type : "sended"});
 
     return res.status(204).send();
   } catch (error) {
