@@ -25,37 +25,40 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
     let user = await User.findById(userId);
 
     let findObject;
-    if(type === "received"){      
-      findObject = { userId: user._id };
-  
-      if(user.role === "admin"){
-        findObject = {$or : 
-          [
-            { userId: user._id },
-            { householdId : user.householdId, type: "invitation-user-to-household" },
-            { householdId : user.householdId, type: "information", userId: { $exists: false } },
-          ]
-        };
+    let indexNotif;
+    if(notificationId){
+
+      if(type === "received"){      
+        findObject = { userId: user._id };
+    
+        if(user.role === "admin"){
+          findObject = {$or : 
+            [
+              { userId: user._id },
+              { householdId : user.householdId, type: "invitation-user-to-household" },
+              { householdId : user.householdId, type: "information", userId: { $exists: false } },
+            ]
+          };
+        }
       }
-    }
-
-    if(type === "sended"){
-      findObject = { senderUserId: user._id };
   
-      if(user.role === "admin"){
-        findObject = {$or : 
-          [
-            { senderUserId: user._id },
-            { householdId : user.householdId, type: "invitation-household-to-user" },
-            { householdId : user.householdId, type: "need-switch-admin" }
-          ]
-        };
+      if(type === "sended"){
+        findObject = { senderUserId: user._id };
+    
+        if(user.role === "admin"){
+          findObject = {$or : 
+            [
+              { senderUserId: user._id },
+              { householdId : user.householdId, type: "invitation-household-to-user" },
+              { householdId : user.householdId, type: "need-switch-admin" }
+            ]
+          };
+        }
       }
-    }
-
-
-    let allNotifByType = await Notification.find(findObject);
-    let indexNotif = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
+  
+      let allNotifByType = await Notification.find(findObject);
+      indexNotif = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
+    } 
 
     if(deleteNotif){
       await Notification.findByIdAndRemove(notificationId);
@@ -63,16 +66,26 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
 
     for( userRoomName of userRoomNameArray ){
       let pageIndex = parseInt(userRoomName.split('-')[2]);
-      if(indexNotif >= (pageIndex * 12) && indexNotif < (((pageIndex + 1 ) * 12))){
-        let finalObject = "finalObjectNotifReceivedList";
-        if(type === "sended") finalObject = "finalObjectNotifSendedList";
-        let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
+      if(notificationId){
+        if(indexNotif >= (pageIndex * 12) && indexNotif < (((pageIndex + 1 ) * 12))){
+          let finalObject = "finalObjectNotifReceivedList";
+          if(type === "sended") finalObject = "finalObjectNotifSendedList";
+          let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
+          socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
+        }else{
+          let totalNotif = await Notification.countDocuments(findObject);
+          socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+        }
+      }
+      if(!notificationId){
+        let updatedNotifByType = await FindByQueryHelper.finalObjectNotifSendedList(pageIndex, user, Notification);
         socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
-      }else{
-        let totalNotif = await Notification.countDocuments(findObject);
-        socketIoTo(userRoomName, "updatePageCount", {totalNotif});
       }
     }
   }
-  return;
+  if(userRoomNameArray.length >= 1 && deleteNotif){
+    return true;
+  }else{
+    return false;
+  }
 };
