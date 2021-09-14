@@ -8,7 +8,8 @@ const Household = require('./../models/household.model'),
       Brand = require('./../models/brand.model'),
       cryptoRandomString = require('crypto-random-string'),
       Moment = require('moment-timezone'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper');
+      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
 
 exports.addHousehold = async (body) => {
   try {
@@ -101,7 +102,12 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
         userData = await User.findByIdAndUpdate(member.userData, { householdId: null });
       }
 
-      let deletedNotification = await Notification.findOneAndDelete({userId : member.userData, type: "last-chance-request-delegate-admin" });
+      let deletedNotification = await Notification.find({userId : member.userData, type: "last-chance-request-delegate-admin" });
+      if(deletedNotification){
+        let isNotifDeleted = await sendNotifToSocket({userId : member.userData, notificationId : deletedNotification._id, deleteNotif: true, type : "received"});
+        if(!isNotifDeleted) await Notification.findByIdAndDelete(deletedNotification._id);
+      }
+
 
       let arraySocketIo = [{ name : "updateUserAndFamillyData", data: { userData : userData.transform(), householdData : householdData } }];
 
