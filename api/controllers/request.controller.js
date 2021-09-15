@@ -159,7 +159,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
       if(notification.type === "last-chance-request-delegate-admin"){
         let isNotifDeleted = await sendNotifToSocket({userId : notification.userId, notificationId : notification._id, deleteNotif: true, type : "received"});
-        if(!isNotifDeleted) await Notification.findByIdAndDelete(notification._id);
+        if(!isNotifDeleted.notifDeleted) await Notification.findByIdAndDelete(notification._id);
         socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
         
         const otherLastChanceNotifExist = await Notification.find({householdId : household._id, type : "last-chance-request-delegate-admin"});
@@ -248,7 +248,32 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     if (req.query.acceptedRequest !== "yes" && req.query.acceptedRequest !== "no") return next(Boom.badRequest('Paramètre de requête invalide!'));
 
-    await Notification.findByIdAndDelete(notification._id);
+    let notifDeletedSended = {notifDeleted : false};
+    let notifDeletedReceived = {notifDeleted : false}; 
+    if(req.query.acceptedRequest === "no"){
+      const user = await User.findById(notification.userId);
+      let newNotification = new Notification({
+        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration!`,
+        type: 'information',
+        householdId: notification.householdId,
+      });
+      await newNotification.save();
+
+      socketIoEmit(notification.senderUserId, [
+        { name : "deleteNotificationSended", data: notification._id }, 
+        { name : "updateNotificationReceived", data: newNotification.transform() }
+      ]);
+
+      sendNotifToSocket({userId : notification.senderUserId, notificationId : newNotification, type : "received"});
+      notifDeletedSended = await sendNotifToSocket({userId : notification.senderUserId, notificationId : notification._id, deleteNotif: true, type : "sended"});
+
+      socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
+      notifDeletedReceived = await sendNotifToSocket({userId : notification.userId, notificationId : notification._id, deleteNotif: !notifDeletedSended.notifDeleted, indexNotif: notifDeletedSended.indexNotif, type : "received"});
+    }
+
+    if(!notifDeletedSended.notifDeleted && !notifDeletedReceived.notifDeleted){
+      await Notification.findByIdAndDelete(notification._id);
+    }
 
     if (req.query.acceptedRequest === "yes") {
       let household = await Household.findById(notification.householdId);
@@ -287,6 +312,9 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           {name : "updateAllNotifications", data: {notificationsReceived : transformArray(oldAdminNotificationsReceived, "notificationHouseholdId"), notificationsSended : transformArray(oldAdminNotificationsSended, "notificationUserId")}},
         ]
       );
+
+      sendNotifToSocket({userId : oldAdmin._id, type : "received"});
+      sendNotifToSocket({userId : oldAdmin._id, type : "sended"});
 
       for (const member of household.members){
         if(member.userData.toString() !== oldAdmin._id.toString() && member.userData.toString() !== notification.userId.toString()){
@@ -328,22 +356,9 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
           {name : "updateAllNotifications", data: {notificationsReceived : transformArray(newAdminNotificationsReceived, "notificationHouseholdId"), notificationsSended : transformArray(newAdminNotificationsSended, "notificationUserId")}},
         ]
       );
-    }
 
-    if(req.query.acceptedRequest === "no"){
-      const user = await User.findById(notification.userId);
-      let newNotification = await new Notification({
-        message: `L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête de délégation de droit d'administration!`,
-        type: 'information',
-        householdId: notification.householdId,
-      });
-      await newNotification.save();
-
-      socketIoEmit(notification.senderUserId, [
-        { name : "deleteNotificationSended", data: notification._id }, 
-        { name : "updateNotificationReceived", data: newNotification.transform() }
-      ]);
-      socketIoEmit(notification.userId, [{ name : "deleteNotificationReceived", data: notification._id }]);
+      sendNotifToSocket({userId : notification.userId, type : "received"});
+      sendNotifToSocket({userId : notification.userId, type : "sended"});
     }
 
     let finalObject = [];
@@ -497,7 +512,7 @@ exports.addUserRespond = async (req, res, next) => {
       socketIoEmit(userSended, [{name : "deleteNotificationSended", data: notification._id}]);
     }
     
-    let isNotifDeletedOne = false;
+    let isNotifDeletedOne = {notifDeleted : false};
     if(userSended){
       isNotifDeletedOne = await sendNotifToSocket({userId : userSended, notificationId : notification._id, deleteNotif: true, type : "sended"});
     } 
@@ -507,8 +522,8 @@ exports.addUserRespond = async (req, res, next) => {
 
     if (notification.type === "invitation-user-to-household") user = await User.findById(notification.senderUserId);
     if (notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin") user = await User.findById(notification.userId);
-    let isNotifDeletedTwo = await sendNotifToSocket({userId : user._id, notificationId : notification._id, deleteNotif: !isNotifDeletedOne, type : "sended"});
-    if(!isNotifDeletedOne && !isNotifDeletedTwo){
+    let isNotifDeletedTwo = await sendNotifToSocket({userId : user._id, notificationId : notification._id, deleteNotif: !isNotifDeletedOne.notifDeleted, indexNotif : isNotifDeletedOne.indexNotif, type : "sended"});
+    if(!isNotifDeletedOne.notifDeleted && !isNotifDeletedTwo.notifDeleted){
       await Notification.findByIdAndDelete(notification._id);
     }
 
