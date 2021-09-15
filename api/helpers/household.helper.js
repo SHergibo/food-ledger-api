@@ -105,7 +105,7 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
       let deletedNotification = await Notification.find({userId : member.userData, type: "last-chance-request-delegate-admin" });
       if(deletedNotification){
         let isNotifDeleted = await sendNotifToSocket({userId : member.userData, notificationId : deletedNotification._id, deleteNotif: true, type : "received"});
-        if(!isNotifDeleted) await Notification.findByIdAndDelete(deletedNotification._id);
+        if(!isNotifDeleted.notifDeleted) await Notification.findByIdAndDelete(deletedNotification._id);
       }
 
 
