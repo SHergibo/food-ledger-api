@@ -4,7 +4,7 @@ const Notification = require('./../models/notification.model'),
       FindByQueryHelper = require('./findByQueryParams.helper'),
       socketIo = require('./../../config/socket-io.config');
 
-exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) => {
+exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNotif, type}) => {
   const io = socketIo.getSocketIoInstance();
   let socketRooms = io.sockets.adapter.rooms;
 
@@ -19,13 +19,12 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
     }
   }
 
-
+  let notificationIndex = indexNotif;
   if(userRoomNameArray.length >= 1){
     
     let user = await User.findById(userId);
 
     let findObject;
-    let indexNotif;
     if(notificationId){
 
       if(type === "received"){      
@@ -55,9 +54,11 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
           };
         }
       }
-  
-      let allNotifByType = await Notification.find(findObject);
-      indexNotif = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
+
+      if(!indexNotif){
+        let allNotifByType = await Notification.find(findObject);
+        notificationIndex = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
+      }
     } 
 
     if(deleteNotif){
@@ -67,7 +68,7 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
     for( userRoomName of userRoomNameArray ){
       let pageIndex = parseInt(userRoomName.split('-')[2]);
       if(notificationId){
-        if(indexNotif >= (pageIndex * 12) && indexNotif < (((pageIndex + 1 ) * 12))){
+        if(notificationIndex >= (pageIndex * 12) && notificationIndex < (((pageIndex + 1 ) * 12))){
           let finalObject = "finalObjectNotifReceivedList";
           if(type === "sended") finalObject = "finalObjectNotifSendedList";
           let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
@@ -78,14 +79,16 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, type}) 
         }
       }
       if(!notificationId){
-        let updatedNotifByType = await FindByQueryHelper.finalObjectNotifSendedList(pageIndex, user, Notification);
+        let finalObject = "finalObjectNotifReceivedList";
+        if(type === "sended") finalObject = "finalObjectNotifSendedList";
+        let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
         socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
       }
     }
   }
   if(userRoomNameArray.length >= 1 && deleteNotif){
-    return true;
+    return {notifDeleted : true, indexNotif : notificationIndex};
   }else{
-    return false;
+    return {notifDeleted : false};
   }
 };
