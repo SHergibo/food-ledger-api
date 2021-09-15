@@ -105,15 +105,15 @@ exports.findPaginateNotifSended = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    // if (!req.query.type) return next(Boom.badRequest("Besoin d'un paramètre de requête!"));
-
-    if (req.query.type !== "received" && req.query.type !== "sended") return next(Boom.badRequest('Paramètre de requête invalide!'));
+    if(req.query.type){
+      if (req.query.type !== "received" && req.query.type !== "sended") return next(Boom.badRequest('Paramètre de requête invalide!'));
+    }
 
     let notification = await Notification.findById(req.params.notificationId);
     if(notification.type === "request-delegate-admin") return next(Boom.forbidden('Vous ne pouvez pas supprimer cette notification!'));
 
     let idUser = notification.userId;
-    if(notification.type === "invitation-user-to-household"){
+    if(notification.type === "invitation-user-to-household" || notification.type === "information"){
       const household = await Household.findById(notification.householdId);
       idUser = household.userId;
     }
@@ -123,7 +123,11 @@ exports.remove = async (req, res, next) => {
     }
 
     if(req.query.type === "received"){
-      await Notification.findByIdAndRemove(req.params.notificationId);
+      let isNotifReceivedDeleted = {notifDeleted : false};
+      if(!req.query.page){
+        isNotifReceivedDeleted = await sendNotifToSocket({userId : idUser, notificationId : notification._id, deleteNotif: true, type : "received"});
+      }
+      if(!isNotifReceivedDeleted.notifDeleted) await Notification.findByIdAndRemove(req.params.notificationId);
     }
     
     if(notification.type !== "information"){
@@ -134,15 +138,15 @@ exports.remove = async (req, res, next) => {
     socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notification._id}]);
 
     let finalObject = [];
-    if(req.query.type === "received"){
+    if(req.query.type === "received" && req.query.page){
       finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
     }
 
-    if(req.query.type === "sended"){
+    if(req.query.type === "sended" && req.query.page){
       finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req.query.page, req.user, Notification);
     }
 
-    if(!req.query.type){
+    if(!req.query.type && !req.query.page){
       return res.status(204).send();
     }else{
       return res.json(finalObject);
