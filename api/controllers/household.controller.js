@@ -4,7 +4,8 @@ const Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
+      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper'),
+      { sendNotifToSocket } = require('../helpers/sendNotifToSocket.helper');
 
 /**
 * Post one household
@@ -98,11 +99,15 @@ exports.kickUser = async (req, res, next) => {
       oldHousehold = undefined;
     }
 
-    let deletedNotificationOldHousehold = await Notification.findOneAndDelete({householdId : household._id, userId: user._id});
+    let findNotifOldHousehold = await Notification.find({householdId : household._id, userId: user._id});
+
+    await sendNotifToSocket({userId : req.body.userId, notificationId : findNotifOldHousehold._id, type : "received"});
+
+    await Notification.findByIdAndDelete(findNotifOldHousehold._id);
 
     socketIoEmit(req.body.userId, [
       {name : "updateUserAndFamillyData", data: {userData : user.transform(), householdData : oldHousehold}},
-      {name : "deleteNotificationReceived", data: deletedNotificationOldHousehold._id},
+      {name : "deleteNotificationReceived", data: findNotifOldHousehold._id},
     ]);
 
     return res.json(household.transform());
