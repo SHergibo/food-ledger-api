@@ -119,16 +119,14 @@ exports.remove = async (req, res, next) => {
     }
 
     if(req.query.type === "sended"){
-      sendNotifToSocket({userId : idUser, notificationId : notification._id, deleteNotif: true, type : "received"});
+      await sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
     }
 
-    if(req.query.type === "received"){
-      let isNotifReceivedDeleted = {notifDeleted : false};
-      if(!req.query.page){
-        isNotifReceivedDeleted = await sendNotifToSocket({userId : idUser, notificationId : notification._id, deleteNotif: true, type : "received"});
-      }
-      if(!isNotifReceivedDeleted.notifDeleted) await Notification.findByIdAndRemove(req.params.notificationId);
+    if(req.query.type === "received" && !req.query.page){
+      await sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
     }
+
+    await Notification.findByIdAndRemove(req.params.notificationId);
     
     if(notification.type !== "information"){
       socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
