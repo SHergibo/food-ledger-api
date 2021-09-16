@@ -5,7 +5,8 @@ const Notification = require('./../models/notification.model'),
       Moment = require('moment-timezone'),
       NodeMailer = require('./../../api/helpers/nodemailer.helper'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { loggerError } = require('./../../config/logger.config');
+      { loggerError } = require('./../../config/logger.config'),
+      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
 
 exports.notification = async () => {
   try {
@@ -38,6 +39,7 @@ exports.notification = async () => {
             await newNotification.save();
 
             socketIoEmit(newArrayMembers[0].userData, [{ name : "updateNotificationReceived", data: newNotification.transform() }]);
+            await sendNotifToSocket({userId : newArrayMembers[0].userData, notificationId : newNotification._id, type : "received", addedNotif: true});
 
           } else {
             if(!household.lastChance){
@@ -51,6 +53,7 @@ exports.notification = async () => {
                 });
                 await lastChanceNotification.save();
                 socketIoEmit(member.userData, [{ name : "updateNotificationReceived", data: lastChanceNotification.transform() }]);
+                await sendNotifToSocket({userId : member.userData, notificationId : lastChanceNotification._id, type : "received", addedNotif: true});
               }
               await Household.findByIdAndUpdate(notif.householdId, { lastChance: Moment().add({d : 6, h: 23, m: 59, s: 59}).toDate() });
             }
