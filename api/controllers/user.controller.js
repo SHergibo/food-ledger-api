@@ -7,7 +7,8 @@ const User = require('./../models/user.model'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper');
+      { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper'),
+      { sendNotifToSocket } = require('../helpers/sendNotifToSocket.helper');
 
 /**
 * Post one user
@@ -108,6 +109,7 @@ exports.add = async (req, res, next) => {
           });
 
           socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: injectHouseholdName(notification.transform({withHouseholdId: true}))}]);
+          await sendNotifToSocket({userId : otherUser._id, notificationId : notification._id, type : "received", addedNotif: true});
         }
         searchUserArray = [];
       }
@@ -124,6 +126,7 @@ exports.add = async (req, res, next) => {
       });
       await notification.save();
       socketIoEmit(household.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
+      await sendNotifToSocket({userId : household.userId, notificationId : notification._id, type : "received", addedNotif: true});
     } else {
       return next(Boom.badRequest('Need a household name or a household code'));
     }
@@ -209,8 +212,10 @@ exports.remove = async (req, res, next) => {
         let notifHousehold = await Household.findById(notif.householdId);
         if(notif.userId){
           socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationSended", data: notif._id}]);
+          await sendNotifToSocket({userId : notifHousehold.userId, notificationId : notif._id, type : "sended"});
         }else if (notif.senderUserId){
           socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationReceived", data: notif._id}]);
+          await sendNotifToSocket({userId : notifHousehold.userId, notificationId : notif._id, type : "received"});
         }
         await Notification.findByIdAndDelete(notif._id);
       }
