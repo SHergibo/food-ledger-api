@@ -4,7 +4,7 @@ const Notification = require('./../models/notification.model'),
       FindByQueryHelper = require('./findByQueryParams.helper'),
       socketIo = require('./../../config/socket-io.config');
 
-exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNotif, type}) => {
+exports.sendNotifToSocket = async ({userId, notificationId, type, addedNotif}) => {
   const io = socketIo.getSocketIoInstance();
   let socketRooms = io.sockets.adapter.rooms;
 
@@ -19,12 +19,11 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNo
     }
   }
 
-  let notificationIndex = indexNotif;
   if(userRoomNameArray.length >= 1){
-    
     let user = await User.findById(userId);
-
     let findObject;
+    let notificationIndex;
+
     if(notificationId){
 
       if(type === "received"){      
@@ -55,15 +54,9 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNo
         }
       }
 
-      if(!indexNotif){
-        let allNotifByType = await Notification.find(findObject);
-        notificationIndex = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
-      }
+      let allNotifByType = await Notification.find(findObject);
+      notificationIndex = allNotifByType.findIndex((notif) => notif._id.toString() === notificationId.toString());
     } 
-
-    if(deleteNotif){
-      await Notification.findByIdAndRemove(notificationId);
-    }
 
     for( userRoomName of userRoomNameArray ){
       let pageIndex = parseInt(userRoomName.split('-')[2]);
@@ -71,7 +64,7 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNo
         if(notificationIndex >= (pageIndex * 12) && notificationIndex < (((pageIndex + 1 ) * 12))){
           let finalObject = "finalObjectNotifReceivedList";
           if(type === "sended") finalObject = "finalObjectNotifSendedList";
-          let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
+          let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification, addedNotif ? null : notificationId);
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
           let totalNotif = await Notification.countDocuments(findObject);
@@ -86,9 +79,5 @@ exports.sendNotifToSocket = async ({userId, notificationId, deleteNotif, indexNo
       }
     }
   }
-  if(userRoomNameArray.length >= 1 && deleteNotif){
-    return {notifDeleted : true, indexNotif : notificationIndex};
-  }else{
-    return {notifDeleted : false};
-  }
+  return;
 };
