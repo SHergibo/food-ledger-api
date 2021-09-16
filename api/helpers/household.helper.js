@@ -64,6 +64,7 @@ exports.requestSwitchAdmin = async (userId, query) => {
         await notification.save();
 
         socketIoEmit(delegate._id, [{name : "updateNotificationReceived", data: notification.transform()}]);
+        await sendNotifToSocket({userId : delegate._id, notificationId : notification._id, type : "received", addedNotif: true});
 
         for (const member of household.members){
           socketIoEmit(member.userData._id, [{name : "updateFamilly", data: household.transform()}]);
@@ -135,11 +136,14 @@ let removeHousehold = async (householdId) => {
     let notifications = await Notification.find({householdId : householdId});
     for (const notif of notifications) {
       let idUser = notif.userId;
+      let data;
       if(notif.type === "invitation-user-to-household"){
         idUser = notif.senderUserId;
         data = [{ name : "deleteNotificationSended", data: notif._id }];
+        await sendNotifToSocket({userId : idUser, notificationId : notif._id, type : "sended"});
       }else{
         data = [{ name : "deleteNotificationReceived", data: notif._id }];
+        await sendNotifToSocket({userId : idUser, notificationId : notif._id, type : "received"});
       }
       socketIoEmit(idUser, data);
       await Notification.findByIdAndDelete(notif._id);
