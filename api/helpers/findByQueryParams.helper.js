@@ -135,7 +135,7 @@ exports.finalObjectBrandList = async (req, householdId, model) => {
   return {arrayData : transformArray(brand, 'brand'), totalBrand};
 };
 
-exports.finalObjectNotifReceivedList = async (pageIndex, user, model) => {
+exports.finalObjectNotifReceivedList = async (pageIndex, user, model, notificationId) => {
   let page = pageIndex || 0;
 
   let findObject = { userId: user._id };
@@ -148,6 +148,23 @@ exports.finalObjectNotifReceivedList = async (pageIndex, user, model) => {
         { householdId : user.householdId, type: "information", userId: { $exists: false } },
       ]
     };
+  }
+
+  if(notificationId){
+    findObject = {_id: {$ne: notificationId},  userId: user._id };
+
+    if(user.role === "admin"){
+      findObject = {$and : [
+        { _id: {$ne: notificationId} },
+        {$or : 
+          [
+            { userId: user._id },
+            { householdId : user.householdId, type: "invitation-user-to-household" },
+            { householdId : user.householdId, type: "information", userId: { $exists: false } },
+          ]
+        }
+      ]};
+    }
   }
 
   let totalNotifReceived = await model.countDocuments(findObject);
@@ -171,7 +188,7 @@ exports.finalObjectNotifReceivedList = async (pageIndex, user, model) => {
   return {arrayData : transformArray(notificationsReceived, 'notificationHouseholdId'), totalNotifReceived};
 };
 
-exports.finalObjectNotifSendedList = async (pageIndex, user, model) => {
+exports.finalObjectNotifSendedList = async (pageIndex, user, model, notificationId) => {
   let page = pageIndex || 0;
 
   let findObject = { senderUserId: user._id };
@@ -184,6 +201,23 @@ exports.finalObjectNotifSendedList = async (pageIndex, user, model) => {
         { householdId : user.householdId, type: "need-switch-admin" }
       ]
     };
+  }
+
+  if(notificationId){
+    findObject = {_id: {$ne: notificationId},  senderUserId: user._id };
+
+    if(user.role === "admin"){
+      findObject = {$and : [
+        { _id: {$ne: notificationId} },
+        {$or : 
+          [
+            { senderUserId: user._id },
+            { householdId : user.householdId, type: "invitation-household-to-user" },
+            { householdId : user.householdId, type: "need-switch-admin" }
+          ]
+        }
+      ]};
+    }
   }
 
   
