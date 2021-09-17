@@ -1,7 +1,7 @@
 const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
+      SendNotifToSocketHelper = require('./../helpers/sendNotifToSocket.helper');
 
 const injectHouseholdNameNotification = (notification) => {
   let message = notification.message;
@@ -43,7 +43,7 @@ const transformNotification = async (userId, type) => {
       });
 
       await Notification.findByIdAndDelete(notif._id);
-      await sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
+      await SendNotifToSocketHelper.sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
 
       socketIoEmit(notif.userId, 
         [
@@ -60,7 +60,7 @@ const transformNotification = async (userId, type) => {
 
       const otherHousehold = await Household.findById(notif.householdId);
 
-      await sendNotifToSocket({userId : otherHousehold.userId, notificationId : notificationSended._id, type : "sended", addedNotif: true});
+      await SendNotifToSocketHelper.sendNotifToSocket({userId : otherHousehold.userId, notificationId : notificationSended._id, type : "sended", addedNotif: true});
       socketIoEmit(otherHousehold.userId, 
         [
           {name : "deleteNotificationSended", data: notif._id},
@@ -71,21 +71,28 @@ const transformNotification = async (userId, type) => {
   }
 };
 
-module.exports.transformInviteToNeedSwitchAdminNotif = async (userId) => {
+const transformInviteToNeedSwitchAdminNotif = async (userId) => {
   await transformNotification(userId, "invitation-household-to-user");
 };
 
-module.exports.transformNeedSwitchAdminToInviteNotif = async (userId) => {
+const transformNeedSwitchAdminToInviteNotif = async (userId) => {
   await transformNotification(userId, "need-switch-admin");
 };
 
-module.exports.injectHouseholdName = (notification) => {
+const injectHouseholdName = (notification) => {
   return injectHouseholdNameNotification(notification);
 };
 
-module.exports.injectHouseholdNameInNotifArray = (notificationArray) => {
+const injectHouseholdNameInNotifArray = (notificationArray) => {
   notificationArray.forEach((notif, index) => {
     notificationArray[index] = injectHouseholdNameNotification(notif);
   });
   return notificationArray;
 };
+
+module.exports = {
+  transformInviteToNeedSwitchAdminNotif,
+  transformNeedSwitchAdminToInviteNotif,
+  injectHouseholdName,
+  injectHouseholdNameInNotifArray
+}
