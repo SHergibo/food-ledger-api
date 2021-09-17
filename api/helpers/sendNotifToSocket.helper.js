@@ -2,10 +2,10 @@ const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       { socketIoTo } = require('./socketIo.helper'),
       FindByQueryHelper = require('./findByQueryParams.helper'),
-      socketIo = require('./../../config/socket-io.config');
+      { getSocketIoInstance } = require('./../../config/socket-io.config');
 
-exports.sendNotifToSocket = async ({userId, notificationId, type, addedNotif}) => {
-  const io = socketIo.getSocketIoInstance();
+exports.sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) => {
+  const io = getSocketIoInstance();
   let socketRooms = io.sockets.adapter.rooms;
 
   let userRoomNameArray = [];
