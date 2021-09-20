@@ -136,16 +136,13 @@ let removeHousehold = async (householdId) => {
     let notifications = await Notification.find({householdId : householdId});
     for (const notif of notifications) {
       let idUser = notif.userId;
-      let data;
       if(notif.type === "invitation-user-to-household"){
         idUser = notif.senderUserId;
-        data = [{ name : "deleteNotificationSended", data: notif._id }];
         await sendNotifToSocket({userId : idUser, notificationId : notif._id, type : "sended"});
       }else{
-        data = [{ name : "deleteNotificationReceived", data: notif._id }];
         await sendNotifToSocket({userId : idUser, notificationId : notif._id, type : "received"});
+        socketIoEmit(idUser, [{ name : "deleteNotificationReceived", data: notif._id }]);
       }
-      socketIoEmit(idUser, data);
       await Notification.findByIdAndDelete(notif._id);
     }
 
