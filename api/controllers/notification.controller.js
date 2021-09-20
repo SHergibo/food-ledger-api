@@ -11,21 +11,10 @@ const Notification = require('./../models/notification.model'),
 /**
 * GET all notifications
 */
-exports.findAll = async (req, res, next) => {
+exports.findAllReceivedNotif = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
     let notificationsReceived = [] 
-    let notificationsSended = [];
-
-    let notificationsSendedLeaned = await Notification.find({senderUserId: req.params.userId}).lean();
-    for(let notif of notificationsSendedLeaned){
-      let otherHousehold = await Household.findById(notif.householdId)
-      .populate({
-        path: 'userId',
-        select: 'firstname lastname -_id'
-      });
-      notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
-    }
 
     if(user.role === "admin"){
       notificationsReceived = await Notification.find({$or : 
@@ -41,6 +30,41 @@ exports.findAll = async (req, res, next) => {
 
       notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
 
+    }else if(user.role === "user"){
+      notificationsReceived = await Notification.find({ userId: req.params.userId })
+      .populate({
+        path: 'householdId',
+        select: 'householdName -_id'
+      });
+
+      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
+    } 
+    
+    return res.json(transformArray(notificationsReceived, 'notificationHouseholdId'));
+  } catch (error) {
+    next({error: error, boom: Boom.badImplementation(error.message)});
+  }
+};
+
+/**
+* GET all sended notifications
+*/
+exports.findAllSendedNotif = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    let notificationsSended = [];
+
+    let notificationsSendedLeaned = await Notification.find({senderUserId: req.params.userId}).lean();
+    for(let notif of notificationsSendedLeaned){
+      let otherHousehold = await Household.findById(notif.householdId)
+      .populate({
+        path: 'userId',
+        select: 'firstname lastname -_id'
+      });
+      notif.userId = { firstname: otherHousehold.userId.firstname, lastname: otherHousehold.userId.lastname };
+    }
+
+    if(user.role === "admin"){
       let notificationsSendedPopulated = await Notification.find(
       {$or : 
         [
@@ -54,21 +78,10 @@ exports.findAll = async (req, res, next) => {
       });  
       notificationsSended = [...notificationsSendedPopulated, ...notificationsSendedLeaned];
     }else if(user.role === "user"){
-      notificationsReceived = await Notification.find({ userId: req.params.userId })
-      .populate({
-        path: 'householdId',
-        select: 'householdName -_id'
-      });
-
-      notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
       notificationsSended = notificationsSendedLeaned;
     } 
     
-    let objectNotification ={
-      notificationsReceived : transformArray(notificationsReceived, 'notificationHouseholdId'),
-      notificationsSended : transformArray(notificationsSended, 'notificationUserId')
-    }
-    return res.json(objectNotification);
+    return res.json(transformArray(notificationsSended, 'notificationUserId'));
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
@@ -77,7 +90,7 @@ exports.findAll = async (req, res, next) => {
 /**
 * GET received notification list with pagination
 */
-exports.findPaginateNotifReceived = async (req, res, next) => {
+exports.findPaginateReceivedNotif = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
     const finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, user, Notification);
@@ -90,7 +103,7 @@ exports.findPaginateNotifReceived = async (req, res, next) => {
 /**
 * GET sended notification list with pagination
 */
-exports.findPaginateNotifSended = async (req, res, next) => {
+exports.findPaginateSendedNotif = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
     const finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req.query.page, user, Notification);
