@@ -133,12 +133,8 @@ exports.remove = async (req, res, next) => {
 
     await Notification.findByIdAndRemove(req.params.notificationId);
     
-    if(notification.type !== "information"){
-      socketIoEmit(idUser, [{name : "deleteNotificationReceived", data: notification._id}]);
-    }
-
-    let socketIoEmitName = notification.type === "information" ? "deleteNotificationReceived" : "deleteNotificationSended";
-    socketIoEmit(req.user._id, [{name : socketIoEmitName, data: notification._id}]);
+    let socketUserId = notification.type === "information" ? req.user._id : idUser;
+    socketIoEmit(socketUserId, [{name : "deleteNotificationReceived", data: notification._id}]);
 
     let finalObject = [];
     if(req.query.type === "received" && req.query.page){
