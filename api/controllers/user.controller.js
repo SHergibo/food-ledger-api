@@ -211,7 +211,6 @@ exports.remove = async (req, res, next) => {
       for (const notif of notifToDelete) {
         let notifHousehold = await Household.findById(notif.householdId);
         if(notif.userId){
-          socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationSended", data: notif._id}]);
           await sendNotifToSocket({userId : notifHousehold.userId, notificationId : notif._id, type : "sended"});
         }else if (notif.senderUserId){
           socketIoEmit(notifHousehold.userId, [{name : "deleteNotificationReceived", data: notif._id}]);
