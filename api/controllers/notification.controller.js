@@ -120,6 +120,11 @@ exports.remove = async (req, res, next) => {
 
     if(req.query.type === "sended"){
       await sendNotifToSocket({userId : idUser, notificationId : notification._id, type : "received"});
+      await sendNotifToSocket({userId : req.user._id, notificationId : notification._id, type : "sended"});
+    }
+
+    if(req.query.type === "received"){
+      await sendNotifToSocket({userId : req.user._id, notificationId : notification._id, type : "received"});
     }
 
     if(req.query.type === "received" && !req.query.page){
