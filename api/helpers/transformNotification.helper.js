@@ -52,21 +52,9 @@ const transformNotification = async (userId, type) => {
         ]
       );
 
-      const notificationSended = await Notification.findById(newTranformedNotif._id)
-      .populate({
-        path: 'userId',
-        select: 'firstname lastname -_id'
-      });
-
       const otherHousehold = await Household.findById(notif.householdId);
 
-      await SendNotifToSocketHelper.sendNotifToSocket({userId : otherHousehold.userId, notificationId : notificationSended._id, type : "sended", addedNotif: true});
-      socketIoEmit(otherHousehold.userId, 
-        [
-          {name : "deleteNotificationSended", data: notif._id},
-          {name : "updateNotificationSended", data: notificationSended.transform({withUserId : true})},
-        ]
-      ); 
+      await SendNotifToSocketHelper.sendNotifToSocket({userId : otherHousehold.userId, notificationId : newTranformedNotif._id, type : "sended", addedNotif: true});
     }
   }
 };
