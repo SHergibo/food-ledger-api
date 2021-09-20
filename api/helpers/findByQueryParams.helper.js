@@ -248,7 +248,7 @@ exports.finalObjectNotifSendedList = async (pageIndex, user, model, notification
   }
 
   if(user.role === "user"){
-    notificationsSended = await Notification.find({senderUserId: user._id})    
+    notificationsSended = await model.find({senderUserId: user._id})    
       .skip(page * LIMIT)
       .limit(LIMIT)
       .lean();
