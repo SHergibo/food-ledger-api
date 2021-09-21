@@ -484,7 +484,17 @@ exports.addUserRespond = async (req, res, next) => {
 
         socketIoEmit(newHousehold.userId, [{name : "deleteNotificationReceived", data: req.params.notificationId}]);
 
-        return res.status(204).send();
+        let finalObject = [];
+        if(req.query.type === "received"){
+          finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+        }
+    
+        if(!req.query.type){
+          return res.status(204).send();
+        }else{
+          return res.json(finalObject);
+        }
+
       }
 
       let newMembersArray = newHousehold.members;
