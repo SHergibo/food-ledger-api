@@ -8,8 +8,7 @@ const Household = require('./../models/household.model'),
       Brand = require('./../models/brand.model'),
       cryptoRandomString = require('crypto-random-string'),
       Moment = require('moment-timezone'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper');
 
 exports.addHousehold = async (body) => {
   try {
