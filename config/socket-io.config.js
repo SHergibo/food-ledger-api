@@ -86,8 +86,29 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
         if(isEdited) socket.join(`${brandId}-brandId`);
 
         if(editBrand && socket.rooms.has(`${brandId}-brandId`)){
+
+          let userRoomNameArray = [];
+
+          for (let key of io.sockets.adapter.rooms.keys()) {
+            if (key.includes(`${householdId}-brand`)) {
+              userRoomNameArray = [...userRoomNameArray, key];
+              break;
+            }
+          }
+
           await Brand.findByIdAndUpdate(brandId, { isBeingEdited: isEdited });
-          io.to(`${householdId}-brand`).emit("brandIsEdited", {brandId : brandId, isEdited: isEdited});
+
+          if(userRoomNameArray.length >= 1){
+            let brands = await Brand.find({ householdId: householdId });
+            brandIndex = brands.findIndex((brand) => brand._id.toString() === brandId.toString());
+
+            for( userRoomName of userRoomNameArray ){
+              let pageIndex = parseInt(userRoomName.split('-')[2]);
+              if(brandIndex >= (pageIndex * 12) && brandIndex < (((pageIndex + 1 ) * 12))){
+                io.to(userRoomName).emit("brandIsEdited", {brandId : brandId, isEdited: isEdited});
+              }
+            }
+          }
         }
 
         if(!isEdited && socket.rooms.has(`${brandId}-brandId`)) socket.leave(`${brandId}-brandId`);
