@@ -6,9 +6,8 @@ const User = require('./../models/user.model'),
       Boom = require('@hapi/boom'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper'),
-      { sendNotifToSocket } = require('../helpers/sendNotifToSocket.helper');
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
+      { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper');
 
 /**
 * Post one user
