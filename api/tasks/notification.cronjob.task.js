@@ -4,9 +4,8 @@ const Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper');
       Moment = require('moment-timezone'),
       NodeMailer = require('./../../api/helpers/nodemailer.helper'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { loggerError } = require('./../../config/logger.config'),
-      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
+      { loggerError } = require('./../../config/logger.config');
 
 exports.notification = async () => {
   try {
