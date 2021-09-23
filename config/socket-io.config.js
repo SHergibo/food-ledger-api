@@ -14,21 +14,9 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
     }
   });
   io.on('connection', function(socket) {
-    socket.on('setUserRoom', ({userId}) => {
+    socket.on('enterSocketRoom', ({socketRoomName}) => {
       try {
-        socket.join(userId);
-      } catch (error) {
-        if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`setUserRoom in socket-io.config error: ${error}`);
-        }else{
-          console.log(error);
-        }
-      }
-    });
-
-    socket.on('enterEditedRoom', ({householdId, type}) => {
-      try {
-        socket.join(`${householdId}-${type}`);
+        socket.join(socketRoomName);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`enterEditedRoom in socket-io.config error: ${error}`);
@@ -38,36 +26,12 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
       }
     });
 
-    socket.on('leaveEditedRoom', ({householdId, type}) => {
+    socket.on('leaveSocketRoom', ({socketRoomName}) => {
       try {
-        socket.leave(`${householdId}-${type}`);
+        socket.leave(socketRoomName);
       } catch (error) {
         if(env.toUpperCase() === environments.PRODUCTION){
           loggerError.error(`leaveEditedRoom in socket-io.config error: ${error}`);
-        }else{
-          console.log(error);
-        }
-      }
-    });
-
-    socket.on('enterNotificationRoom', ({userId, type, pageIndex}) => {
-      try {
-        socket.join(`${userId}-${type}-${pageIndex}`);
-      } catch (error) {
-        if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`enterNotificationRoom in socket-io.config error: ${error}`);
-        }else{
-          console.log(error);
-        }
-      }
-    });
-
-    socket.on('leaveNotificationRoom', ({userId, type, pageIndex}) => {
-      try {
-        socket.leave(`${userId}-${type}-${pageIndex}`);
-      } catch (error) {
-        if(env.toUpperCase() === environments.PRODUCTION){
-          loggerError.error(`leaveNotificationRoom in socket-io.config error: ${error}`);
         }else{
           console.log(error);
         }
