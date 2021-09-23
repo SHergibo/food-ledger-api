@@ -1,11 +1,10 @@
 const Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       Household = require('./../models/household.model'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
-      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper'),
       Boom = require('@hapi/boom');
 
 /**
