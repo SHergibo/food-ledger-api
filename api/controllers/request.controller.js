@@ -4,11 +4,10 @@ const Household = require('./../models/household.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
       Moment = require('moment-timezone'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformArray, transformObject } = require('../helpers/transformJsonData.helper'),
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
+      { transformArray } = require('../helpers/transformJsonData.helper'),
       { transformInviteToNeedSwitchAdminNotif, transformNeedSwitchAdminToInviteNotif, injectHouseholdName, injectHouseholdNameInNotifArray } = require('../helpers/transformNotification.helper'),
-      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
-      { sendNotifToSocket } = require('./../helpers/sendNotifToSocket.helper');
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper');
 /**
 * Switch familly and delegate admin request
 */
