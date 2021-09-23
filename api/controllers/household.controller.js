@@ -3,9 +3,8 @@ const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper'),
-      { sendNotifToSocket } = require('../helpers/sendNotifToSocket.helper');
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
+      { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
 
 /**
 * Post one household
