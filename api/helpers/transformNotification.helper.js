@@ -1,7 +1,7 @@
 const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
-      { socketIoEmit } = require('./../helpers/socketIo.helper'),
-      SendNotifToSocketHelper = require('./../helpers/sendNotifToSocket.helper');
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper');
+      // SendNotifToSocketHelper = require('./../helpers/sendNotifToSocket.helper');
 
 const injectHouseholdNameNotification = (notification) => {
   let message = notification.message;
@@ -43,7 +43,7 @@ const transformNotification = async (userId, type) => {
       });
 
       await Notification.findByIdAndDelete(notif._id);
-      await SendNotifToSocketHelper.sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
+      await sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
 
       socketIoEmit(notif.userId, 
         [
@@ -54,7 +54,7 @@ const transformNotification = async (userId, type) => {
 
       const otherHousehold = await Household.findById(notif.householdId);
 
-      await SendNotifToSocketHelper.sendNotifToSocket({userId : otherHousehold.userId, notificationId : newTranformedNotif._id, type : "sended", addedNotif: true});
+      await sendNotifToSocket({userId : otherHousehold.userId, notificationId : newTranformedNotif._id, type : "sended", addedNotif: true});
     }
   }
 };
