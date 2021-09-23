@@ -1,7 +1,7 @@
 const Brand = require('./../models/brand.model'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
-      { socketIoTo } = require('./../helpers/socketIo.helper'),
+      { socketIoTo, socketIoToBrand } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -51,7 +51,8 @@ exports.update = async (req, res, next) => {
   try {
     //TODO faire attention à l'objet brandName et label et value en slugify
     const brand = await Brand.findByIdAndUpdate(req.params.brandId, req.body);
-    socketIoTo(`${brand.householdId}-brand`, "addedBrand", brand.transform());
+    socketIoToBrand({brandData : brand, type : "updatedBrand"})
+    //socketIoTo(`${brand.householdId}-brand`, "addedBrand", brand.transform());
     return res.json(brand.transform());
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
