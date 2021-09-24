@@ -81,7 +81,7 @@ exports.switchAdminRequest = async (req, res, next) => {
       });
 
       if(updatedHousehold.members.length > 1){
-        await transformInviteToNeedSwitchAdminNotif(user._id);
+        await transformInviteToNeedSwitchAdminNotif({userId : user._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
       }
 
       const newAdminNotificationsReceived = await Notification.find(
@@ -256,8 +256,8 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       let arrayMembers = household.members;
       arrayMembers.sort((a, member)=>{ if(member.userData.toString() === newAdmin._id.toString()) return 1;});
 
-      await transformNeedSwitchAdminToInviteNotif(oldAdmin._id);
-      await transformInviteToNeedSwitchAdminNotif(newAdmin._id);
+      await transformNeedSwitchAdminToInviteNotif({userId : oldAdmin._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
+      await transformInviteToNeedSwitchAdminNotif({userId : newAdmin._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
 
       household = await Household.findByIdAndUpdate(notification.householdId, {userId : notification.userId, members : arrayMembers})
       .populate({
@@ -498,7 +498,7 @@ exports.addUserRespond = async (req, res, next) => {
 
       let newMembersArray = newHousehold.members;
       if(newMembersArray.length === 1){
-        await transformInviteToNeedSwitchAdminNotif(newHousehold.userId);
+        await transformInviteToNeedSwitchAdminNotif({userId : newHousehold.userId, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
       }
 
       let indexMember = oldMembersArray.findIndex(member => member.userData.toString() === user._id.toString());
@@ -546,7 +546,7 @@ exports.addUserRespond = async (req, res, next) => {
       if(user.role === "user") socketIoEmit(user._id, [{name : "updateUserAndFamillyData", data: {userData : updatedUser.transform(), householdData : updatedNewHousehold.transform()}}]);
 
       if(user.role === "admin"){
-        await transformNeedSwitchAdminToInviteNotif(user._id);
+        await transformNeedSwitchAdminToInviteNotif({userId : user._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
         let userNotificationsReceived = await Notification.find({userId : user._id})
         .populate({
           path: 'householdId',

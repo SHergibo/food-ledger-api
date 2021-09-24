@@ -189,7 +189,7 @@ exports.remove = async (req, res, next) => {
         socketIoEmit(household.userId, [{name : "updateFamilly", data: household.transform()}]);
 
         if(household.members.length === 1){
-          await transformNeedSwitchAdminToInviteNotif(household.userId);
+          await transformNeedSwitchAdminToInviteNotif({userId : household.userId, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
         }
   
         let olderHousehold = await Household.findOne({ userId: user._id });

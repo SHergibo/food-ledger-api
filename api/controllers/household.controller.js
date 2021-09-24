@@ -74,7 +74,7 @@ exports.kickUser = async (req, res, next) => {
     });
 
     if(household.members.length === 1){
-      await transformNeedSwitchAdminToInviteNotif(household.userId);
+      await transformNeedSwitchAdminToInviteNotif({userId : household.userId, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
     }
 
     let oldHousehold = await Household.findOne({userId : req.body.userId});
