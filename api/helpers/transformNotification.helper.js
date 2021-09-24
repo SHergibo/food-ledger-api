@@ -1,7 +1,5 @@
 const Household = require('./../models/household.model'),
-      Notification = require('./../models/notification.model'),
-      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper');
-      // SendNotifToSocketHelper = require('./../helpers/sendNotifToSocket.helper');
+      Notification = require('./../models/notification.model');
 
 const injectHouseholdNameNotification = (notification) => {
   let message = notification.message;
@@ -10,7 +8,7 @@ const injectHouseholdNameNotification = (notification) => {
   return notification;
 };
 
-const transformNotification = async (userId, type) => {
+const transformNotification = async (userId, type, SocketIoHelper) => {
   let notifData = {};
   const searchedNotification = await Notification.find({userId : userId, type: type});
   if(searchedNotification.length >= 1){
@@ -43,9 +41,9 @@ const transformNotification = async (userId, type) => {
       });
 
       await Notification.findByIdAndDelete(notif._id);
-      await sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
+      await SocketIoHelper.sendNotifToSocket({userId : notif.userId, notificationId : newTranformedNotif._id, type : "received", addedNotif: true});
 
-      socketIoEmit(notif.userId, 
+      SocketIoHelper.socketIoEmit(notif.userId, 
         [
           {name : "deleteNotificationReceived", data: notif._id},
           {name : "updateNotificationReceived", data: injectHouseholdNameNotification(newTranformedNotif.transform({withHouseholdId: true}))},
@@ -54,17 +52,17 @@ const transformNotification = async (userId, type) => {
 
       const otherHousehold = await Household.findById(notif.householdId);
 
-      await sendNotifToSocket({userId : otherHousehold.userId, notificationId : newTranformedNotif._id, type : "sended", addedNotif: true});
+      await SocketIoHelper.sendNotifToSocket({userId : otherHousehold.userId, notificationId : newTranformedNotif._id, type : "sended", addedNotif: true});
     }
   }
 };
 
-const transformInviteToNeedSwitchAdminNotif = async (userId) => {
-  await transformNotification(userId, "invitation-household-to-user");
+const transformInviteToNeedSwitchAdminNotif = async ({userId, SocketIoHelper}) => {
+  await transformNotification(userId, "invitation-household-to-user", SocketIoHelper);
 };
 
-const transformNeedSwitchAdminToInviteNotif = async (userId) => {
-  await transformNotification(userId, "need-switch-admin");
+const transformNeedSwitchAdminToInviteNotif = async ({userId, SocketIoHelper}) => {
+  await transformNotification(userId, "need-switch-admin", SocketIoHelper);
 };
 
 const injectHouseholdName = (notification) => {
