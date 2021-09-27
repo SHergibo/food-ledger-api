@@ -121,11 +121,16 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
   return {arrayData : transformArray(shoppingList, 'shoppingList'), totalShoppingList}
 };
 
-exports.finalObjectBrandList = async (req, householdId, model) => {
-  let page = req.query.page || 0;
+exports.finalObjectBrandList = async (pageIndex, householdId, model, brandId) => {
+  let page = pageIndex || 0;
 
   let findObject = { householdId: householdId };
-  let totalBrand = await model.countDocuments({householdId: householdId});
+
+  if(brandId){
+    findObject = {_id: {$ne: brandId},  householdId: householdId };
+  }
+
+  let totalBrand = await model.countDocuments(findObject);
 
   let brand = await model.find(findObject)
       .skip(page * LIMIT)
