@@ -1,15 +1,18 @@
 const Brand = require('./../models/brand.model'),
       Product = require('./../models/product.model'),
-      Historic = require('./../models/historic.model');
+      Historic = require('./../models/historic.model'),
+      { socketIoToBrand } = require('./socketIo.helper');
 
 exports.brandLogicWhenCreating = async (req, type) => {
   let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   if (brandDB) {
+    let updatedBrand;
     if (type === "product") {
-      await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
+      updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
     } else if (type === "historic") {
-      await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
+      updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
     }
+    socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
   } else {
     let brandObject = {
       brandName: req.body.brand,
@@ -26,6 +29,8 @@ exports.brandLogicWhenCreating = async (req, type) => {
 
     brandDB = new Brand(brandObject);
     await brandDB.save();
+
+    socketIoToBrand({brandData : brandDB, type : "addedBrand"});
   }
   return brandDB;
 };
@@ -41,11 +46,14 @@ exports.brandLogicWhenSwitching = async (req, type) => {
 
   let brandDB = await Brand.findById(productBrand.brand._id);
 
+  let updatedBrand;
   if (type === "product") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1, numberOfHistoric: brandDB.numberOfHistoric - 1 });
+    updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1, numberOfHistoric: brandDB.numberOfHistoric - 1 });
   } else if (type === "historic") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1, numberOfHistoric: brandDB.numberOfHistoric + 1 });
+    updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1, numberOfHistoric: brandDB.numberOfHistoric + 1 });
   }
+
+  socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
 
   return;
 };
@@ -70,49 +78,60 @@ exports.brandLogicWhenUpdating = async (req, type, switching) => {
   let brandDB = await Brand.findOne({"brandName.value": req.body.brand.value, householdId : req.body.householdId});
   let oldBrand = await Brand.findById(productBrand.brand);
   if (brandDB) {
+    let updatedNewBrand;
+    let updatedOldBrand;
     if (!switching) {
       if (type === "product") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
+        updatedNewBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       } else if (type === "historic") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
+        updatedNewBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }
     } else {
       if (type === "product") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
+        updatedNewBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct + 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       } else if (type === "historic") {
-        await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
+        updatedNewBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }
     }
+
+    socketIoToBrand({brandData : updatedNewBrand, type : "updatedBrand"});
+    socketIoToBrand({brandData : updatedOldBrand, type : "updatedBrand"});
+
   } else {
     let brandObject = {
       brandName: req.body.brand,
       householdId: req.body.householdId
     }
+    let updatedOldBrand;
 
     if (type === "product") {
       if(switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }else if(!switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }
       brandObject.numberOfProduct = 1;
       brandObject.numberOfHistoric = 0;
     } else if (type === "historic") {
       if(switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfProduct: oldBrand.numberOfProduct - 1 });
       }else if(!switching){
-        await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
+        updatedOldBrand = await Brand.findByIdAndUpdate(oldBrand._id, { numberOfHistoric: oldBrand.numberOfHistoric - 1 });
       }
       brandObject.numberOfProduct = 0;
       brandObject.numberOfHistoric = 1;
     }
 
+    socketIoToBrand({brandData : updatedOldBrand, type : "updatedBrand"});
+
     brandDB = new Brand(brandObject);
     await brandDB.save();
+
+    socketIoToBrand({brandData : brandDB, type : "addedBrand"});
   }
 
   return brandDB;
@@ -128,11 +147,14 @@ exports.brandLogicWhenDeleting = async (req, type) => {
 
   let brandDB = await Brand.findById(productBrand.brand);
 
+  let updatedBrand;
   if (type === "product") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1 });
+    updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1 });
   } else if (type === "historic") {
-    await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric - 1 });
+    updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric - 1 });
   }
+
+  socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
 
   return;
 };
