@@ -51,8 +51,7 @@ exports.update = async (req, res, next) => {
   try {
     //TODO faire attention à l'objet brandName et label et value en slugify
     const brand = await Brand.findByIdAndUpdate(req.params.brandId, req.body);
-    socketIoToBrand({brandData : brand, type : "updatedBrand"})
-    //socketIoTo(`${brand.householdId}-brand`, "addedBrand", brand.transform());
+    socketIoToBrand({brandData : brand, type : "updatedBrand"});
     return res.json(brand.transform());
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
