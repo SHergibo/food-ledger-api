@@ -13,10 +13,6 @@ router
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, BrandController.findPaginate);
 
 router
-  .route('/delete-pagination/:brandId')
-    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.removePagination);
-
-router
   .route('/:brandId')
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.findOne)
     .patch(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, BrandController.update)
