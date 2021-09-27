@@ -37,7 +37,7 @@ exports.findAll = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObjectBrandList(req, req.params.householdId, Brand);
+    const finalObject = await FindByQueryHelper.finalObjectBrandList(req.query.page, req.params.householdId, Brand);
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -63,22 +63,13 @@ exports.update = async (req, res, next) => {
 */
 exports.remove = async (req, res, next) => {
   try {
-    const brand = await Brand.findByIdAndDelete(req.params.brandId);
-    socketIoTo(`${brand.householdId}-brand`, "deletedBrand", brand._id);
-    return res.json(brand.transform());
-  } catch (error) {
-    next({error: error, boom: Boom.badImplementation(error.message)});
-  }
-};
+    const brand = await Brand.findById(req.params.brandId);
 
-/**
-* DELETE one brand and send new brand list using front-end pagination data
-*/
-exports.removePagination = async (req, res, next) => {
-  try {
-    const brand = await Brand.findByIdAndRemove(req.params.brandId);
-    const finalObject = await FindByQueryHelper.finalObjectBrandList(req, brand.householdId, Brand);
-    return res.json(finalObject);
+    await socketIoToBrand({brandData : brand, type : "deletedBrand"});
+
+    await Brand.findByIdAndDelete(brand._id);
+    
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
