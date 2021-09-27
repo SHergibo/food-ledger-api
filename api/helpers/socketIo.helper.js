@@ -137,7 +137,11 @@ const socketIoToBrand = async ({ brandData, type }) => {
       let pageIndex = parseInt(userRoomName.split('-')[2]);
       if(brandIndex >= (pageIndex * 12) && brandIndex < (((pageIndex + 1 ) * 12))){
         if(type === "updatedBrand") socketIoTo(userRoomName, "updatedBrand", brandData.transform());
-        //socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
+        if(type === "addedBrand") socketIoTo(userRoomName, "addedBrand", brandData.transform());
+        if(type === "deletedBrand"){
+          let newBrandArray = await FindByQueryHelper.finalObjectBrandList(pageIndex, brandData.householdId, Brand, brandData._id);
+          socketIoTo(userRoomName, "updateBrandArray", newBrandArray);
+        }
       }else{
         // let totalNotif = await Notification.countDocuments(findObject);
         // socketIoTo(userRoomName, "updatePageCount", {totalNotif});
@@ -146,4 +150,9 @@ const socketIoToBrand = async ({ brandData, type }) => {
   }
 }
 
-module.exports = { socketIoEmit, socketIoTo, sendNotifToSocket, socketIoToBrand };
+module.exports = { 
+  socketIoEmit, 
+  socketIoTo, 
+  sendNotifToSocket, 
+  socketIoToBrand 
+};
