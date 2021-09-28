@@ -39,7 +39,6 @@ const findSocketRoom  = ({includesType}) => {
   for (let key of socketRooms.keys()) {
     if (key.includes(includesType)) {
       userRoomNameArray = [...userRoomNameArray, key];
-      break;
     }
   }
 
@@ -47,20 +46,10 @@ const findSocketRoom  = ({includesType}) => {
 }
 
 const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) => {
-  // const io = getSocketIoInstance();
-  // let socketRooms = io.sockets.adapter.rooms;
-
   let includesType = `${userId}-notificationReceived`;
   if (type === "sended") includesType = `${userId}-notificationSended`;
 
   let userRoomNameArray = findSocketRoom({includesType});
-
-  // for (let key of socketRooms.keys()) {
-  //   if (key.includes(includesType)) {
-  //     userRoomNameArray = [...userRoomNameArray, key];
-  //     break;
-  //   }
-  // }
 
   if(userRoomNameArray.length >= 1){
     let user = await User.findById(userId);
@@ -130,7 +119,9 @@ const socketIoToBrand = async ({ brandData, type }) => {
   let userRoomNameArray = findSocketRoom({includesType : `${householdId}-brand`});
 
   if(userRoomNameArray.length >= 1){
-    let brands = await Brand.find({ householdId: householdId });
+    let brands = await Brand.find({ householdId: householdId })
+    .sort({createdAt : -1});
+
     brandIndex = brands.findIndex((brand) => brand._id.toString() === brandData._id.toString());
 
     for( userRoomName of userRoomNameArray ){
@@ -143,8 +134,22 @@ const socketIoToBrand = async ({ brandData, type }) => {
           socketIoTo(userRoomName, "updateBrandArray", newBrandArray);
         }
       }else{
-        // let totalNotif = await Notification.countDocuments(findObject);
-        // socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+        let currentPageIndex = brandIndex === 0 ? 0 : Math.ceil(brandIndex/12) - 1;
+        let roomNamePageIndex = userRoomName.split('-')[2];
+
+        if(roomNamePageIndex > currentPageIndex){
+          if(type !== "updatedBrand"){
+            let newBrandArray = await FindByQueryHelper.finalObjectBrandList(pageIndex, brandData.householdId, Brand, type === "deletedBrand" ? brandData._id : null);
+            socketIoTo(userRoomName, "updateBrandArray", newBrandArray);
+          }
+        }else{
+          if(type !== "updatedBrand"){
+            let findObject = { householdId: householdId };
+            if(type === "deletedBrand") findObject = {_id: {$ne: brandData._id},  householdId: householdId };
+            let totalBrand = await Brand.countDocuments(findObject);
+            socketIoTo(userRoomName, "updatePageCount", {totalBrand});
+          }
+        }
       }
     }
   }
