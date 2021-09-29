@@ -1,7 +1,7 @@
 const Brand = require('./../models/brand.model'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
-      { socketIoTo, socketIoToBrand } = require('./../helpers/socketIo.helper'),
+      { socketIoToBrand } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
