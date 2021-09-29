@@ -1,6 +1,7 @@
 const ShoppingList = require('./../models/shopping-list.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       NodeMailer = require('./../helpers/nodemailer.helper'),
+      { socketIoToShoppingList } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -8,7 +9,7 @@ const ShoppingList = require('./../models/shopping-list.model'),
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, req.params.householdId, ShoppingList);
+    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req.query.page, req.params.householdId, ShoppingList);
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -16,13 +17,17 @@ exports.findPaginate = async (req, res, next) => {
 };
 
 /**
-* DELETE one shopping and send new shopping list using front-end pagination data
+* DELETE one shopping
 */
-exports.removePagination = async (req, res, next) => {
+exports.remove = async (req, res, next) => {
   try {
-    const shopping = await ShoppingList.findByIdAndRemove(req.params.shoppingId);
-    const finalObject = await FindByQueryHelper.finalObjectShoppingList(req, shopping.householdId, ShoppingList);
-    return res.json(finalObject);
+    const shopping = await ShoppingList.findById(req.params.shoppingId);
+
+    await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
+
+    await ShoppingList.findByIdAndDelete(shopping._id);
+    
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
@@ -33,6 +38,8 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.removeAll = async (req, res, next) => {
   try {
+    await socketIoToShoppingList({data : {householdId: req.params.householdId}, type : "deleteAll", model: ShoppingList});
+
     await ShoppingList.deleteMany({householdId : req.params.householdId});
     return res.status(204).send();
   } catch (error) {
