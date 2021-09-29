@@ -86,11 +86,16 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
   return {arrayData : transformArray(productLog, 'productLog'), totalProductLog};
 };
 
-exports.finalObjectShoppingList = async (req, householdId, model) => {
-  let page = req.query.page || 0;
+exports.finalObjectShoppingList = async (pageIndex, householdId, model, shoppingId) => {
+  let page = pageIndex || 0;
 
   let findObject = { householdId: householdId };
-  let totalShoppingList = await model.countDocuments({householdId: householdId});
+
+  if(shoppingId){
+    findObject = {_id: {$ne: shoppingId},  householdId: householdId };
+  }
+
+  let totalShoppingList = await model.countDocuments(findObject);
 
   let shoppingList = await model.find(findObject)
       .populate({
@@ -116,7 +121,8 @@ exports.finalObjectShoppingList = async (req, householdId, model) => {
         }
       })
       .skip(page * LIMIT)
-      .limit(LIMIT);
+      .limit(LIMIT)
+      .sort({createdAt : -1});
 
   return {arrayData : transformArray(shoppingList, 'shoppingList'), totalShoppingList}
 };
