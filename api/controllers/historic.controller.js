@@ -6,7 +6,7 @@ const Historic = require('./../models/historic.model'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
       ProductLogHelper = require('./../helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
-      { socketIoTo } = require('./../helpers/socketIo.helper'),
+      { socketIoTo, socketIoToShoppingList } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -87,9 +87,11 @@ exports.update = async (req, res, next) => {
       let shopping = await ShoppingList.findOne({historic : historic._id});
       if(shopping){
         if(req.body.number >= shopping.numberProduct){
+          await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
           await ShoppingList.findByIdAndDelete(shopping._id);
         }else{
-          await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)});
+          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)});
+          await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
         }
       }
 
@@ -138,6 +140,7 @@ exports.remove = async (req, res, next) => {
     const historic = await Historic.findByIdAndDelete(req.params.historicId);
     const shopping = await ShoppingList.findOne({historic : historic._id});
     if(shopping){
+      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
     socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
@@ -157,6 +160,7 @@ exports.removePagination = async (req, res, next) => {
 
     const shopping = await ShoppingList.findOne({historic : historic._id});
     if(shopping){
+      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
 
