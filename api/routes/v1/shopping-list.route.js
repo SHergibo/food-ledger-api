@@ -9,11 +9,11 @@ router
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ShoppingListController.findPaginate);
 
 router
-  .route('/delete-pagination/:shoppingId')
-    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, ShoppingListController.removePagination);
+  .route('/:shoppingId')
+    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, ShoppingListController.remove);
 
 router
-  .route('/:householdId')
+  .route('/delete-all/:householdId')
     .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, ShoppingListController.removeAll);
 
 router
