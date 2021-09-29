@@ -92,15 +92,57 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
 
     for( userRoomName of userRoomNameArray ){
       let pageIndex = parseInt(userRoomName.split('-')[2]);
+      let finalObject = "finalObjectNotifReceivedList";
+      if(type === "sended") finalObject = "finalObjectNotifSendedList";
       if(notificationId){
         if(notificationIndex >= (pageIndex * 12) && notificationIndex < (((pageIndex + 1 ) * 12))){
-          let finalObject = "finalObjectNotifReceivedList";
-          if(type === "sended") finalObject = "finalObjectNotifSendedList";
           let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification, addedNotif ? null : notificationId);
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
-          let totalNotif = await Notification.countDocuments(findObject);
-          socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+          let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/12) - 1;
+          let roomNamePageIndex = userRoomName.split('-')[2];
+
+          if(roomNamePageIndex > currentPageIndex){
+            let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification, addedNotif ? null : notificationId);
+            socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
+          }else{
+            if(notificationId){
+              if(type === "received"){
+                findObject = {_id: {$ne: notificationId},  userId: user._id };
+
+                if(user.role === "admin"){
+                  findObject = {$and : [
+                    { _id: {$ne: notificationId} },
+                    {$or : 
+                      [
+                        { userId: user._id },
+                        { householdId : user.householdId, type: "invitation-user-to-household" },
+                        { householdId : user.householdId, type: "information", userId: { $exists: false } },
+                      ]
+                    }
+                  ]};
+                }
+              }
+              if(type === "sended"){
+                findObject = {_id: {$ne: notificationId},  senderUserId: user._id };
+
+                if(user.role === "admin"){
+                  findObject = {$and : [
+                    { _id: {$ne: notificationId} },
+                    {$or : 
+                      [
+                        { senderUserId: user._id },
+                        { householdId : user.householdId, type: "invitation-household-to-user" },
+                        { householdId : user.householdId, type: "need-switch-admin" }
+                      ]
+                    }
+                  ]};
+                }
+              }
+            } 
+            let totalNotif = await Notification.countDocuments(findObject);
+            socketIoTo(userRoomName, "updatePageCount", {totalNotif});
+          }
         }
       }
       if(!notificationId){
