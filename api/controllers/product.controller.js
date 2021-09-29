@@ -7,7 +7,7 @@ const Product = require('./../models/product.model'),
       { transformDate } = require('./../helpers/transformDate.helper'),
       Slugify = require('./../utils/slugify'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
-      { socketIoTo } = require('./../helpers/socketIo.helper'),
+      { socketIoTo, socketIoToShoppingList } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -69,6 +69,8 @@ exports.update = async (req, res, next) => {
 
     const product = await Product.findById(req.params.productId).populate('brand', 'brandName');
     const shopping = await ShoppingList.findOne({product : product._id});
+    console.log('ici')
+    console.log(shopping)
 
     if (req.body.number == 0) {
       let oldProduct;
@@ -93,8 +95,11 @@ exports.update = async (req, res, next) => {
           householdId: historic.householdId
         });
         await shoppingList.save();
+        const newShoppingList = await ShoppingList.findById(shoppingList._id);
+        await socketIoToShoppingList({data : newShoppingList, type : "addedData", model: ShoppingList});
       }else{
-        await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)});
+        const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)});
+        await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
       }
 
 
@@ -130,15 +135,20 @@ exports.update = async (req, res, next) => {
             householdId: product.householdId
           });
           await shoppingList.save();
+          const newShoppingList = await ShoppingList.findById(shoppingList._id);
+          await socketIoToShoppingList({data : newShoppingList, type : "addedData", model: ShoppingList});
         }else{
-          await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)});
+          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)});
+          await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
         }
       }else{
         if(shopping){
           let numberShoppingList = req.body.number - product.number;
           if(req.body.number > product.number && shopping.numberProduct > req.body.number){
-            await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)});
+            const updatedShoppingList =  await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)});
+            await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
           }else if (req.body.number > product.number && shopping.numberProduct <= req.body.number){
+            await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
             await ShoppingList.findByIdAndDelete(shopping._id);
           }
         }
@@ -168,6 +178,7 @@ exports.remove = async (req, res, next) => {
     await ProductLogHelper.productLogDelete(product, req.user);
     const shopping = await ShoppingList.findOne({product : product._id});
     if(shopping){
+      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
     socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
@@ -189,6 +200,7 @@ exports.removePagination = async (req, res, next) => {
 
     const shopping = await ShoppingList.findOne({product : product._id});
     if(shopping){
+      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
 
