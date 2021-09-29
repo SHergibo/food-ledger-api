@@ -24,4 +24,13 @@ let schema = new Schema({
   timestamps: true
 });
 
+schema.methods.transform = function () {
+  const fields = ['_id', 'numberProduct', 'product', "historic", "householdId"];
+  const object = {};
+  fields.forEach((field) => {
+    object[field] = this[field];
+  });
+  return object;
+};
+
 module.exports = Mongoose.model('ShoppingList', schema);
