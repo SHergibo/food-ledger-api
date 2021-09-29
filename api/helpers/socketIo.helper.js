@@ -157,6 +157,8 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
 };
 
 const socketIoToBrand = async ({ brandData, type }) => {
+  console.log(brandData)
+  console.log(type)
   const { householdId } = brandData;
   let userRoomNameArray = findSocketRoom({includesType : `${householdId}-brand`});
 
@@ -195,11 +197,61 @@ const socketIoToBrand = async ({ brandData, type }) => {
       }
     }
   }
+  return;
+}
+
+const socketIoToShoppingList = async ({ data, type, model }) => {
+  const { householdId } = data;
+  let userRoomNameArray = findSocketRoom({includesType : `${householdId}-shoppingList`});
+
+  if(userRoomNameArray.length >= 1){
+    if(type !== "deleteAll"){
+      let dataArray = await model.find({ householdId: householdId })
+      .sort({createdAt : -1});
+  
+      dataIndex = dataArray.findIndex((dataLoop) => dataLoop._id.toString() === data._id.toString());
+    }
+
+    for( userRoomName of userRoomNameArray ){
+      if(type === "deleteAll"){
+        socketIoTo(userRoomName, "updateDataArray", {arrayData : [], totalShoppingList : 0});
+        return;
+      }
+      let pageIndex = parseInt(userRoomName.split('-')[2]);
+      if(dataIndex >= (pageIndex * 12) && dataIndex < (((pageIndex + 1 ) * 12))){
+        if(type === "updatedData") socketIoTo(userRoomName, "updatedData", data.transform());
+        if(type === "addedData") socketIoTo(userRoomName, "addedData", data.transform());
+        if(type === "deletedData"){
+          let newDataArray = await FindByQueryHelper.finalObjectShoppingList(pageIndex, data.householdId, model, data._id);
+          socketIoTo(userRoomName, "updateDataArray", newDataArray);
+        }
+      }else{
+        let currentPageIndex = dataIndex === 0 ? 0 : Math.ceil(dataIndex/12) - 1;
+        let roomNamePageIndex = userRoomName.split('-')[2];
+
+        if(roomNamePageIndex > currentPageIndex){
+          if(type !== "updatedData"){
+            let newDataArray = await FindByQueryHelper.finalObjectShoppingList(pageIndex, data.householdId, model, type === "deletedData" ? data._id : null);
+            socketIoTo(userRoomName, "updateDataArray", newDataArray);
+          }
+        }else{
+          if(type !== "updatedData"){
+            let findObject = { householdId: householdId };
+            if(type === "deletedData") findObject = {_id: {$ne: data._id},  householdId: householdId };
+            let totalData = await model.countDocuments(findObject);
+            socketIoTo(userRoomName, "updatePageCount", {totalData});
+          }
+        }
+      }
+    }
+  }
+  return;
 }
 
 module.exports = { 
   socketIoEmit, 
   socketIoTo, 
   sendNotifToSocket, 
-  socketIoToBrand 
+  socketIoToBrand,
+  socketIoToShoppingList
 };
