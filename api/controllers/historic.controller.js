@@ -90,7 +90,18 @@ exports.update = async (req, res, next) => {
           await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
           await ShoppingList.findByIdAndDelete(shopping._id);
         }else{
-          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)});
+          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {$unset: { historic: 1 }, product: product._id, numberProduct : (shopping.numberProduct - req.body.number)})
+          .populate({
+            path: 'historic',
+            populate : {
+              path: 'brand',
+              select: {brandName: 1}
+            },
+            select: {
+              name: 1,
+              weight: 1,
+            }
+          });
           await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
         }
       }
