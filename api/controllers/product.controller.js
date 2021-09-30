@@ -69,8 +69,6 @@ exports.update = async (req, res, next) => {
 
     const product = await Product.findById(req.params.productId).populate('brand', 'brandName');
     const shopping = await ShoppingList.findOne({product : product._id});
-    console.log('ici')
-    console.log(shopping)
 
     if (req.body.number == 0) {
       let oldProduct;
@@ -95,10 +93,32 @@ exports.update = async (req, res, next) => {
           householdId: historic.householdId
         });
         await shoppingList.save();
-        const newShoppingList = await ShoppingList.findById(shoppingList._id);
+        const newShoppingList = await ShoppingList.findById(shoppingList._id)
+        .populate({
+          path: 'product',
+          populate : {
+            path: 'brand',
+            select: {brandName: 1}
+          },
+          select: {
+            name: 1,
+            weight: 1,
+          }
+        });
         await socketIoToShoppingList({data : newShoppingList, type : "addedData", model: ShoppingList});
       }else{
-        const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)});
+        const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {historic : historic._id, $unset: { product: 1 }, numberProduct : (shopping.numberProduct + product.number)})
+        .populate({
+          path: 'product',
+          populate : {
+            path: 'brand',
+            select: {brandName: 1}
+          },
+          select: {
+            name: 1,
+            weight: 1,
+          }
+        });
         await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
       }
 
@@ -135,17 +155,50 @@ exports.update = async (req, res, next) => {
             householdId: product.householdId
           });
           await shoppingList.save();
-          const newShoppingList = await ShoppingList.findById(shoppingList._id);
+          const newShoppingList = await ShoppingList.findById(shoppingList._id)
+          .populate({
+            path: 'product',
+            populate : {
+              path: 'brand',
+              select: {brandName: 1}
+            },
+            select: {
+              name: 1,
+              weight: 1,
+            }
+          });
           await socketIoToShoppingList({data : newShoppingList, type : "addedData", model: ShoppingList});
         }else{
-          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)});
+          const updatedShoppingList = await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct + numberShoppingList)})
+          .populate({
+            path: 'product',
+            populate : {
+              path: 'brand',
+              select: {brandName: 1}
+            },
+            select: {
+              name: 1,
+              weight: 1,
+            }
+          });
           await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
         }
       }else{
         if(shopping){
           let numberShoppingList = req.body.number - product.number;
           if(req.body.number > product.number && shopping.numberProduct > req.body.number){
-            const updatedShoppingList =  await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)});
+            const updatedShoppingList =  await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)})
+            .populate({
+              path: 'product',
+              populate : {
+                path: 'brand',
+                select: {brandName: 1}
+              },
+              select: {
+                name: 1,
+                weight: 1,
+              }
+            });
             await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
           }else if (req.body.number > product.number && shopping.numberProduct <= req.body.number){
             await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
