@@ -9,7 +9,7 @@ const Product = require('../models/product.model'),
 exports.checkSameHousehold = async (req, res, next) => {
   try {
     let household;
-    let data;
+    let data = {};
 
     if (req.params.productId) {
       data = await Product.findById(req.params.productId);
@@ -21,12 +21,14 @@ exports.checkSameHousehold = async (req, res, next) => {
       data = await ProductLog.findById(req.params.productLogId);
     }else if (req.params.shoppingId) {
       data = await ShoppingList.findById(req.params.shoppingId);
+    } else if (req.params.householdId){
+      data.householdId = req.params.householdId
     }
 
     if(req.body.householdId){
       household = await Household.findById(req.body.householdId);
-    }else if(!req.params.householdId && !req.body.householdId){
-      if(data){
+    }else{
+      if(data.householdId){
         household = await Household.findById(data.householdId);
       }else{
         return next(Boom.notFound("Cette donnée n'existe pas!"));
