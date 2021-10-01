@@ -1,5 +1,6 @@
 const ProductLog = require('./../models/product-log.model'),
       FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
+      { socketIoToProductLog } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -8,7 +9,7 @@ const ProductLog = require('./../models/product-log.model'),
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, req.params.householdId, ProductLog);
+    const finalObject = await FindByQueryHelper.finalObjectProductLog(req.query.page, req.params.householdId, ProductLog);
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -16,13 +17,17 @@ exports.findPaginate = async (req, res, next) => {
 };
 
 /**
-* DELETE one productLog and send new productLog list using front-end pagination data
+* DELETE one productLog
 */
-exports.removePagination = async (req, res, next) => {
+exports.remove = async (req, res, next) => {
   try {
-    const productLog = await ProductLog.findByIdAndRemove(req.params.productLogId);
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req, productLog.householdId, ProductLog);
-    return res.json(finalObject);
+    const productLog = await ProductLog.findById(req.params.productLogId);
+
+    await socketIoToProductLog({data : productLog, type : "deletedData", model: ProductLog});
+
+    await ProductLog.findByIdAndRemove(productLog._id);
+
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
@@ -33,6 +38,7 @@ exports.removePagination = async (req, res, next) => {
 */
 exports.removeAll = async (req, res, next) => {
   try {
+    await socketIoToProductLog({data : {householdId: req.params.householdId}, type : "deleteAll", model: ProductLog});
     await ProductLog.deleteMany({householdId : req.params.householdId});
     return res.status(200).send();
   } catch (error) {
