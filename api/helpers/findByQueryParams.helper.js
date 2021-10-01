@@ -71,11 +71,16 @@ exports.finalObject = async (req, householdId, model) => {
   return {arrayData : transformArray(products, 'product'), totalProduct};
 };
 
-exports.finalObjectProductLog = async (req, householdId, model) => {
-  let page = req.query.page || 0;
+exports.finalObjectProductLog = async (pageIndex, householdId, model, productLogId) => {
+  let page = pageIndex || 0;
 
   let findObject = { householdId: householdId };
-  let totalProductLog = await model.countDocuments({householdId: householdId});
+
+  if(productLogId){
+    findObject = {_id: {$ne: productLogId},  householdId: householdId };
+  }
+
+  let totalData = await model.countDocuments(findObject);
 
   let productLog = await model.find(findObject)
       .populate('user', "firstname")
@@ -83,7 +88,7 @@ exports.finalObjectProductLog = async (req, householdId, model) => {
       .limit(LIMIT)
       .sort({createdAt : -1});
   
-  return {arrayData : transformArray(productLog, 'productLog'), totalProductLog};
+  return {arrayData : transformArray(productLog, 'productLog'), totalData};
 };
 
 exports.finalObjectShoppingList = async (pageIndex, householdId, model, shoppingId) => {
@@ -95,7 +100,7 @@ exports.finalObjectShoppingList = async (pageIndex, householdId, model, shopping
     findObject = {_id: {$ne: shoppingId},  householdId: householdId };
   }
 
-  let totalShoppingList = await model.countDocuments(findObject);
+  let totalData = await model.countDocuments(findObject);
 
   let shoppingList = await model.find(findObject)
       .populate({
@@ -124,7 +129,7 @@ exports.finalObjectShoppingList = async (pageIndex, householdId, model, shopping
       .limit(LIMIT)
       .sort({createdAt : -1});
 
-  return {arrayData : transformArray(shoppingList, 'shoppingList'), totalShoppingList}
+  return {arrayData : transformArray(shoppingList, 'shoppingList'), totalData}
 };
 
 exports.finalObjectBrandList = async (pageIndex, householdId, model, brandId) => {
@@ -136,14 +141,14 @@ exports.finalObjectBrandList = async (pageIndex, householdId, model, brandId) =>
     findObject = {_id: {$ne: brandId},  householdId: householdId };
   }
 
-  let totalBrand = await model.countDocuments(findObject);
+  let totalData = await model.countDocuments(findObject);
 
   let brand = await model.find(findObject)
       .skip(page * LIMIT)
       .limit(LIMIT)
       .sort({createdAt : -1});
   
-  return {arrayData : transformArray(brand, 'brand'), totalBrand};
+  return {arrayData : transformArray(brand, 'brand'), totalData};
 };
 
 exports.finalObjectNotifReceivedList = async (pageIndex, user, model, notificationId) => {
