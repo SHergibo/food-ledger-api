@@ -51,7 +51,7 @@ exports.update = async (req, res, next) => {
   try {
     //TODO faire attention à l'objet brandName et label et value en slugify
     const brand = await Brand.findByIdAndUpdate(req.params.brandId, req.body);
-    socketIoToBrand({brandData : brand, type : "updatedBrand"});
+    socketIoToBrand({data : brand, type : "updatedData", model: Brand});
     return res.json(brand.transform());
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -65,7 +65,7 @@ exports.remove = async (req, res, next) => {
   try {
     const brand = await Brand.findById(req.params.brandId);
 
-    await socketIoToBrand({brandData : brand, type : "deletedBrand"});
+    await socketIoToBrand({data : brand, type : "deletedData", model: Brand});
 
     await Brand.findByIdAndDelete(brand._id);
     
