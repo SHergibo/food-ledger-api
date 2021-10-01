@@ -186,7 +186,7 @@ exports.update = async (req, res, next) => {
       }else{
         if(shopping){
           let numberShoppingList = req.body.number - product.number;
-          if(req.body.number > product.number && shopping.numberProduct > req.body.number){
+          if(req.body.number > product.number && shopping.numberProduct > (req.body.number - product.number )){
             const updatedShoppingList =  await ShoppingList.findByIdAndUpdate(shopping._id, {numberProduct : (shopping.numberProduct - numberShoppingList)})
             .populate({
               path: 'product',
@@ -200,7 +200,7 @@ exports.update = async (req, res, next) => {
               }
             });
             await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
-          }else if (req.body.number > product.number && shopping.numberProduct <= req.body.number){
+          }else if (req.body.number > product.number && shopping.numberProduct <= (req.body.number - product.number)){
             await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
             await ShoppingList.findByIdAndDelete(shopping._id);
           }
