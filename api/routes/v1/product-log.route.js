@@ -8,11 +8,11 @@ router
     .get(authorize([ADMIN]), checkSameHousehold, ProductLogController.findPaginate);
 
 router
-  .route('/delete-pagination/:productLogId')
-    .delete(authorize([ADMIN]), checkSameHousehold, ProductLogController.removePagination);
+  .route('/:productLogId')
+    .delete(authorize([ADMIN]), checkSameHousehold, ProductLogController.remove);
   
 router
-  .route('/:householdId')
+  .route('/delete-all/:householdId')
     .delete(authorize([ADMIN]), checkSameHousehold, ProductLogController.removeAll);
 
 module.exports = router;
