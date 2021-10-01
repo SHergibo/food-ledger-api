@@ -156,53 +156,9 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
   return;
 };
 
-const socketIoToBrand = async ({ brandData, type }) => {
-  console.log(brandData)
-  console.log(type)
-  const { householdId } = brandData;
-  let userRoomNameArray = findSocketRoom({includesType : `${householdId}-brand`});
-
-  if(userRoomNameArray.length >= 1){
-    let brands = await Brand.find({ householdId: householdId })
-    .sort({createdAt : -1});
-
-    brandIndex = brands.findIndex((brand) => brand._id.toString() === brandData._id.toString());
-
-    for( userRoomName of userRoomNameArray ){
-      let pageIndex = parseInt(userRoomName.split('-')[2]);
-      if(brandIndex >= (pageIndex * 12) && brandIndex < (((pageIndex + 1 ) * 12))){
-        if(type === "updatedBrand") socketIoTo(userRoomName, "updatedBrand", brandData.transform());
-        if(type === "addedBrand") socketIoTo(userRoomName, "addedBrand", brandData.transform());
-        if(type === "deletedBrand"){
-          let newBrandArray = await FindByQueryHelper.finalObjectBrandList(pageIndex, brandData.householdId, Brand, brandData._id);
-          socketIoTo(userRoomName, "updateBrandArray", newBrandArray);
-        }
-      }else{
-        let currentPageIndex = brandIndex === 0 ? 0 : Math.ceil(brandIndex/12) - 1;
-        let roomNamePageIndex = userRoomName.split('-')[2];
-
-        if(roomNamePageIndex > currentPageIndex){
-          if(type !== "updatedBrand"){
-            let newBrandArray = await FindByQueryHelper.finalObjectBrandList(pageIndex, brandData.householdId, Brand, type === "deletedBrand" ? brandData._id : null);
-            socketIoTo(userRoomName, "updateBrandArray", newBrandArray);
-          }
-        }else{
-          if(type !== "updatedBrand"){
-            let findObject = { householdId: householdId };
-            if(type === "deletedBrand") findObject = {_id: {$ne: brandData._id},  householdId: householdId };
-            let totalBrand = await Brand.countDocuments(findObject);
-            socketIoTo(userRoomName, "updatePageCount", {totalBrand});
-          }
-        }
-      }
-    }
-  }
-  return;
-}
-
-const socketIoToShoppingList = async ({ data, type, model }) => {
+const socketIoToLogic = async ({ data, type, model, includesType, finalObject }) => {
   const { householdId } = data;
-  let userRoomNameArray = findSocketRoom({includesType : `${householdId}-shoppingList`});
+  let userRoomNameArray = findSocketRoom(includesType);
 
   if(userRoomNameArray.length >= 1){
     if(type !== "deleteAll"){
@@ -214,7 +170,7 @@ const socketIoToShoppingList = async ({ data, type, model }) => {
 
     for( userRoomName of userRoomNameArray ){
       if(type === "deleteAll"){
-        socketIoTo(userRoomName, "updateDataArray", {arrayData : [], totalShoppingList : 0});
+        socketIoTo(userRoomName, "updateDataArray", {arrayData : [], totalData : 0});
         return;
       }
       let pageIndex = parseInt(userRoomName.split('-')[2]);
@@ -222,7 +178,7 @@ const socketIoToShoppingList = async ({ data, type, model }) => {
         if(type === "updatedData") socketIoTo(userRoomName, "updatedData", data.transform());
         if(type === "addedData") socketIoTo(userRoomName, "addedData", data.transform());
         if(type === "deletedData"){
-          let newDataArray = await FindByQueryHelper.finalObjectShoppingList(pageIndex, data.householdId, model, data._id);
+          let newDataArray = await FindByQueryHelper[finalObject](pageIndex, householdId, model, data._id);
           socketIoTo(userRoomName, "updateDataArray", newDataArray);
         }
       }else{
@@ -231,7 +187,7 @@ const socketIoToShoppingList = async ({ data, type, model }) => {
 
         if(roomNamePageIndex > currentPageIndex){
           if(type !== "updatedData"){
-            let newDataArray = await FindByQueryHelper.finalObjectShoppingList(pageIndex, data.householdId, model, type === "deletedData" ? data._id : null);
+            let newDataArray = await FindByQueryHelper[finalObject](pageIndex, householdId, model, type === "deletedData" ? data._id : null);
             socketIoTo(userRoomName, "updateDataArray", newDataArray);
           }
         }else{
@@ -246,6 +202,24 @@ const socketIoToShoppingList = async ({ data, type, model }) => {
     }
   }
   return;
+};
+
+const socketIoToBrand = async ({ data, type, model }) => {
+  let includesType = {includesType: `${data.householdId}-brand`};
+  let finalObject = "finalObjectBrandList";
+  await socketIoToLogic({ data, type, model, includesType, finalObject });
+}
+
+const socketIoToShoppingList = async ({ data, type, model }) => {
+  let includesType = {includesType: `${data.householdId}-shoppingList`};
+  let finalObject = "finalObjectShoppingList";
+  await socketIoToLogic({ data, type, model, includesType, finalObject });
+}
+
+const socketIoToProductLog = async ({ data, type, model }) => {
+  let includesType = {includesType: `${data.householdId}-productLog`};
+  let finalObject = "finalObjectProductLog";
+  await socketIoToLogic({ data, type, model, includesType, finalObject });
 }
 
 module.exports = { 
@@ -253,5 +227,6 @@ module.exports = {
   socketIoTo, 
   sendNotifToSocket, 
   socketIoToBrand,
-  socketIoToShoppingList
+  socketIoToShoppingList,
+  socketIoToProductLog
 };
