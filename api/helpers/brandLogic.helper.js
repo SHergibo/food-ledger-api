@@ -12,7 +12,7 @@ exports.brandLogicWhenCreating = async (req, type) => {
     } else if (type === "historic") {
       updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric + 1 });
     }
-    socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
+    socketIoToBrand({data : updatedBrand, type : "updatedData", model: Brand});
   } else {
     let brandObject = {
       brandName: req.body.brand,
@@ -30,7 +30,7 @@ exports.brandLogicWhenCreating = async (req, type) => {
     brandDB = new Brand(brandObject);
     await brandDB.save();
 
-    socketIoToBrand({brandData : brandDB, type : "addedBrand"});
+    socketIoToBrand({data : brandDB, type : "addedData", model: Brand});
   }
   return brandDB;
 };
@@ -53,7 +53,7 @@ exports.brandLogicWhenSwitching = async (req, type) => {
     updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfProduct: brandDB.numberOfProduct - 1, numberOfHistoric: brandDB.numberOfHistoric + 1 });
   }
 
-  socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
+  socketIoToBrand({data : updatedBrand, type : "updatedData", model: Brand});
 
   return;
 };
@@ -98,8 +98,8 @@ exports.brandLogicWhenUpdating = async (req, type, switching) => {
       }
     }
 
-    socketIoToBrand({brandData : updatedNewBrand, type : "updatedBrand"});
-    socketIoToBrand({brandData : updatedOldBrand, type : "updatedBrand"});
+    socketIoToBrand({data : updatedNewBrand, type : "updatedData", model: Brand});
+    socketIoToBrand({data : updatedOldBrand, type : "updatedData", model: Brand});
 
   } else {
     let brandObject = {
@@ -126,12 +126,12 @@ exports.brandLogicWhenUpdating = async (req, type, switching) => {
       brandObject.numberOfHistoric = 1;
     }
 
-    socketIoToBrand({brandData : updatedOldBrand, type : "updatedBrand"});
+    socketIoToBrand({data : updatedOldBrand, type : "updatedData", model: Brand});
 
     brandDB = new Brand(brandObject);
     await brandDB.save();
 
-    socketIoToBrand({brandData : brandDB, type : "addedBrand"});
+    socketIoToBrand({data : brandDB, type : "addedData", model: Brand});
   }
 
   return brandDB;
@@ -154,7 +154,7 @@ exports.brandLogicWhenDeleting = async (req, type) => {
     updatedBrand = await Brand.findByIdAndUpdate(brandDB._id, { numberOfHistoric: brandDB.numberOfHistoric - 1 });
   }
 
-  socketIoToBrand({brandData : updatedBrand, type : "updatedBrand"});
+  socketIoToBrand({data : updatedBrand, type : "updatedData", model: Brand});
 
   return;
 };
