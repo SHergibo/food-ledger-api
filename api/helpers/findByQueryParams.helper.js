@@ -5,14 +5,19 @@ const Brand = require('./../models/brand.model'),
 
 const LIMIT = 12;
 
-exports.finalObject = async (req, householdId, model) => {
+exports.finalObject = async (req, householdId, model, productId) => {
   let queryObject = req.query;
   let queryWithSort = false;
   let querySortObject = {};
   let page = req.query.page || 0;
 
   let findObject = { householdId: householdId };
-  let totalProduct = await model.countDocuments({householdId: householdId});
+
+  if(productId){
+    findObject = {_id: {$ne: productId},  householdId: householdId };
+  }
+
+  let totalProduct = await model.countDocuments(findObject);
 
   for (const key in queryObject) {
     if (key.split('-')[1] === "sort") {
@@ -60,7 +65,8 @@ exports.finalObject = async (req, householdId, model) => {
     products = await model.find(findObject)
       .populate('brand', 'brandName')
       .skip(page * LIMIT)
-      .limit(LIMIT);
+      .limit(LIMIT)
+      .sort({createdAt : -1});
   }
 
   if (Object.keys(findObject).length >= 2) {
