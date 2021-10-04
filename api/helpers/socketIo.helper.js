@@ -204,6 +204,12 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject })
   return;
 };
 
+const socketIoToProduct = async ({ data, type, model, to }) => {
+  let includesType = {includesType: `${data.householdId}-${to}`};
+  let finalObject = "finalObject";
+  await socketIoToLogic({ data, type, model, includesType, finalObject });
+}
+
 const socketIoToBrand = async ({ data, type, model }) => {
   let includesType = {includesType: `${data.householdId}-brand`};
   let finalObject = "finalObjectBrandList";
@@ -225,7 +231,8 @@ const socketIoToProductLog = async ({ data, type, model }) => {
 module.exports = { 
   socketIoEmit, 
   socketIoTo, 
-  sendNotifToSocket, 
+  sendNotifToSocket,
+  socketIoToProduct,
   socketIoToBrand,
   socketIoToShoppingList,
   socketIoToProductLog
