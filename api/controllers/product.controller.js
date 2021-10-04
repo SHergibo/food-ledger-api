@@ -7,7 +7,7 @@ const Product = require('./../models/product.model'),
       { transformDate } = require('./../helpers/transformDate.helper'),
       Slugify = require('./../utils/slugify'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
-      { socketIoTo, socketIoToShoppingList } = require('./../helpers/socketIo.helper'),
+      { socketIoToShoppingList, socketIoToProduct } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -26,7 +26,8 @@ exports.add = async (req, res, next) => {
 
     let productWithBrand = await Product.findById(product._id)
     .populate('brand', 'brandName');
-    socketIoTo(`${product.householdId}-produit`, "addedProduct", productWithBrand.transform());
+
+    socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit"});
 
     return res.json(product.transform());
   } catch (error) {
@@ -122,16 +123,16 @@ exports.update = async (req, res, next) => {
         await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
       }
 
+      await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit"});
 
-      await Product.findByIdAndDelete(req.params.productId);
+      await Product.findByIdAndDelete(product._id);
 
       response = res.json(historic.transform());
-      socketIoTo(`${historic.householdId}-produit`, "deletedProduct", product._id);
 
       let historicWithBrand = await Historic.findById(historic._id)
       .populate('brand', 'brandName');
 
-      socketIoTo(`${historic.householdId}-historique`, "addedProduct", historicWithBrand.transform());
+      socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique"});
     } else {
       if (req.body.brand.value !== product.brand.brandName.value) {
         brand = await BrandLogic.brandLogicWhenUpdating(req, "product", false);
@@ -208,7 +209,8 @@ exports.update = async (req, res, next) => {
       }
       
       response = res.json(updatedProduct.transform());
-      socketIoTo(`${updatedProduct.householdId}-produit`, "updatedProduct", updatedProduct.transform());
+
+      socketIoToProduct({data : updatedProduct, type : "updatedData", model: Product, to: "produit"});
     }
 
     if(req.body.number !== product.number){
@@ -227,40 +229,20 @@ exports.update = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDeleting(req, "product");
-    const product = await Product.findByIdAndDelete(req.params.productId);
+    const product = await Product.findById(req.params.productId);
+
+    await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit"});
+
+    await Product.findByIdAndDelete(product._id);
+
     await ProductLogHelper.productLogDelete(product, req.user);
     const shopping = await ShoppingList.findOne({product : product._id});
     if(shopping){
       await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
-    socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
-    return res.json(product.transform());
-  } catch (error) {
-    next({error: error, boom: Boom.badImplementation(error.message)});
-  }
-};
 
-/**
-* DELETE one product and send new product list using front-end pagination data
-*/
-exports.removePagination = async (req, res, next) => {
-  try {
-    await BrandLogic.brandLogicWhenDeleting(req, "product");
-    const product = await Product.findByIdAndRemove(req.params.productId);
-
-    await ProductLogHelper.productLogDelete(product, req.user);
-
-    const shopping = await ShoppingList.findOne({product : product._id});
-    if(shopping){
-      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
-      await ShoppingList.findByIdAndDelete(shopping._id);
-    }
-
-    const finalObject = await FindByQueryHelper.finalObject(req, product.householdId, Product);
-    socketIoTo(`${product.householdId}-produit`, "deletedProduct", product._id);
-    return res.json(finalObject);
-    
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
