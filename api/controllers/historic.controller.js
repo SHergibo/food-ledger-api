@@ -6,7 +6,7 @@ const Historic = require('./../models/historic.model'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
       ProductLogHelper = require('./../helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
-      { socketIoTo, socketIoToShoppingList } = require('./../helpers/socketIo.helper'),
+      { socketIoToShoppingList, socketIoToProduct } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -23,7 +23,8 @@ exports.add = async (req, res, next) => {
 
     let historicWithBrand = await Historic.findById(historic._id)
     .populate('brand', 'brandName');
-    socketIoTo(`${historic.householdId}-historique`, "addedProduct", historicWithBrand.transform());
+
+    socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique"});
 
     return res.json(historic.transform());
   } catch (error) {
@@ -106,14 +107,16 @@ exports.update = async (req, res, next) => {
         }
       }
 
-      await Historic.findByIdAndDelete(req.params.historicId);
+      await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique"});
+
+      await Historic.findByIdAndDelete(historic._id);
       
       response = res.json(product.transform());
-      socketIoTo(`${product.householdId}-historique`, "deletedProduct", historic._id);
-
+      
       let productWithBrand = await Product.findById(product._id)
       .populate('brand', 'brandName');
-      socketIoTo(`${product.householdId}-produit`, "addedProduct", productWithBrand.transform());
+
+      socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit"});
     }else{
 
       if (req.body.brand.value !== historic.brand.brandName.value) {
@@ -129,7 +132,8 @@ exports.update = async (req, res, next) => {
       let updatedHistoric = await Historic.findByIdAndUpdate(req.params.historicId, req.body).populate('brand', 'brandName');
       
       response = res.json(updatedHistoric.transform());
-      socketIoTo(`${updatedHistoric.householdId}-historique`, "updatedProduct", updatedHistoric.transform());
+
+      socketIoToProduct({data : updatedHistoric, type : "updatedData", model: Historic, to: "historique"});
     }
 
     if(req.body.number !== historic.number){
@@ -148,26 +152,12 @@ exports.update = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     await BrandLogic.brandLogicWhenDeleting(req, "historic");
-    const historic = await Historic.findByIdAndDelete(req.params.historicId);
-    const shopping = await ShoppingList.findOne({historic : historic._id});
-    if(shopping){
-      await socketIoToShoppingList({data : shopping, type : "deletedData", model: ShoppingList});
-      await ShoppingList.findByIdAndDelete(shopping._id);
-    }
-    socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
-    return res.json(historic.transform());
-  } catch (error) {
-    next({error: error, boom: Boom.badImplementation(error.message)});
-  }
-};
+    
+    const historic = await Historic.findById(req.params.historicId);
 
-/**
-* DELETE one historic product and send new historic product list using front-end pagination data
-*/
-exports.removePagination = async (req, res, next) => {
-  try {
-    await BrandLogic.brandLogicWhenDeleting(req, "historic");
-    const historic = await Historic.findByIdAndRemove(req.params.historicId);
+    await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique"});
+
+    await Historic.findByIdAndDelete(historic._id);
 
     const shopping = await ShoppingList.findOne({historic : historic._id});
     if(shopping){
@@ -175,10 +165,7 @@ exports.removePagination = async (req, res, next) => {
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
 
-    const finalObject = await FindByQueryHelper.finalObject(req, historic.householdId, Historic);
-
-    socketIoTo(`${historic.householdId}-historique`, "deletedProduct", historic._id);
-    return res.json(finalObject);
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
