@@ -20,10 +20,6 @@ router
     .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, outdatedStatistics, ProductController.remove);
 
 router
-  .route('/delete-pagination/:productId')
-    .delete(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, isWaiting, outdatedStatistics, ProductController.removePagination);
-
-router
   .route('/download/:householdId')
     .get(authorize([ADMIN, LOGGED_USER]), checkSameHousehold, ProductController.download);
 
