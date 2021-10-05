@@ -27,7 +27,7 @@ exports.add = async (req, res, next) => {
     let productWithBrand = await Product.findById(product._id)
     .populate('brand', 'brandName');
 
-    socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit"});
+    socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit", req});
 
     return res.json(product.transform());
   } catch (error) {
@@ -41,7 +41,7 @@ exports.add = async (req, res, next) => {
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObject(req, req.params.householdId, Product);
+    const finalObject = await FindByQueryHelper.finalObject({req, findByData : req.params.householdId, model : Product});
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -123,7 +123,7 @@ exports.update = async (req, res, next) => {
         await socketIoToShoppingList({data : updatedShoppingList, type : "updatedData", model: ShoppingList});
       }
 
-      await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit"});
+      await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit", req});
 
       await Product.findByIdAndDelete(product._id);
 
@@ -132,7 +132,7 @@ exports.update = async (req, res, next) => {
       let historicWithBrand = await Historic.findById(historic._id)
       .populate('brand', 'brandName');
 
-      socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique"});
+      socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique", req});
     } else {
       if (req.body.brand.value !== product.brand.brandName.value) {
         brand = await BrandLogic.brandLogicWhenUpdating(req, "product", false);
@@ -210,7 +210,7 @@ exports.update = async (req, res, next) => {
       
       response = res.json(updatedProduct.transform());
 
-      socketIoToProduct({data : updatedProduct, type : "updatedData", model: Product, to: "produit"});
+      socketIoToProduct({data : updatedProduct, type : "updatedData", model: Product, to: "produit", req});
     }
 
     if(req.body.number !== product.number){
@@ -231,7 +231,7 @@ exports.remove = async (req, res, next) => {
     await BrandLogic.brandLogicWhenDeleting(req, "product");
     const product = await Product.findById(req.params.productId);
 
-    await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit"});
+    await socketIoToProduct({data : product, type : "deletedData", model: Product, to: "produit", req});
 
     await Product.findByIdAndDelete(product._id);
 
