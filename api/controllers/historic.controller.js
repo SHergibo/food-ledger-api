@@ -24,7 +24,7 @@ exports.add = async (req, res, next) => {
     let historicWithBrand = await Historic.findById(historic._id)
     .populate('brand', 'brandName');
 
-    socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique"});
+    socketIoToProduct({data : historicWithBrand, type : "addedData", model: Historic, to: "historique", req});
 
     return res.json(historic.transform());
   } catch (error) {
@@ -37,7 +37,7 @@ exports.add = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObject(req, req.params.householdId, Historic);
+    const finalObject = await FindByQueryHelper.finalObject({req, findByData : req.params.householdId, model : Historic});
 
     return res.json(finalObject);
   } catch (error) {
@@ -107,7 +107,7 @@ exports.update = async (req, res, next) => {
         }
       }
 
-      await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique"});
+      await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique", req});
 
       await Historic.findByIdAndDelete(historic._id);
       
@@ -116,7 +116,7 @@ exports.update = async (req, res, next) => {
       let productWithBrand = await Product.findById(product._id)
       .populate('brand', 'brandName');
 
-      socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit"});
+      socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit", req});
     }else{
 
       if (req.body.brand.value !== historic.brand.brandName.value) {
@@ -133,7 +133,7 @@ exports.update = async (req, res, next) => {
       
       response = res.json(updatedHistoric.transform());
 
-      socketIoToProduct({data : updatedHistoric, type : "updatedData", model: Historic, to: "historique"});
+      socketIoToProduct({data : updatedHistoric, type : "updatedData", model: Historic, to: "historique", req});
     }
 
     if(req.body.number !== historic.number){
@@ -155,7 +155,7 @@ exports.remove = async (req, res, next) => {
     
     const historic = await Historic.findById(req.params.historicId);
 
-    await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique"});
+    await socketIoToProduct({data : historic, type : "deletedData", model: Historic, to: "historique", req});
 
     await Historic.findByIdAndDelete(historic._id);
 
