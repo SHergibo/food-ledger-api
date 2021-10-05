@@ -37,7 +37,7 @@ exports.findAll = async (req, res, next) => {
 */
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObjectBrandList(req.query.page, req.params.householdId, Brand);
+    const finalObject = await FindByQueryHelper.finalObjectBrandList({pageIndex : req.query.page, findByData : req.params.householdId, model : Brand});
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
