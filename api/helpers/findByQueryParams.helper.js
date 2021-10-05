@@ -5,19 +5,20 @@ const Brand = require('./../models/brand.model'),
 
 const LIMIT = 12;
 
-exports.finalObject = async (req, householdId, model, productId) => {
+exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
   let queryObject = req.query;
   let queryWithSort = false;
   let querySortObject = {};
-  let page = req.query.page || 0;
+  let page = req.query.page || pageIndex;
+  let householdId = findByData;
 
   let findObject = { householdId: householdId };
 
-  if(productId){
-    findObject = {_id: {$ne: productId},  householdId: householdId };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  householdId: householdId };
   }
 
-  let totalProduct = await model.countDocuments(findObject);
+  let totalData = await model.countDocuments(findObject);
 
   for (const key in queryObject) {
     if (key.split('-')[1] === "sort") {
@@ -71,19 +72,20 @@ exports.finalObject = async (req, householdId, model, productId) => {
 
   if (Object.keys(findObject).length >= 2) {
     const countProductSearch = await model.find(findObject);
-    totalProduct = countProductSearch.length;
+    totalData = countProductSearch.length;
   }
 
-  return {arrayData : transformArray(products, 'product'), totalProduct};
+  return {arrayData : transformArray(products, 'product'), totalData};
 };
 
-exports.finalObjectProductLog = async (pageIndex, householdId, model, productLogId) => {
+exports.finalObjectProductLog = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
+  let householdId = findByData;
 
   let findObject = { householdId: householdId };
 
-  if(productLogId){
-    findObject = {_id: {$ne: productLogId},  householdId: householdId };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  householdId: householdId };
   }
 
   let totalData = await model.countDocuments(findObject);
@@ -97,13 +99,14 @@ exports.finalObjectProductLog = async (pageIndex, householdId, model, productLog
   return {arrayData : transformArray(productLog, 'productLog'), totalData};
 };
 
-exports.finalObjectShoppingList = async (pageIndex, householdId, model, shoppingId) => {
+exports.finalObjectShoppingList = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
+  let householdId = findByData;
 
   let findObject = { householdId: householdId };
 
-  if(shoppingId){
-    findObject = {_id: {$ne: shoppingId},  householdId: householdId };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  householdId: householdId };
   }
 
   let totalData = await model.countDocuments(findObject);
@@ -138,13 +141,14 @@ exports.finalObjectShoppingList = async (pageIndex, householdId, model, shopping
   return {arrayData : transformArray(shoppingList, 'shoppingList'), totalData}
 };
 
-exports.finalObjectBrandList = async (pageIndex, householdId, model, brandId) => {
+exports.finalObjectBrandList = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
+  let householdId = findByData;
 
   let findObject = { householdId: householdId };
 
-  if(brandId){
-    findObject = {_id: {$ne: brandId},  householdId: householdId };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  householdId: householdId };
   }
 
   let totalData = await model.countDocuments(findObject);
@@ -157,8 +161,9 @@ exports.finalObjectBrandList = async (pageIndex, householdId, model, brandId) =>
   return {arrayData : transformArray(brand, 'brand'), totalData};
 };
 
-exports.finalObjectNotifReceivedList = async (pageIndex, user, model, notificationId) => {
+exports.finalObjectNotifReceivedList = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
+  let user = findByData;
 
   let findObject = { userId: user._id };
 
@@ -172,12 +177,12 @@ exports.finalObjectNotifReceivedList = async (pageIndex, user, model, notificati
     };
   }
 
-  if(notificationId){
-    findObject = {_id: {$ne: notificationId},  userId: user._id };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  userId: user._id };
 
     if(user.role === "admin"){
       findObject = {$and : [
-        { _id: {$ne: notificationId} },
+        { _id: {$ne: dataId} },
         {$or : 
           [
             { userId: user._id },
@@ -210,8 +215,9 @@ exports.finalObjectNotifReceivedList = async (pageIndex, user, model, notificati
   return {arrayData : transformArray(notificationsReceived, 'notificationHouseholdId'), totalNotifReceived};
 };
 
-exports.finalObjectNotifSendedList = async (pageIndex, user, model, notificationId) => {
+exports.finalObjectNotifSendedList = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
+  let user = findByData;
 
   let findObject = { senderUserId: user._id };
 
@@ -225,12 +231,12 @@ exports.finalObjectNotifSendedList = async (pageIndex, user, model, notification
     };
   }
 
-  if(notificationId){
-    findObject = {_id: {$ne: notificationId},  senderUserId: user._id };
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  senderUserId: user._id };
 
     if(user.role === "admin"){
       findObject = {$and : [
-        { _id: {$ne: notificationId} },
+        { _id: {$ne: dataId} },
         {$or : 
           [
             { senderUserId: user._id },
