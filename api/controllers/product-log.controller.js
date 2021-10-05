@@ -9,7 +9,7 @@ const ProductLog = require('./../models/product-log.model'),
 
 exports.findPaginate = async (req, res, next) => {
   try {
-    const finalObject = await FindByQueryHelper.finalObjectProductLog(req.query.page, req.params.householdId, ProductLog);
+    const finalObject = await FindByQueryHelper.finalObjectProductLog({pageIndex : req.query.page, findByData : req.params.householdId, model : ProductLog});
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
