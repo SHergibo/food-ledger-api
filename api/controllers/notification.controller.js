@@ -92,7 +92,7 @@ exports.findAllSendedNotif = async (req, res, next) => {
 exports.findPaginateReceivedNotif = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
-    const finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, user, Notification);
+    const finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : user, model : Notification});
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -105,7 +105,7 @@ exports.findPaginateReceivedNotif = async (req, res, next) => {
 exports.findPaginateSendedNotif = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
-    const finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req.query.page, user, Notification);
+    const finalObject = await FindByQueryHelper.finalObjectNotifSendedList({pageIndex : req.query.page, findByData : user, model : Notification});
     return res.json(finalObject);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -150,11 +150,11 @@ exports.remove = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received" && req.query.page){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
     }
 
     if(req.query.type === "sended" && req.query.page){
-      finalObject = await FindByQueryHelper.finalObjectNotifSendedList(req.query.page, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifSendedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
     }
 
     if(!req.query.type && !req.query.page){
