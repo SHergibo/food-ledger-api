@@ -96,14 +96,14 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
       if(type === "sended") finalObject = "finalObjectNotifSendedList";
       if(notificationId){
         if(notificationIndex >= (pageIndex * 12) && notificationIndex < (((pageIndex + 1 ) * 12))){
-          let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification, addedNotif ? null : notificationId);
+          let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId : addedNotif ? null : notificationId});
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
           let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/12) - 1;
           let roomNamePageIndex = userRoomName.split('-')[2];
 
           if(roomNamePageIndex > currentPageIndex){
-            let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification, addedNotif ? null : notificationId);
+            let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId :  addedNotif ? null : notificationId});
             socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
           }else{
             if(notificationId){
@@ -148,7 +148,7 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
       if(!notificationId){
         let finalObject = "finalObjectNotifReceivedList";
         if(type === "sended") finalObject = "finalObjectNotifSendedList";
-        let updatedNotifByType = await FindByQueryHelper[finalObject](pageIndex, user, Notification);
+        let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findByData : user, model : Notification});
         socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
       }
     }
@@ -156,29 +156,53 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
   return;
 };
 
-const socketIoToLogic = async ({ data, type, model, includesType, finalObject }) => {
+const findDataIndex = async({model, findObject, sortObject, data}) => {
+  let dataArray = await model.find(findObject)
+  .sort(sortObject);
+
+  dataIndex = await dataArray.findIndex((dataLoop) => dataLoop._id.toString() === data._id.toString());
+  return dataIndex;
+};
+
+const createSearchParams = ({searchData, householdId}) => {
+  console.log(searchData);
+  return { householdId , sortObject : {createdAt : -1}}
+}
+
+const socketIoToLogic = async ({ data, type, model, includesType, finalObject, req }) => {
   const { householdId } = data;
-  let userRoomNameArray = findSocketRoom(includesType);
+  const userRoomNameArray = findSocketRoom(includesType);
+  let dataIndex;
 
   if(userRoomNameArray.length >= 1){
-    if(type !== "deleteAll"){
-      let dataArray = await model.find({ householdId: householdId })
-      .sort({createdAt : -1});
-  
-      dataIndex = dataArray.findIndex((dataLoop) => dataLoop._id.toString() === data._id.toString());
+    if(type !== "deleteAll" && !req){
+      dataIndex = await findDataIndex({model, findObject : { householdId: householdId }, sortObject : {createdAt : -1}, data});
     }
-
+    
     for( userRoomName of userRoomNameArray ){
       if(type === "deleteAll"){
         socketIoTo(userRoomName, "updateDataArray", {arrayData : [], totalData : 0});
         return;
       }
+      
+      if(req){
+        let findObject = { householdId: householdId };
+        let sortObject = {createdAt : -1}
+        const searchData = userRoomName.split('-')[3];
+
+        if(searchData){
+         ({findObject, sortObject} = createSearchParams({searchData, householdId}));
+        }
+
+        dataIndex = await findDataIndex({model, findObject, sortObject, data});
+      }
+
       let pageIndex = parseInt(userRoomName.split('-')[2]);
       if(dataIndex >= (pageIndex * 12) && dataIndex < (((pageIndex + 1 ) * 12))){
         if(type === "updatedData") socketIoTo(userRoomName, "updatedData", data.transform());
         if(type === "addedData") socketIoTo(userRoomName, "addedData", data.transform());
         if(type === "deletedData"){
-          let newDataArray = await FindByQueryHelper[finalObject](pageIndex, householdId, model, data._id);
+          let newDataArray = await FindByQueryHelper[finalObject]({pageIndex, findByData : householdId, model, dataId : data._id, req});
           socketIoTo(userRoomName, "updateDataArray", newDataArray);
         }
       }else{
@@ -187,7 +211,7 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject })
 
         if(roomNamePageIndex > currentPageIndex){
           if(type !== "updatedData"){
-            let newDataArray = await FindByQueryHelper[finalObject](pageIndex, householdId, model, type === "deletedData" ? data._id : null);
+            let newDataArray = await FindByQueryHelper[finalObject]({pageIndex, findByData : householdId, model, dataId : type === "deletedData" ? data._id : null, req});
             socketIoTo(userRoomName, "updateDataArray", newDataArray);
           }
         }else{
@@ -204,10 +228,10 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject })
   return;
 };
 
-const socketIoToProduct = async ({ data, type, model, to }) => {
+const socketIoToProduct = async ({req, data, type, model, to }) => {
   let includesType = {includesType: `${data.householdId}-${to}`};
   let finalObject = "finalObject";
-  await socketIoToLogic({ data, type, model, includesType, finalObject });
+  await socketIoToLogic({ data, type, model, includesType, finalObject, req });
 }
 
 const socketIoToBrand = async ({ data, type, model }) => {
