@@ -157,7 +157,7 @@ exports.switchAdminRequest = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received" && req.query.page){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
     }
 
     if(!req.query.type){
@@ -317,7 +317,7 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received"){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
     }
 
     if(!req.query.type){
@@ -485,7 +485,7 @@ exports.addUserRespond = async (req, res, next) => {
 
         let finalObject = [];
         if(req.query.type === "received"){
-          finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+          finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
         }
     
         if(!req.query.type){
@@ -615,7 +615,7 @@ exports.addUserRespond = async (req, res, next) => {
 
     let finalObject = [];
     if(req.query.type === "received"){
-      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList(req.query.page, req.user, Notification);
+      finalObject = await FindByQueryHelper.finalObjectNotifReceivedList({pageIndex : req.query.page, findByData : req.user, model : Notification});
     }
 
     if(!req.query.type){
