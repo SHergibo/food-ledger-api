@@ -1,7 +1,8 @@
 const { getSocketIoInstance } = require('./../../config/socket-io.config'),
       Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
-      FindByQueryHelper = require('./findByQueryParams.helper');
+      FindByQueryHelper = require('./findByQueryParams.helper'),
+      { createFindAndSortObject }  = require('./createFindAndSortObject.helper');
 
 const socketIoEmit = async (userId, arrayEmitData) => {
   try {
@@ -91,7 +92,7 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
     } 
 
     for( userRoomName of userRoomNameArray ){
-      let pageIndex = parseInt(userRoomName.split('-')[2]);
+      let pageIndex = parseInt(userRoomName.split('/')[2]);
       let finalObject = "finalObjectNotifReceivedList";
       if(type === "sended") finalObject = "finalObjectNotifSendedList";
       if(notificationId){
@@ -100,7 +101,7 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
           let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/12) - 1;
-          let roomNamePageIndex = userRoomName.split('-')[2];
+          let roomNamePageIndex = userRoomName.split('/')[2];
 
           if(roomNamePageIndex > currentPageIndex){
             let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId :  addedNotif ? null : notificationId});
@@ -164,9 +165,19 @@ const findDataIndex = async({model, findObject, sortObject, data}) => {
   return dataIndex;
 };
 
-const createSearchParams = ({searchData, householdId}) => {
-  console.log(searchData);
-  return { householdId , sortObject : {createdAt : -1}}
+const createSearchParams = async ({searchData, findObject, sortObject}) => {
+  let objectSearchParams  = {};
+  let searchDataArray = searchData.split('&');
+  searchDataArray.shift();
+
+  searchDataArray.forEach(data => {
+    searchParams = data.split('=');
+    objectSearchParams[searchParams[0]] = searchParams[1];
+  });
+
+  ({ findObject , sortObject } = await createFindAndSortObject({findObject, sortObject, queryParams : objectSearchParams}));
+
+  return { findObject , sortObject }
 }
 
 const socketIoToLogic = async ({ data, type, model, includesType, finalObject, req }) => {
@@ -188,16 +199,16 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
       if(req){
         let findObject = { householdId: householdId };
         let sortObject = {createdAt : -1}
-        const searchData = userRoomName.split('-')[3];
+        const searchData = userRoomName.split('/')[3];
 
         if(searchData){
-         ({findObject, sortObject} = createSearchParams({searchData, householdId}));
+         ({findObject, sortObject} = await createSearchParams({searchData, findObject, sortObject}));
         }
 
         dataIndex = await findDataIndex({model, findObject, sortObject, data});
       }
 
-      let pageIndex = parseInt(userRoomName.split('-')[2]);
+      let pageIndex = parseInt(userRoomName.split('/')[2]);
       if(dataIndex >= (pageIndex * 12) && dataIndex < (((pageIndex + 1 ) * 12))){
         if(type === "updatedData") socketIoTo(userRoomName, "updatedData", data.transform());
         if(type === "addedData") socketIoTo(userRoomName, "addedData", data.transform());
@@ -207,7 +218,7 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
         }
       }else{
         let currentPageIndex = dataIndex === 0 ? 0 : Math.ceil(dataIndex/12) - 1;
-        let roomNamePageIndex = userRoomName.split('-')[2];
+        let roomNamePageIndex = userRoomName.split('/')[2];
 
         if(roomNamePageIndex > currentPageIndex){
           if(type !== "updatedData"){
@@ -229,25 +240,25 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
 };
 
 const socketIoToProduct = async ({req, data, type, model, to }) => {
-  let includesType = {includesType: `${data.householdId}-${to}`};
+  let includesType = {includesType: `${data.householdId}/${to}`};
   let finalObject = "finalObject";
   await socketIoToLogic({ data, type, model, includesType, finalObject, req });
 }
 
 const socketIoToBrand = async ({ data, type, model }) => {
-  let includesType = {includesType: `${data.householdId}-brand`};
+  let includesType = {includesType: `${data.householdId}/brand`};
   let finalObject = "finalObjectBrandList";
   await socketIoToLogic({ data, type, model, includesType, finalObject });
 }
 
 const socketIoToShoppingList = async ({ data, type, model }) => {
-  let includesType = {includesType: `${data.householdId}-shoppingList`};
+  let includesType = {includesType: `${data.householdId}/shoppingList`};
   let finalObject = "finalObjectShoppingList";
   await socketIoToLogic({ data, type, model, includesType, finalObject });
 }
 
 const socketIoToProductLog = async ({ data, type, model }) => {
-  let includesType = {includesType: `${data.householdId}-productLog`};
+  let includesType = {includesType: `${data.householdId}/productLog`};
   let finalObject = "finalObjectProductLog";
   await socketIoToLogic({ data, type, model, includesType, finalObject });
 }
