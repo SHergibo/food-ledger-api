@@ -1,18 +1,17 @@
-const Brand = require('./../models/brand.model'),
-      Household = require('./../models/household.model'),
+const Household = require('./../models/household.model'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
-      { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper');
+      { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
+      { createFindAndSortObject }  = require('./createFindAndSortObject.helper');
 
 const LIMIT = 12;
 
 exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
   let queryObject = req.query;
-  let queryWithSort = false;
-  let querySortObject = {};
   let page = req.query.page || pageIndex;
   let householdId = findByData;
 
   let findObject = { householdId: householdId };
+  let sortObject = { createdAt : -1 };
 
   if(dataId){
     findObject = {_id: {$ne: dataId},  householdId: householdId };
@@ -20,55 +19,13 @@ exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
 
   let totalData = await model.countDocuments(findObject);
 
-  for (const key in queryObject) {
-    if (key.split('-')[1] === "sort") {
-      queryWithSort = true;
-      if(key === "expirationDate-sort"){
-        querySortObject["expirationDate.0"] = queryObject[key];
-      }else{
-        querySortObject[key.split('-')[0]] = queryObject[key];
-      }
-    }
-    if (key !== "page" && key.split('-')[1] !== "sort") {
-      if (key === "name" || key === "brand" || key === "type" || key === "location") {
-        if(key === "name"){
-          findObject["slugName"] = { $regex: queryObject[key], $options: 'i' };
-        }else if(key === "location"){
-          findObject["slugLocation"] = { $regex: queryObject[key], $options: 'i' };
-        }else if(key === "brand"){
-          let brand = await Brand.findOne({"brandName.value": queryObject[key]}); 
-          findObject[key] = brand._id;
-        }else if(key === "type"){
-          findObject["type.value"] = { $regex: queryObject[key], $options: 'i' };
-        }else{
-          findObject[key] = { $regex: queryObject[key], $options: 'i' };
-        }
-      } else if(key === "expirationDate"){
-        let dateUpperCase = queryObject[key].toUpperCase()
-        let unSlugExpDate = dateUpperCase.split('T')[1].replace(/-/g, ":").replace("_", ".");
-        let expDate = `${dateUpperCase.split('T')[0]}T${unSlugExpDate}`;
-        findObject["expirationDate.expDate"] = expDate;
-      } else {
-        findObject[key] = queryObject[key];
-      }
-      //TODO faire une regex?? pour rechercher par année ou mois/année ou jour/mois/année
-    }
-  }
+  ({findObject, sortObject} = await createFindAndSortObject({findObject, sortObject, queryParams : queryObject}));
 
-  let products;
-  if (queryWithSort) {
-    products = await model.find(findObject)
-      .populate('brand', 'brandName')
-      .skip(page * LIMIT)
-      .limit(LIMIT)
-      .sort(querySortObject);
-  } else {
-    products = await model.find(findObject)
-      .populate('brand', 'brandName')
-      .skip(page * LIMIT)
-      .limit(LIMIT)
-      .sort({createdAt : -1});
-  }
+  let products = await model.find(findObject)
+    .populate('brand', 'brandName')
+    .skip(page * LIMIT)
+    .limit(LIMIT)
+    .sort(sortObject);
 
   if (Object.keys(findObject).length >= 2) {
     const countProductSearch = await model.find(findObject);
