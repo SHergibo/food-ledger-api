@@ -2,7 +2,8 @@ const { getSocketIoInstance } = require('./../../config/socket-io.config'),
       Notification = require('./../models/notification.model'),
       User = require('./../models/user.model'),
       FindByQueryHelper = require('./findByQueryParams.helper'),
-      { createFindAndSortObject }  = require('./createFindAndSortObject.helper');
+      { createFindAndSortObject }  = require('./createFindAndSortObject.helper'),
+      { pageSize } = require('./../utils/globalVariable');
 
 const socketIoEmit = async (userId, arrayEmitData) => {
   try {
@@ -96,11 +97,11 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
       let finalObject = "finalObjectNotifReceivedList";
       if(type === "sended") finalObject = "finalObjectNotifSendedList";
       if(notificationId){
-        if(notificationIndex >= (pageIndex * 12) && notificationIndex < (((pageIndex + 1 ) * 12))){
+        if(notificationIndex >= (pageIndex * pageSize) && notificationIndex < (((pageIndex + 1 ) * pageSize))){
           let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId : addedNotif ? null : notificationId});
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
-          let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/12) - 1;
+          let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/pageSize) - 1;
           let roomNamePageIndex = userRoomName.split('/')[2];
 
           if(roomNamePageIndex > currentPageIndex){
@@ -209,7 +210,7 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
       }
 
       let pageIndex = parseInt(userRoomName.split('/')[2]);
-      if(dataIndex >= (pageIndex * 12) && dataIndex < (((pageIndex + 1 ) * 12))){
+      if(dataIndex >= (pageIndex * pageSize) && dataIndex < (((pageIndex + 1 ) * pageSize))){
         if(type === "updatedData") socketIoTo(userRoomName, "updatedData", data.transform());
         if(type === "addedData") socketIoTo(userRoomName, "addedData", data.transform());
         if(type === "deletedData"){
@@ -217,7 +218,7 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
           socketIoTo(userRoomName, "updateDataArray", newDataArray);
         }
       }else{
-        let currentPageIndex = dataIndex === 0 ? 0 : Math.ceil(dataIndex/12) - 1;
+        let currentPageIndex = dataIndex === 0 ? 0 : Math.ceil(dataIndex/pageSize) - 1;
         let roomNamePageIndex = userRoomName.split('/')[2];
 
         if(roomNamePageIndex > currentPageIndex){
