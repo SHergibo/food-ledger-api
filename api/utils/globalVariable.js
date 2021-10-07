@@ -1,0 +1,1 @@
+exports.pageSize = 12;
