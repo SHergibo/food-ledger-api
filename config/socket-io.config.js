@@ -3,7 +3,8 @@ const sio = require('socket.io'),
       { env, environments } = require('./environment.config'),
       Product = require('./../api/models/product.model'),
       Historic = require('./../api/models/historic.model');
-      Brand = require('./../api/models/brand.model');
+      Brand = require('./../api/models/brand.model'),
+      { pageSize } = require('./../api/utils/globalVariable');
 
 let io = null;
 
@@ -104,7 +105,7 @@ const initializeSocketIo = (httpServer, CorsOrigin) => {
 
             for( userRoomName of userRoomNameArray ){
               let pageIndex = parseInt(userRoomName.split('-')[2]);
-              if(brandIndex >= (pageIndex * 12) && brandIndex < (((pageIndex + 1 ) * 12))){
+              if(brandIndex >= (pageIndex * pageSize) && brandIndex < (((pageIndex + 1 ) * pageSize))){
                 io.to(userRoomName).emit("brandIsEdited", {brandId : brandId, isEdited: isEdited});
               }
             }
