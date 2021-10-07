@@ -1,9 +1,8 @@
 const Household = require('./../models/household.model'),
       { transformArray } = require('./../helpers/transformJsonData.helper'),
       { injectHouseholdNameInNotifArray } = require('./../helpers/transformNotification.helper'),
-      { createFindAndSortObject }  = require('./createFindAndSortObject.helper');
-
-const LIMIT = 12;
+      { createFindAndSortObject }  = require('./createFindAndSortObject.helper'),
+      { pageSize } = require('./../utils/globalVariable');
 
 exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
   let queryObject = req.query;
@@ -23,8 +22,8 @@ exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
 
   let products = await model.find(findObject)
     .populate('brand', 'brandName')
-    .skip(page * LIMIT)
-    .limit(LIMIT)
+    .skip(page * pageSize)
+    .limit(pageSize)
     .sort(sortObject);
 
   if (Object.keys(findObject).length >= 2) {
@@ -49,8 +48,8 @@ exports.finalObjectProductLog = async ({pageIndex, findByData, model, dataId}) =
 
   let productLog = await model.find(findObject)
       .populate('user', "firstname")
-      .skip(page * LIMIT)
-      .limit(LIMIT)
+      .skip(page * pageSize)
+      .limit(pageSize)
       .sort({createdAt : -1});
   
   return {arrayData : transformArray(productLog, 'productLog'), totalData};
@@ -91,8 +90,8 @@ exports.finalObjectShoppingList = async ({pageIndex, findByData, model, dataId})
           weight: 1,
         }
       })
-      .skip(page * LIMIT)
-      .limit(LIMIT)
+      .skip(page * pageSize)
+      .limit(pageSize)
       .sort({createdAt : -1});
 
   return {arrayData : transformArray(shoppingList, 'shoppingList'), totalData}
@@ -111,8 +110,8 @@ exports.finalObjectBrandList = async ({pageIndex, findByData, model, dataId}) =>
   let totalData = await model.countDocuments(findObject);
 
   let brand = await model.find(findObject)
-      .skip(page * LIMIT)
-      .limit(LIMIT)
+      .skip(page * pageSize)
+      .limit(pageSize)
       .sort({createdAt : -1});
   
   return {arrayData : transformArray(brand, 'brand'), totalData};
@@ -158,8 +157,8 @@ exports.finalObjectNotifReceivedList = async ({pageIndex, findByData, model, dat
       path: 'householdId',
       select: 'householdName -_id'
     })
-    .skip(page * LIMIT)
-    .limit(LIMIT);
+    .skip(page * pageSize)
+    .limit(pageSize);
 
   if(user.role === "admin"){
     notificationsReceived = injectHouseholdNameInNotifArray(notificationsReceived);
@@ -216,8 +215,8 @@ exports.finalObjectNotifSendedList = async ({pageIndex, findByData, model, dataI
         path: 'userId',
         select: 'firstname lastname -_id'
       })
-      .skip(page * LIMIT)
-      .limit(LIMIT)
+      .skip(page * pageSize)
+      .limit(pageSize)
       .lean();
 
     for(let notif of notificationsSended){
@@ -234,8 +233,8 @@ exports.finalObjectNotifSendedList = async ({pageIndex, findByData, model, dataI
 
   if(user.role === "user"){
     notificationsSended = await model.find({senderUserId: user._id})    
-      .skip(page * LIMIT)
-      .limit(LIMIT)
+      .skip(page * pageSize)
+      .limit(pageSize)
       .lean();
     
     for(let notif of notificationsSended){
