@@ -1,6 +1,6 @@
 const Brand = require('../models/brand.model');
 
-exports.createFindAndSortObject = async ({findObject, sortObject, queryParams}) => {
+exports.createFindAndSortObject = async ({findObject, sortObject, queryParams, householdId}) => {
   let queryWithSort = false;
   let querySortObject = {};
 
@@ -20,7 +20,7 @@ exports.createFindAndSortObject = async ({findObject, sortObject, queryParams}) 
         }else if(key === "location"){
           findObject["slugLocation"] = { $regex: queryParams[key], $options: 'i' };
         }else if(key === "brand"){
-          let brand = await Brand.findOne({"brandName.value": queryParams[key]}); 
+          let brand = await Brand.findOne({"brandName.value": queryParams[key], householdId}); 
           findObject[key] = brand._id;
         }else if(key === "type"){
           findObject["type.value"] = { $regex: queryParams[key], $options: 'i' };
