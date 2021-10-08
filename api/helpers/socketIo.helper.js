@@ -166,7 +166,7 @@ const findDataIndex = async({model, findObject, sortObject, data}) => {
   return dataIndex;
 };
 
-const createSearchParams = async ({searchData, findObject, sortObject}) => {
+const createSearchParams = async ({searchData, findObject, sortObject, householdId}) => {
   let objectSearchParams  = {};
   let searchDataArray = searchData.split('&');
   searchDataArray.shift();
@@ -176,7 +176,7 @@ const createSearchParams = async ({searchData, findObject, sortObject}) => {
     objectSearchParams[searchParams[0]] = searchParams[1];
   });
 
-  ({ findObject , sortObject } = await createFindAndSortObject({findObject, sortObject, queryParams : objectSearchParams}));
+  ({ findObject , sortObject } = await createFindAndSortObject({findObject, sortObject, queryParams : objectSearchParams, householdId}));
 
   return { findObject , sortObject }
 }
@@ -203,7 +203,7 @@ const socketIoToLogic = async ({ data, type, model, includesType, finalObject, r
         const searchData = userRoomName.split('/')[3];
 
         if(searchData){
-         ({findObject, sortObject} = await createSearchParams({searchData, findObject, sortObject}));
+         ({findObject, sortObject} = await createSearchParams({searchData, findObject, sortObject, householdId}));
         }
 
         dataIndex = await findDataIndex({model, findObject, sortObject, data});
