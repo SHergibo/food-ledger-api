@@ -18,7 +18,7 @@ exports.finalObject = async ({pageIndex, req, findByData, model, dataId}) => {
 
   let totalData = await model.countDocuments(findObject);
 
-  ({findObject, sortObject} = await createFindAndSortObject({findObject, sortObject, queryParams : queryObject}));
+  ({findObject, sortObject} = await createFindAndSortObject({findObject, sortObject, queryParams : queryObject, householdId}));
 
   let products = await model.find(findObject)
     .populate('brand', 'brandName')
