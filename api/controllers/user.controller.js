@@ -6,6 +6,7 @@ const User = require('./../models/user.model'),
       Boom = require('@hapi/boom'),
       RefreshToken = require('./../models/refresh-token.model'),
       cryptoRandomString = require('crypto-random-string'),
+      FindByQueryHelper = require('./../helpers/findByQueryParams.helper'),
       { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
       { transformNeedSwitchAdminToInviteNotif, injectHouseholdName } = require('../helpers/transformNotification.helper');
 
@@ -133,6 +134,40 @@ exports.add = async (req, res, next) => {
     return res.json(user.transform());
   } catch (error) {
     next({error: error, boom: User.checkDuplicateEmail(error)});
+  }
+};
+
+/**
+* GET user List with pagination
+*/
+exports.findPaginate = async (req, res, next) => {
+  try {
+    let finalObject = await FindByQueryHelper.finalObjectUserList({pageIndex : req.query.page, findByData : req.params.householdId, model : User});
+    const household = await Household.findById(req.params.householdId);
+
+    const members = household.members;
+
+    members.forEach(member => {
+      finalObject.arrayData = finalObject.arrayData.map(element => {
+        if(element._id.toString() === member.userData.toString()){
+          return {...element, isFlagged : member.isFlagged}
+        }else{
+          return element;
+        }
+      });
+    });
+
+    const adminIndex = finalObject.arrayData.findIndex(element => element._id.toString() === household.userId.toString());
+
+    if(adminIndex !== 0){
+      const member = finalObject.arrayData[adminIndex];
+      finalObject.arrayData.splice(adminIndex, 1);
+      finalObject.arrayData.splice(0, 0, member);
+    }
+
+    return res.json(finalObject);
+  } catch (error) {
+    next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
 
