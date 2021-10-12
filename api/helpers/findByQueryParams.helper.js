@@ -117,6 +117,26 @@ exports.finalObjectBrandList = async ({pageIndex, findByData, model, dataId}) =>
   return {arrayData : transformArray(brand, 'brand'), totalData};
 };
 
+exports.finalObjectUserList = async ({pageIndex, findByData, model, dataId}) => {
+  let page = pageIndex || 0;
+  let householdId = findByData;
+
+  let findObject = { householdId: householdId };
+
+  if(dataId){
+    findObject = {_id: {$ne: dataId},  householdId: householdId };
+  }
+
+  let totalData = await model.countDocuments(findObject);
+
+  let user = await model.find(findObject)
+      .skip(page * 5)
+      .limit(5)
+      .sort({createdAt : -1});
+  
+  return {arrayData : transformArray(user, 'user'), totalData};
+};
+
 exports.finalObjectNotifReceivedList = async ({pageIndex, findByData, model, dataId}) => {
   let page = pageIndex || 0;
   let user = findByData;
