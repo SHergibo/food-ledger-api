@@ -3,7 +3,7 @@ const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
+      { socketIoEmit, sendNotifToSocket, socketIoToHouseholdMember } = require('./../helpers/socketIo.helper'),
       { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
 
 /**
@@ -109,7 +109,9 @@ exports.kickUser = async (req, res, next) => {
       {name : "deleteNotificationReceived", data: findNotifOldHousehold._id},
     ]);
 
-    return res.json(household.transform());
+    socketIoEmit(req.user._id, [{name : "updateFamilly", data: household.transform()}]);
+
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
