@@ -6,7 +6,7 @@ const Historic = require('./../models/historic.model'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
       ProductLogHelper = require('./../helpers/product-log.helper'),
       Slugify = require('./../utils/slugify'),
-      { socketIoToShoppingList, socketIoToProduct } = require('./../helpers/socketIo.helper'),
+      { socketIoToShoppingList, socketIoToProduct, socketIoToStats } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -84,6 +84,8 @@ exports.update = async (req, res, next) => {
       
       const product = new Product(newBody);
       await product.save();
+
+      socketIoToStats({householdId : product.householdId});
 
       let shopping = await ShoppingList.findOne({historic : historic._id});
       if(shopping){
