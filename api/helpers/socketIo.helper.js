@@ -3,6 +3,7 @@ const { getSocketIoInstance } = require('./../../config/socket-io.config'),
       User = require('./../models/user.model'),
       FindByQueryHelper = require('./findByQueryParams.helper'),
       { createFindAndSortObject }  = require('./createFindAndSortObject.helper'),
+      { getChartData } =  require('./chartData.helper'),
       { pageSize } = require('./../utils/globalVariable');
 
 const socketIoEmit = async (userId, arrayEmitData) => {
@@ -264,12 +265,17 @@ const socketIoToProductLog = async ({ data, type, model }) => {
   await socketIoToLogic({ data, type, model, includesType, finalObject });
 }
 
+const socketIoToStats = async ({ householdId }) => {
+  const getStatistics = await getChartData({householdId});
+  socketIoTo(`${householdId}/statistics`, "updatedData", getStatistics);
+}
+
 module.exports = { 
-  socketIoEmit, 
-  socketIoTo, 
+  socketIoEmit,
   sendNotifToSocket,
   socketIoToProduct,
   socketIoToBrand,
   socketIoToShoppingList,
-  socketIoToProductLog
+  socketIoToProductLog,
+  socketIoToStats
 };
