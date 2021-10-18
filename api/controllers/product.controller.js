@@ -7,7 +7,7 @@ const Product = require('./../models/product.model'),
       { transformDate } = require('./../helpers/transformDate.helper'),
       Slugify = require('./../utils/slugify'),
       BrandLogic = require('./../helpers/brandLogic.helper'),
-      { socketIoToShoppingList, socketIoToProduct } = require('./../helpers/socketIo.helper'),
+      { socketIoToShoppingList, socketIoToProduct, socketIoToStats } = require('./../helpers/socketIo.helper'),
       Boom = require('@hapi/boom');
 
 /**
@@ -24,9 +24,11 @@ exports.add = async (req, res, next) => {
     await product.save();
     await ProductLogHelper.productLogAdd(product, req.user);
 
+    
     let productWithBrand = await Product.findById(product._id)
     .populate('brand', 'brandName');
-
+    
+    socketIoToStats({householdId : productWithBrand.householdId});
     socketIoToProduct({data : productWithBrand, type : "addedData", model: Product, to: "produit", req});
 
     return res.json(product.transform());
@@ -217,6 +219,8 @@ exports.update = async (req, res, next) => {
       await ProductLogHelper.productLogUpdate(product.number, req.body, req.user);
     }
 
+    socketIoToStats({householdId : product.householdId});
+
     return response;
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
@@ -242,6 +246,8 @@ exports.remove = async (req, res, next) => {
       await ShoppingList.findByIdAndDelete(shopping._id);
     }
 
+    socketIoToStats({householdId : product.householdId});
+    
     return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
