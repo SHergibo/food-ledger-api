@@ -204,7 +204,7 @@ exports.switchAdminRights = async (req, res, next) => {
 
     await sendNotifToSocket({userId : req.user._id, notificationId : notification._id, type : "sended", addedNotif: true});
 
-    return res.status(204).send();
+    return res.json(notification.transform());
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
