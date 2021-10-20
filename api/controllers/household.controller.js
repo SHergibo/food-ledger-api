@@ -3,7 +3,7 @@ const Household = require('./../models/household.model'),
       Notification = require('./../models/notification.model'),
       Helpers = require('./../helpers/household.helper'),
       Boom = require('@hapi/boom'),
-      { socketIoEmit, sendNotifToSocket, socketIoToHouseholdMember } = require('./../helpers/socketIo.helper'),
+      { socketIoEmit, sendNotifToSocket } = require('./../helpers/socketIo.helper'),
       { transformNeedSwitchAdminToInviteNotif } = require('../helpers/transformNotification.helper');
 
 /**
@@ -65,6 +65,10 @@ exports.update = async (req, res, next) => {
 */
 exports.kickUser = async (req, res, next) => {
   try {
+    if(req.user.role === "user"){
+      if(req.user._id.toString() !== req.body.userId.toString()) return next(Boom.unauthorized("Vous ne pouvez pas effectuer cette action!"));
+    }
+
     let household = await Household.findById(req.params.householdId);
     let updatedArrayMembers = household.members.filter(member => member.userData.toString() !== req.body.userId);
     household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers })
@@ -109,7 +113,7 @@ exports.kickUser = async (req, res, next) => {
       {name : "deleteNotificationReceived", data: findNotifOldHousehold._id},
     ]);
 
-    socketIoEmit(req.user._id, [{name : "updateFamilly", data: household.transform()}]);
+    socketIoEmit(household.userId, [{name : "updateFamilly", data: household.transform()}]);
 
     return res.status(204).send();
   } catch (error) {
