@@ -69,6 +69,10 @@ exports.kickUser = async (req, res, next) => {
       if(req.user._id.toString() !== req.body.userId.toString()) return next(Boom.unauthorized("Vous ne pouvez pas effectuer cette action!"));
     }
 
+    if(req.user.role === "admin"){
+      if(req.user._id.toString() === req.body.userId.toString()) return next(Boom.unauthorized("Vous ne pouvez pas quitter votre famille tant que vous en êtes l'administrateur.trice!"));
+    }
+
     let household = await Household.findById(req.params.householdId);
     let updatedArrayMembers = household.members.filter(member => member.userData.toString() !== req.body.userId);
     household = await Household.findByIdAndUpdate(household._id, { members: updatedArrayMembers })
