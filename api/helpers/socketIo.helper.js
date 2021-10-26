@@ -49,8 +49,8 @@ const findSocketRoom  = ({includesType}) => {
 }
 
 const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) => {
-  let includesType = `${userId}-notificationReceived`;
-  if (type === "sended") includesType = `${userId}-notificationSended`;
+  let includesType = `${userId}/notificationReceived`;
+  if (type === "sended") includesType = `${userId}/notificationSended`;
 
   let userRoomNameArray = findSocketRoom({includesType});
 
@@ -99,14 +99,14 @@ const sendNotifToSocket = async ({ userId, notificationId, type, addedNotif }) =
       if(type === "sended") finalObject = "finalObjectNotifSendedList";
       if(notificationId){
         if(notificationIndex >= (pageIndex * pageSize) && notificationIndex < (((pageIndex + 1 ) * pageSize))){
-          let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId : addedNotif ? null : notificationId});
+          let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findByData : user, model : Notification, dataId : addedNotif ? null : notificationId});
           socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
         }else{
           let currentPageIndex = notificationIndex === 0 ? 0 : Math.ceil(notificationIndex/pageSize) - 1;
           let roomNamePageIndex = userRoomName.split('/')[2];
 
           if(roomNamePageIndex > currentPageIndex){
-            let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findById : user, model : Notification, dataId :  addedNotif ? null : notificationId});
+            let updatedNotifByType = await FindByQueryHelper[finalObject]({pageIndex, findByData : user, model : Notification, dataId :  addedNotif ? null : notificationId});
             socketIoTo(userRoomName, "updateNotifArray", updatedNotifByType);
           }else{
             if(notificationId){
