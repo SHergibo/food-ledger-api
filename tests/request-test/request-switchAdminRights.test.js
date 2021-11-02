@@ -36,7 +36,7 @@ describe("Test switchAdminRights request controller", () => {
   it("Test 5) send switch admin rights request", async () => {
     const { statusCode, checkNotification, adminOne, householdOne, userTwo } = await switchAdminRightsRequest();
 
-    expect(statusCode).toBe(204);
+    expect(statusCode).toBe(200);
     expect(checkNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(checkNotification.senderUserId.toString()).toBe(adminOne._id.toString());
     expect(checkNotification.householdId.toString()).toBe(householdOne._id.toString());
