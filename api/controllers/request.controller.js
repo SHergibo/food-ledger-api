@@ -72,8 +72,9 @@ exports.switchAdminRequest = async (req, res, next) => {
 
       user = await User.findByIdAndUpdate(notification.userId, { role: "admin" });
       
-      arrayMembers.sort((a, member)=>{ if(member.userData.toString() === notification.userId.toString()) return 1;});
-
+      arrayMembers = arrayMembers.filter(member => member.userData.toString() !== notification.userId.toString());
+      arrayMembers.unshift({isFlagged: false, userData: user._id});
+      
       const updatedHousehold = await Household.findByIdAndUpdate(notification.householdId, { userId: notification.userId, isWaiting: false, members: arrayMembers, $unset: { lastChance: "" } })
       .populate({
         path: 'members.userData',
@@ -254,7 +255,9 @@ exports.switchAdminRightsRespond = async (req, res, next) => {
       const newAdmin = await User.findByIdAndUpdate(notification.userId, {role : "admin"});
 
       let arrayMembers = household.members;
-      arrayMembers.sort((a, member)=>{ if(member.userData.toString() === newAdmin._id.toString()) return 1;});
+
+      arrayMembers = arrayMembers.filter(member => member.userData.toString() !== newAdmin._id.toString());
+      arrayMembers.unshift({isFlagged: false, userData: newAdmin._id});
 
       await transformNeedSwitchAdminToInviteNotif({userId : oldAdmin._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
       await transformInviteToNeedSwitchAdminNotif({userId : newAdmin._id, SocketIoHelper : {socketIoEmit, sendNotifToSocket}});
