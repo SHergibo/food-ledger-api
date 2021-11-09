@@ -33,5 +33,17 @@ exports.exit = (err, req, res, next) => {
 
 exports.notFound = (req, res, next) => {
   res.status(404);
-  res.json(Boom.notFound('End point not found'));
+
+  if (req.accepts('text/html')) {
+    res.render('pages/404', {
+      title : '404 non trouvée !',
+      layout : 'layouts/404-layout.hbs'
+    })
+    return;
+  }
+
+  if (req.accepts('application/json')) {
+    res.json(Boom.notFound(`End point not found`));
+    return;
+  }
 }
