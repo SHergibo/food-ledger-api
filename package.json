@@ -25,6 +25,7 @@
     "dotenv": "^8.2.0",
     "es6-promisify": "^6.1.1",
     "express": "^4.17.1",
+    "express-hbs": "^2.4.0",
     "express-mongo-sanitize": "^2.1.0",
     "googleapis": "^64.0.0",
     "helmet": "^4.3.1",
