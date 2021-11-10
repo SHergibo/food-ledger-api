@@ -1,0 +1,21 @@
+body{
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Poppins", sans-serif;
+  line-height: 1.4;
+}
+h1 {
+  margin: 2rem;
+  color: hsl(257, 63%, 52%);
+}
+
+/*Full-screen*/
+@media screen and (min-width: 1320px){
+  h1{
+    font-size: 4rem;
+  }
+}
