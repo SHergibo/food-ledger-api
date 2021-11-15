@@ -17,7 +17,7 @@ const app = Express();
 app.use('/assets', Express.static(`${process.cwd()}/api/public`));
 
 app.engine('hbs', hbs.express4({
-  defaultLayout : `${process.cwd()}/api/views/layouts/404-layout.hbs`
+  defaultLayout : `${process.cwd()}/api/views/layouts/default-layout.hbs`
 }));
 
 app.set('views', `${process.cwd()}/api/views`);
