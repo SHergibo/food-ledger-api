@@ -37,7 +37,7 @@ exports.notFound = (req, res, next) => {
   if (req.accepts('text/html')) {
     res.render('pages/404', {
       title : '404 - données non trouvées !',
-      layout : 'layouts/404-layout.hbs'
+      layout : 'layouts/default-layout.hbs'
     })
     return;
   }
