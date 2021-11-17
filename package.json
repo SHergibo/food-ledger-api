@@ -22,7 +22,7 @@
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "crypto-random-string": "^3.3.0",
-    "dotenv": "^8.2.0",
+    "dotenv": "^10.0.0",
     "es6-promisify": "^6.1.1",
     "express": "^4.17.1",
     "express-hbs": "^2.4.0",
