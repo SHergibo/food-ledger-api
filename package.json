@@ -29,7 +29,7 @@
     "express-mongo-sanitize": "^2.1.0",
     "googleapis": "^91.0.0",
     "helmet": "^4.6.0",
-    "isomorphic-dompurify": "^0.14.0",
+    "isomorphic-dompurify": "^0.16.0",
     "jwt-simple": "^0.5.6",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.32",
