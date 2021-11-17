@@ -27,7 +27,7 @@
     "express": "^4.17.1",
     "express-hbs": "^2.4.0",
     "express-mongo-sanitize": "^2.1.0",
-    "googleapis": "^64.0.0",
+    "googleapis": "^91.0.0",
     "helmet": "^4.6.0",
     "isomorphic-dompurify": "^0.14.0",
     "jwt-simple": "^0.5.6",
