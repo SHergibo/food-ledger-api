@@ -25,8 +25,8 @@ exports.addHousehold = async (body) => {
     const household = await newHousehold.populate({
       path: 'members.userData',
       select: 'firstname lastname usercode role'
-    })
-    .execPopulate();
+    });
+
     return household;
   } catch (error) {
     return error;
@@ -90,12 +90,13 @@ exports.noMoreAdmin = async (arrayMembers, householdId) => {
           
           userData = await User.findByIdAndUpdate(member.userData, {role : "admin", householdId: oldHousehold._id });
           let addMember = oldHousehold.members;
-          addMember.push(member);
+          addMember = [...addMember, member];
           householdData = await Household.findByIdAndUpdate(oldHousehold._id, { members: addMember })
           .populate({
             path: 'members.userData',
             select: 'firstname lastname usercode role'
           });
+
           householdData = householdData.transform()
       }
       else {
