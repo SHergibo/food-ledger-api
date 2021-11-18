@@ -7,7 +7,7 @@ exports.getChartData = async ({ householdId }) => {
   const products = await Product.find({ householdId });
 
   if(products.length >= 1){
-    if(!statistic || statistic.isOutdated === true || !statistic.chartOne){
+    if(!statistic || statistic.isOutdated === true || !statistic.statistics.chartOne){
       let dataFinal = {};
       let dataChartOne = {};
       let productType = ['legume', 'viande', 'poisson', 'fruit', 'boisson', 'produit-sucre', 'produit-laitier', 'farineux', 'cereale', 'legumineuse'];
@@ -64,12 +64,12 @@ exports.getChartData = async ({ householdId }) => {
         let stat = {
           statistics : dataFinal,
           householdId
-        }
-    
+        };
+
         statistic = new Statistic(stat);
         await statistic.save();
       }
-      if(statistic.isOutdated === true || !statistic.chartOne){
+      if(statistic.isOutdated === true || !statistic.statistics.chartOne){
         statistic = await Statistic.findByIdAndUpdate(statistic._id, {statistics : dataFinal, isOutdated : false});
       }
     }
