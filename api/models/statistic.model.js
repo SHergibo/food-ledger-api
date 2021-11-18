@@ -21,7 +21,7 @@ let statisticObject = new Schema({
 
 let schema = new Schema({
   statistics: {
-    type : {statisticObject},
+    type : statisticObject,
     trim: true,
     required: true
   },
