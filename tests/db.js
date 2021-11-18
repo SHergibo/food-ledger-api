@@ -10,17 +10,9 @@ module.exports.connect = async () => {
   mongod = await MongoMemoryServer.create();
   const uri = mongod.getUri();
 
-  const mongooseOpts = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-    useCreateIndex : true,
-    poolSize: 10
-  };
-
   mongoose.set('returnOriginal', false);
 
-  await mongoose.connect(uri, mongooseOpts);
+  await mongoose.connect(uri, {});
 }
 
 /**
