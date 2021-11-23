@@ -1,11 +1,21 @@
 const { createErrorTest, createAddUserRequestTestOne, createAddUserRequestTestTwo, createAddUserRequestTestThree } = require('./request-helper/addUserRequest.helper'),
-      { adminOneDataComplete, adminTwoDataComplete } = require('../test-data');
+      { adminOneDataComplete, adminTwoDataComplete } = require('../test-data'),
+      Client = require("socket.io-client");
 
 const { dbManagement } = require('../db-management-utils');
 
 dbManagement();
 
 describe("Test addUserRequest controller", () => {
+  let clientSocket;
+  beforeEach(() => {
+    clientSocket = Client(`http://localhost:8003`);
+    clientSocket.on("connect", () => {return true});
+  });
+
+  afterEach(() => {
+    clientSocket.close();
+  });
   it("Test 1) send add user request with bad usercode", async () => {
     const { statusCode, error } = await createErrorTest(adminOneDataComplete, adminTwoDataComplete, "badUserCode");
 
@@ -49,7 +59,11 @@ describe("Test addUserRequest controller", () => {
     expect(error.output.payload.message).toMatch("L'utilisateur.trice ne peut pas changer de famille en ce moment, car cette dernière n'a pas d'administrateur.trice!");
   });
   it("Test 7) Send addUser request from adminOne to adminTwo and test if invite household to user notification is created", async () => {
-    const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
+    clientSocket.on("updateNotificationReceived", (arg) => {
+      console.log(arg)
+      // expect(arg).toBe("world");
+    });
+    const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, clientSocket);
 
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.userId.toString()).toBe(user._id.toString());
