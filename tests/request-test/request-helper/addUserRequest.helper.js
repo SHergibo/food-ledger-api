@@ -6,7 +6,7 @@ const User = require('../../../api/models/user.model');
 const Notification = require('../../../api/models/notification.model');
 const { login } = require('../../login.helper');
 
-const createUsers = async (adminOneData, adminTwoData) => {
+const createUsers = async (adminOneData, adminTwoData, clientSocket) => {
   const adminOne = await request(app)
     .post(`/api/${api}/users`)
     .send(adminOneData);
@@ -14,6 +14,9 @@ const createUsers = async (adminOneData, adminTwoData) => {
   const adminTwo = await request(app)
     .post(`/api/${api}/users`)
     .send(adminTwoData);
+
+  clientSocket.emit('enterSocketRoom', {socketRoomName: adminOne.body._id});
+  clientSocket.emit('enterSocketRoom', {socketRoomName: adminTwo.body._id});
 
   return { adminOne, adminTwo };
 };
@@ -69,8 +72,8 @@ module.exports.createErrorTest = async (adminOneData, adminTwoData, testName) =>
   return {statusCode : addUserResponse.statusCode, error : JSON.parse(addUserResponse.error.text)}
 };
 
-module.exports.createAddUserRequestTestOne = async (adminOneData, adminTwoData) => {
-  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+module.exports.createAddUserRequestTestOne = async (adminOneData, adminTwoData, clientSocket) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData, clientSocket);
 
   const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
 
