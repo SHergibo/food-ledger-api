@@ -1,7 +1,6 @@
 const { createErrorTest, createAddUserRequestTestOne, createAddUserRequestTestTwo, createAddUserRequestTestThree } = require('./request-helper/addUserRequest.helper'),
       { adminOneDataComplete, adminTwoDataComplete } = require('../test-data'),
-      Client = require("socket.io-client"),
-      { testNotification } = require('./notification-helper/test-notification.helper');
+      Client = require("socket.io-client");
 
 const { dbManagement } = require('../db-management-utils');
 const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
@@ -54,23 +53,23 @@ describe("Test addUserRequest controller", () => {
   it("Test 7) Send addUser request from adminOne to adminTwo and test if invite household to user notification is created", async () => {
     let clientSocketAdminOne = Client(`http://localhost:8003`);
     let clientSocketAdminTwo = Client(`http://localhost:8003`);
-
     let objectClientSocket = {clientSocketAdminOne, clientSocketAdminTwo};
 
     connectSocketClient(objectClientSocket);
 
-    // clientSocketAdminTwo.on("updateNotificationReceived", (data) => {
-    //   notification = data;
-    // });
-
-    // let testByEmitName = [
-    //   {clientSocketAdminTwo : ['updateNotificationReceived']}
-    // ]
-
-    // let testNotif = await testNotification(objectClientSocket, testByEmitName);
+    let notifReceivedAdminTwo;
+    clientSocketAdminTwo.on("updateNotificationReceived", (data) => {
+      notifReceivedAdminTwo = data;
+    });
 
     const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
 
+
+    expect(notifReceivedAdminTwo.message).toBe(`L'administrateur.trice de la famille ${householdAdmin.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`);
+    expect(notifReceivedAdminTwo.type).toBe('invitation-household-to-user');
+    expect(notifReceivedAdminTwo.urlRequest).toBe('add-user-respond');
+    expect(notifReceivedAdminTwo.householdId.householdName).toBe(householdAdmin.householdName);
+    
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.userId.toString()).toBe(user._id.toString());
     expect(notificationAddUser.householdId.toString()).toBe(householdAdmin._id.toString());
