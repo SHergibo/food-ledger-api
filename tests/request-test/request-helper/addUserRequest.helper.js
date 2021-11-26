@@ -99,12 +99,12 @@ module.exports.createAddUserRequestTestOne = async (adminOneData, adminTwoData, 
   return {addUser, admin: adminOne.body, user: adminTwo.body,  householdAdmin : householdAdminOne, notificationAddUser}
 };
 
-module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData) => {
-  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData, objectClientSocket) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData, objectClientSocket);
   
   const householdAdminTwo = await Household.findById(adminOne.body.householdId);
   let arrayMembers = householdAdminTwo.members;
-  arrayMembers = [...arrayMembers, arrayMembers[1]];
+  arrayMembers = [...arrayMembers, arrayMembers[0]];
   await Household.findByIdAndUpdate(adminTwo.body.householdId, {members : arrayMembers});
 
   const accessTokenAdminOne = await login(adminOneData.email, adminOneData.password);
