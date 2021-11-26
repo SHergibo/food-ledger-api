@@ -89,12 +89,42 @@ describe("Test addUserRequest controller", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 8) Send addUser request from adminOne to AdminTwo and test if need-switch-admin notification is created", async () => {
-    const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestTwo(adminOneDataComplete, adminTwoDataComplete);
+    let clientSocketAdminOne = Client(`http://localhost:8003`);
+    let clientSocketAdminTwo = Client(`http://localhost:8003`);
+    let objectClientSocket = {clientSocketAdminOne, clientSocketAdminTwo};
+
+    connectSocketClient(objectClientSocket);
+
+    let notifReceivedAdminTwo;
+    clientSocketAdminTwo.on("updateNotificationReceived", (data) => {
+      notifReceivedAdminTwo = data;
+    });
+
+    let updateNotifAdminTwo;
+    clientSocketAdminTwo.on("updateNotifArray", (data) => {
+      updateNotifAdminTwo = data;
+    });
+
+    let updateNotifAdminOne;
+    clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifAdminOne = data;
+    });
+
+    const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestTwo(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
+
+    expect(notifReceivedAdminTwo.message).toBe(`L'administrateur.trice de la famille ${householdAdminOne.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation? Si oui, il faudra déléguer vos droits d'administrations à un.e autre membre de votre famille avant de pouvoir changer de famille.`);
+    expect(notifReceivedAdminTwo.type).toBe('need-switch-admin');
+    expect(notifReceivedAdminTwo.urlRequest).toBe('add-user-respond');
+    expect(notifReceivedAdminTwo.householdId.householdName).toBe(householdAdminOne.householdName);
+    expect(updateNotifAdminTwo.arrayData[0]._id.toString()).toBe(notifReceivedAdminTwo._id.toString());
+    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(notifReceivedAdminTwo._id.toString());
 
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.userId.toString()).toBe(adminTwo._id.toString());
     expect(notificationAddUser.householdId.toString()).toBe(householdAdminOne._id.toString());
     expect(notificationAddUser.type).toBe("need-switch-admin");
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 9) Send addUser request from adminTwo to AdminOne and test if invitation user-to-household notification is created", async () => {
     const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestThree(adminOneDataComplete, adminTwoDataComplete);
