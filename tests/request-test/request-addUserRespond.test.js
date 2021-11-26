@@ -157,7 +157,28 @@ describe("Test addUserRespond", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 7) send addUser request from admin to user and the user accept the offer", async () => {
-    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
+    let clientSocketAdminOne = Client(`http://localhost:8003`);
+    let clientSocketAdminTwo = Client(`http://localhost:8003`);
+    let objectClientSocket = {clientSocketAdminOne, clientSocketAdminTwo};
+
+    connectSocketClient(objectClientSocket);
+
+    let updateUserAndFamillyAdminTwo;
+    clientSocketAdminTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyAdminTwo = data;
+    });
+
+    let updateAllNotifReceivedAdminTwo;
+    clientSocketAdminTwo.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedAdminTwo = data;
+    });
+
+    let deleteNotifAdminTwo;
+    clientSocketAdminTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifAdminTwo = data;
+    });
+
+    const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
 
     const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
@@ -176,6 +197,11 @@ describe("Test addUserRespond", () => {
     const householAdminWithNewMember = await Household.findById(householdAdmin._id);
     const indexUserInHouseholdAdminMemberArray = householAdminWithNewMember.members.findIndex(member => member.userData.toString() === userAfterSwitchFamilly._id.toString())
 
+    expect(updateUserAndFamillyAdminTwo.userData.householdId.toString()).toBe(householdAdmin._id.toString());
+    expect(updateUserAndFamillyAdminTwo.householdData.householdCode).toBe(householdAdmin.householdCode);
+    expect(updateAllNotifReceivedAdminTwo).toEqual([]);
+    expect(deleteNotifAdminTwo.toString()).toBe(notificationAddUser._id.toString());
+
     expect(acceptAddUserRequest.statusCode).toBe(204);
     expect(notificationAddUserDeleted).toBeNull();
 
@@ -183,6 +209,8 @@ describe("Test addUserRespond", () => {
     expect(userAfterSwitchFamilly.householdId.toString()).toBe(householdAdmin._id.toString());
     expect(userAfterSwitchFamilly.role).toMatch("user");
     expect(indexUserInHouseholdAdminMemberArray).toBe(1);
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 8) create delegate Notification and check if that notification is created", async () => {
     const { householdOne, adminTwo } = await createAddUserRespondTest();
