@@ -8,9 +8,12 @@ const request = require("supertest"),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRequestTestOne } = require('./request-helper/addUserRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember, delegateWithoutOtherMember, testTranformInviteNotif } = require('./request-helper/addUserRespond.helper'),
-      { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data');
+      { adminOneDataComplete, adminTwoDataComplete, notificationDelegateAdmin, notificationAddUserRespond} = require('../test-data'),
+      Client = require("socket.io-client");
 
 const { dbManagement } = require('../db-management-utils');
+const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
+
 dbManagement();
 
 const URL_REQUEST = "add-user-respond";
@@ -95,7 +98,28 @@ describe("Test addUserRespond", () => {
     expect(JSON.parse(res.error.text).output.payload.message).toMatch("Vous ne pouvez pas déléguer vos droits d'administrations si une autre requête de délégation de droits est en cour!");
   });
   it("Test 6) send addUser request from admin to user and the user reject the offer", async () => {
-    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
+    let clientSocketAdminOne = Client(`http://localhost:8003`);
+    let clientSocketAdminTwo = Client(`http://localhost:8003`);
+    let objectClientSocket = {clientSocketAdminOne, clientSocketAdminTwo};
+
+    connectSocketClient(objectClientSocket);
+
+    let notifReceivedAdminOne;
+    clientSocketAdminOne.on("updateNotificationReceived", (data) => {
+      notifReceivedAdminOne = data;
+    });
+
+    let updateNotifAdminOne;
+    clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifAdminOne = data;
+    });
+
+    let deleteNotifAdminTwo;
+    clientSocketAdminTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifAdminTwo = data;
+    });
+
+    const { admin, user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
 
     const accessTokenUser = await login(adminTwoDataComplete.email, adminTwoDataComplete.password);
 
@@ -116,6 +140,11 @@ describe("Test addUserRespond", () => {
 
     const householdUser = await Household.findById(user.householdId);
 
+    expect(notifReceivedAdminOne.message).toBe(`L'utilisateur.trice ${user.firstname} ${user.lastname} n'a pas accepté.e votre requête d'invitation!`);
+    expect(notifReceivedAdminOne.type).toBe('information');
+    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(notifReceivedAdminOne._id.toString());
+    expect(deleteNotifAdminTwo.toString()).toBe(notificationAddUser._id.toString());
+
     expect(rejectAddUserRequest.statusCode).toBe(204);
     expect(notificationAddUserDeleted).toBeNull();
 
@@ -124,6 +153,8 @@ describe("Test addUserRespond", () => {
 
     expect(user.householdId.toString()).toBe(householdUser._id.toString());
     expect(user._id.toString()).toBe(householdUser.userId.toString());
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 7) send addUser request from admin to user and the user accept the offer", async () => {
     const { user, householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete);
