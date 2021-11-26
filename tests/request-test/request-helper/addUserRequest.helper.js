@@ -15,12 +15,14 @@ const createUsers = async (adminOneData, adminTwoData, objectClientSocket) => {
     .post(`/api/${api}/users`)
     .send(adminTwoData);
 
-    objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: adminOne.body._id});
-    objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.body._id}/notificationReceived/0`});
-    objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.body._id}/notificationSended/0`});
-    objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: adminTwo.body._id});
-    objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: `${adminTwo.body._id}/notificationReceived/0`});
-    objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: `${adminTwo.body._id}/notificationSended/0`});
+    if(objectClientSocket){
+      objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: adminOne.body._id});
+      objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.body._id}/notificationReceived/0`});
+      objectClientSocket.clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.body._id}/notificationSended/0`});
+      objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: adminTwo.body._id});
+      objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: `${adminTwo.body._id}/notificationReceived/0`});
+      objectClientSocket.clientSocketAdminTwo.emit('enterSocketRoom', {socketRoomName: `${adminTwo.body._id}/notificationSended/0`});
+    }
 
   return { adminOne, adminTwo };
 };
