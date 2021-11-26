@@ -62,13 +62,24 @@ describe("Test addUserRequest controller", () => {
       notifReceivedAdminTwo = data;
     });
 
-    const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
+    let updateNotifAdminTwo;
+    clientSocketAdminTwo.on("updateNotifArray", (data) => {
+      updateNotifAdminTwo = data;
+    });
 
+    let updateNotifAdminOne;
+    clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifAdminOne = data;
+    });
+
+    const { addUser, user,  householdAdmin, notificationAddUser } = await createAddUserRequestTestOne(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
 
     expect(notifReceivedAdminTwo.message).toBe(`L'administrateur.trice de la famille ${householdAdmin.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`);
     expect(notifReceivedAdminTwo.type).toBe('invitation-household-to-user');
     expect(notifReceivedAdminTwo.urlRequest).toBe('add-user-respond');
     expect(notifReceivedAdminTwo.householdId.householdName).toBe(householdAdmin.householdName);
+    expect(updateNotifAdminTwo.arrayData[0]._id.toString()).toBe(notifReceivedAdminTwo._id.toString());
+    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(notifReceivedAdminTwo._id.toString());
     
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.userId.toString()).toBe(user._id.toString());
