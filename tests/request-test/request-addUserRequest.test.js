@@ -127,11 +127,40 @@ describe("Test addUserRequest controller", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 9) Send addUser request from adminTwo to AdminOne and test if invitation user-to-household notification is created", async () => {
-    const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestThree(adminOneDataComplete, adminTwoDataComplete);
+    let clientSocketAdminOne = Client(`http://localhost:8003`);
+    let clientSocketAdminTwo = Client(`http://localhost:8003`);
+    let objectClientSocket = {clientSocketAdminOne, clientSocketAdminTwo};
+
+    connectSocketClient(objectClientSocket);
+
+    let notifReceivedAdminOne;
+    clientSocketAdminOne.on("updateNotificationReceived", (data) => {
+      notifReceivedAdminOne = data;
+    });
+
+    let updateNotifAdminOne;
+    clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifAdminOne = data;
+    });
+
+    let updateNotifAdminTwo;
+    clientSocketAdminTwo.on("updateNotifArray", (data) => {
+      updateNotifAdminTwo = data;
+    });
+
+    const { addUser, adminTwo, householdAdminOne, notificationAddUser } = await createAddUserRequestTestThree(adminOneDataComplete, adminTwoDataComplete, objectClientSocket);
+
+    expect(notifReceivedAdminOne.message).toBe(`L'utilisateur.trice ${user.firstname} ${user.lastname} veut rejoindre votre famille. Acceptez-vous la demande?`);
+    expect(notifReceivedAdminOne.type).toBe('invitation-user-to-household');
+    expect(notifReceivedAdminOne.urlRequest).toBe('add-user-respond');
+    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(notifReceivedAdminOne._id.toString());
+    expect(updateNotifAdminTwo.arrayData[0]._id.toString()).toBe(notifReceivedAdminOne._id.toString());
 
     expect(addUser.statusCode).toBe(204);
     expect(notificationAddUser.senderUserId.toString()).toBe(adminTwo._id.toString());
     expect(notificationAddUser.householdId.toString()).toBe(householdAdminOne._id.toString());
     expect(notificationAddUser.type).toBe("invitation-user-to-household");
+
+    disconnectSocketClient(objectClientSocket);
   });
 });
