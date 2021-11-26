@@ -127,8 +127,8 @@ module.exports.createAddUserRequestTestTwo = async (adminOneData, adminTwoData, 
   return {addUser, adminTwo: adminTwo.body, householdAdminOne, notificationAddUser}
 };
 
-module.exports.createAddUserRequestTestThree = async (adminOneData, adminTwoData) => {
-  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData);
+module.exports.createAddUserRequestTestThree = async (adminOneData, adminTwoData, objectClientSocket) => {
+  const { adminOne, adminTwo } = await createUsers(adminOneData, adminTwoData, objectClientSocket);
   
   const accessTokenAdminTwo = await login(adminTwoData.email, adminTwoData.password);
 
