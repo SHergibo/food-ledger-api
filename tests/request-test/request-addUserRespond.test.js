@@ -213,13 +213,42 @@ describe("Test addUserRespond", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 8) create delegate Notification and check if that notification is created", async () => {
-    const { householdOne, adminTwo } = await createAddUserRespondTest();
-    const { addUserRequestResponse, notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+    const { householdOne, adminTwo, objectClientSocket } = await createAddUserRespondTest({withSocket: true});
+    connectSocketClient(objectClientSocket);
+    
+    let notifReceivedAdminTwo;
+    objectClientSocket.clientSocketAdminTwo.on("updateNotificationReceived", (data) => {
+      notifReceivedAdminTwo = data;
+    });
+
+    let updateNotifAdminTwo = {};
+    objectClientSocket.clientSocketAdminTwo.on("updateNotifArray", (data) => {
+      if(Object.keys(data).find(key => key === 'totalNotifSended')) updateNotifAdminTwo['updateSendedNotif'] = data;
+      if(Object.keys(data).find(key => key === 'totalNotifReceived')) updateNotifAdminTwo['updateReceivedNotif'] = data;
+    });
+
+    let deleteNotifAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("deleteNotificationReceived", (data) => {
+      deleteNotifAdminOne = data;
+    });
+
+    const { addUserNotification, addUserRequestResponse, notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+
+    expect(notifReceivedAdminTwo._id.toString()).toBe(notificationDelegateUser._id.toString());
+    expect(notifReceivedAdminTwo.type).toBe(notificationDelegateUser.type);
+    expect(updateNotifAdminTwo.updateSendedNotif.arrayData).toEqual([]);
+    expect(updateNotifAdminTwo.updateSendedNotif.totalNotifSended).toBe(0);
+    expect(updateNotifAdminTwo.updateReceivedNotif.arrayData[0]._id.toString()).toBe(notificationDelegateUser._id.toString());
+    expect(updateNotifAdminTwo.updateReceivedNotif.arrayData[0].type).toBe(notificationDelegateUser.type);
+    expect(updateNotifAdminTwo.updateReceivedNotif.totalNotifReceived).toBe(1);
+    expect(deleteNotifAdminOne.toString()).toBe(addUserNotification._id.toString());
 
     expect(addUserRequestResponse.statusCode).toBe(204);
     expect(notificationDelegateUser.userId.toString()).toBe(adminTwo._id.toString());
     expect(notificationDelegateUser.householdId.toString()).toBe(householdOne._id.toString());
     expect(notificationDelegateUser.type).toMatch("need-switch-admin");
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 9) admin delegate admin rights with a wrong otherMember query", async () => {
     const { householdOne, adminTwo, householdTwo } = await createAddUserRespondTest();
@@ -236,8 +265,46 @@ describe("Test addUserRespond", () => {
     expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdTwo._id.toString());
   });
   it("Test 10) admin delegate admin rights with a good otherMember query", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
+    const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTest({withSocket: true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
+
+    let notifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateNotificationReceived", (data) => {
+      notifReceivedUserTwo = data;
+    });
+
+    let updateNotifUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
+      updateNotifUserTwo = data;
+    });
+
+    let updateFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateFamilly", (data) => {
+      updateFamillyUserTwo = data;
+    });
+
+    let updateFamillyUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateFamilly", (data) => {
+      updateFamillyUserThree = data;
+    });
+
+    let updateUserAndFamillyAdminTwo;
+    objectClientSocket.clientSocketAdminTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyAdminTwo = data;
+    });
+
+    let deleteNotifAdminTwo;
+    objectClientSocket.clientSocketAdminTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifAdminTwo = data;
+    });
+
+    let updateFamillyNotifAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateFamilly", (data) => {
+      updateFamillyNotifAdminOne = data;
+    });
+
     const { 
       delegateResponse, 
       notificationRequestDelegateAdmin, 
@@ -246,6 +313,22 @@ describe("Test addUserRespond", () => {
       isUserInHouseholdTwo, 
       adminTwoAfterSwitch 
     } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+
+    expect(notifReceivedUserTwo._id.toString()).toBe(notificationRequestDelegateAdmin._id.toString());
+    expect(notifReceivedUserTwo.type).toMatch("request-delegate-admin");
+    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(notificationRequestDelegateAdmin._id.toString());
+    expect(updateNotifUserTwo.arrayData[0].type).toMatch("request-delegate-admin");
+    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
+    expect(updateFamillyUserTwo.isWaiting).toBe(true);
+    expect(updateFamillyUserThree.isWaiting).toBe(true);
+
+    expect(updateUserAndFamillyAdminTwo.householdData._id.toString()).toBe(householdOne._id.toString());
+    expect(updateUserAndFamillyAdminTwo.userData.householdId.toString()).toBe(householdOne._id.toString());
+    expect(updateUserAndFamillyAdminTwo.userData.role).toBe('user');
+    expect(deleteNotifAdminTwo.toString()).toBe(notificationDelegateUser._id.toString());
+
+    expect(updateFamillyNotifAdminOne.members[1].userData._id.toString()).toBe(adminTwo._id.toString());
+
 
     expect(delegateResponse.statusCode).toBe(204);
     expect(notificationRequestDelegateAdmin.userId.toString()).toBe(userTwo._id.toString());
@@ -256,6 +339,8 @@ describe("Test addUserRespond", () => {
     expect(adminTwoAfterSwitch.role).toMatch("user");
     expect(adminTwoAfterSwitch.householdId.toString()).toBe(householdOne._id.toString());
     expect(householdTwoAfterSwitch.isWaiting).toBe(true);
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 11) admin switch household without otherMember query params", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
@@ -270,6 +355,10 @@ describe("Test addUserRespond", () => {
       userThreeAfterSwitch,
       isUserThreeInHouseholdOne
     } = await delegateWithoutOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo, userThree, householdThree);
+
+    //1 userTwo
+    //2 AdminTwo
+    //1 Admin One
 
     expect(delegateResponse.statusCode).toBe(204);
     expect(notificationDeleted).toBeNull();
