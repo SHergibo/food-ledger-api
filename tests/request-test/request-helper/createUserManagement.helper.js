@@ -3,7 +3,7 @@ const Household = require('../../../api/models/household.model'),
       Option = require('../../../api/models/option.model'),
       cryptoRandomString = require('crypto-random-string');
 
-module.exports.createUser = async (userData) => {
+module.exports.createUser = async ({userData, clientSocket}) => {
   let createdUser = await new User({
     firstname: userData.firstname,
     lastname: userData.lastname,
@@ -18,6 +18,13 @@ module.exports.createUser = async (userData) => {
   await option.save();
 
   createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id });
+
+  if(clientSocket){
+    clientSocket.emit('enterSocketRoom', {socketRoomName: createdUser._id});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationReceived/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationSended/0`});
+  }
+
   return createdUser;
 };
 
