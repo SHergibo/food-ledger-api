@@ -7,7 +7,8 @@ const request = require("supertest"),
       Notification = require('../../../api/models/notification.model'),
       cryptoRandomString = require('crypto-random-string'),
       {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data'),
-      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper');
+      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper'),
+      Client = require("socket.io-client");
 
 const createHouseholdWithoutAdmin = async (userId, householdName) => {
   let newHousehold = new Household({
@@ -30,25 +31,40 @@ const createAddUserRequestNotification = async (userData, householdId) => {
   return await addUserRequestNotification.save();
 }
 
-module.exports.createAddUserRespondTest = async () => {
-  let adminOne = await createUser(adminOneDataComplete);
+module.exports.createAddUserRespondTest = async (withSocket) => {
+  let clientSocketAdminOne, clientSocketAdminTwo, clientSocketUserTwo, clientSocketUserThree;
+  if(withSocket){
+    clientSocketAdminOne = Client(`http://localhost:8003`);
+    clientSocketAdminTwo = Client(`http://localhost:8003`);
+    clientSocketUserTwo = Client(`http://localhost:8003`);
+    clientSocketUserThree = Client(`http://localhost:8003`);
+  }
+
+  let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
   const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
   adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
 
-  let adminTwo = await createUser(adminTwoDataComplete);
+  let adminTwo = await createUser({userData : adminTwoDataComplete, clientSocket: clientSocketAdminTwo});
   let householdTwo = await createHousehold(adminTwo._id, adminTwoDataComplete.householdName);
   adminTwo = await updateUserHouseholdId(adminTwo._id, householdTwo._id);
 
-  let userTwo = await createUser(userTwoDataComplete);
+  let userTwo = await createUser({userData : userTwoDataComplete, clientSocket: clientSocketUserTwo});
   userTwo = await updateUserHouseholdId(userTwo._id, householdTwo._id);
   householdTwo = await updateHouseholdMembers(householdTwo._id, householdTwo.members, userTwo._id);
 
-  let userThree = await createUser(userThreeDataComplete);
+  let userThree = await createUser({userData : userThreeDataComplete, clientSocket: clientSocketUserThree});
   userThree = await updateUserHouseholdId(userThree._id, householdTwo._id);
   householdThree = await createHouseholdWithoutAdmin(userThree._id, userThreeDataComplete.householdName)
   householdTwo = await updateHouseholdMembers(householdTwo._id, householdTwo.members, userThree._id);
 
-  return { adminOne, householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree};
+  const objectClientSocket = {
+    clientSocketAdminOne,
+    clientSocketAdminTwo,
+    clientSocketUserTwo,
+    clientSocketUserThree
+  }
+
+  return { adminOne, householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket };
 };
 
 module.exports.createAddUserRespondTestOneUser = async () => {
@@ -83,7 +99,7 @@ module.exports.acceptAddUserRequest = async (adminTwo, householdOne) => {
     urlRequest: "add-user-respond"
   });
 
-  return { addUserRequestResponse, notificationDelegateUser };
+  return { addUserNotification, addUserRequestResponse, notificationDelegateUser };
 };
 
 module.exports.delegateWithOtherMember = async (adminTwo, householdOne, householdTwo, notificationId, otherMember) => {
