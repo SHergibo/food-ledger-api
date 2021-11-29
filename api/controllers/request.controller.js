@@ -451,7 +451,8 @@ exports.addUserRespond = async (req, res, next) => {
 
     if (notification.type === "invitation-user-to-household") user = await User.findById(notification.senderUserId);
     if (notification.type === "invitation-household-to-user" || notification.type === "need-switch-admin") user = await User.findById(notification.userId);
-    await sendNotifToSocket({userId : user._id, notificationId : notification._id, type : "sended"});
+    
+    if(!notification.senderUserId) await sendNotifToSocket({userId : user._id, notificationId : notification._id, type : "sended"});
     
     if(req.query.type === "received" && !req.query.page){
      await sendNotifToSocket({userId : req.user._id, notificationId : notification._id, type : "received"});
