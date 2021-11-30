@@ -410,18 +410,72 @@ describe("Test addUserRespond", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 12) Test if invitation notification is transforming into need switch admin notification", async () => {
-    const { adminOne, householdOne, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+    const { adminOne, householdOne, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
+    let updateNotifAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifAdminOne = data;
+    });
+
+    let deleteNotifAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("deleteNotificationReceived", (data) => {
+      deleteNotifAdminOne = data;
+    });
+    
+    let updateFamillyNotifAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateFamilly", (data) => {
+      updateFamillyNotifAdminOne = data;
+    });
+
+    let updateNotifAdminTwo;
+    objectClientSocket.clientSocketAdminTwo.on("updateNotifArray", (data) => {
+      updateNotifAdminTwo = data;
+    });
+
+    let updateFamillyNotifAdminTwo;
+    objectClientSocket.clientSocketAdminTwo.on("updateFamilly", (data) => {
+      updateFamillyNotifAdminTwo = data;
+    });
+    
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+
+    let updateNotifUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
+      updateNotifUserTwo = data;
+    });
+
     const { 
       delegateResponse,
       notificationDeleted, 
+      addUserNotificationId,
       inviteNotifDeleted, 
       tranformedNotification,  
     } = await testTranformInviteNotif(adminOne, householdOne, userTwo, householdTwo);
+
+    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifAdminOne.totalNotifReceived).toBe(1);
+    expect(deleteNotifAdminOne).toBe(addUserNotificationId);
+    expect(updateFamillyNotifAdminOne.members[1].userData._id.toString()).toBe(userTwo._id.toString());
+
+    expect(updateNotifAdminTwo.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifAdminTwo.totalNotifSended).toBe(1);
+    expect(updateFamillyNotifAdminTwo.members.length).toBe(1);
+
+    expect(updateUserAndFamillyUserTwo.userData.householdId.toString()).toBe(householdOne._id.toString());
+    expect(updateUserAndFamillyUserTwo.householdData._id.toString()).toBe(householdOne._id.toString());
+    expect(updateNotifUserTwo.arrayData).toEqual([]);
+    expect(updateNotifUserTwo.totalNotifSended).toBe(0);
 
     expect(delegateResponse.statusCode).toBe(204);
     expect(notificationDeleted).toBeNull();
     expect(inviteNotifDeleted).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(adminOne._id.toString());
     expect(tranformedNotification.type).toMatch("need-switch-admin");
+
+    disconnectSocketClient(objectClientSocket);
   });
 });
