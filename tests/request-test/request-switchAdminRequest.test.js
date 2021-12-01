@@ -165,9 +165,22 @@ describe("Test switchAdminRequest", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 7) userTwo accept notificationRequestDelegateAdmin without transformed invitation notification", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
+    const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    
+    let updateAllNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedUserTwo = data;
+    });
+
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+
     const { 
       acceptNotification, 
       deletedNotification, 
@@ -178,6 +191,15 @@ describe("Test switchAdminRequest", () => {
       tranformedNotification
     } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne});
 
+    expect(updateAllNotifReceivedUserTwo[0]._id.toString()).toBe(checkInviteNotification._id.toString());
+    expect(updateAllNotifReceivedUserTwo[0].message).toBe(checkInviteNotification.message);
+    expect(updateAllNotifReceivedUserTwo[0].type).toBe(checkInviteNotification.type);
+    
+    expect(updateUserAndFamillyUserTwo.userData.role).toBe("admin");
+    expect(updateUserAndFamillyUserTwo.userData.householdId.toString()).toBe(householdTwoAfterNewAdmin._id.toString());
+    expect(updateUserAndFamillyUserTwo.householdData.isWaiting).toBe(false);
+    expect(updateUserAndFamillyUserTwo.householdData.userId.toString()).toBe(userTwo._id.toString());
+    
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
     expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
@@ -186,6 +208,8 @@ describe("Test switchAdminRequest", () => {
     expect(deletedNotification).toBeNull();
     expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 8) userTwo refuse notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
