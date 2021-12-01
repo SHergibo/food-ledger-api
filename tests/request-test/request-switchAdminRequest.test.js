@@ -12,6 +12,8 @@ const Household = require('./../../api/models/household.model'),
       { adminOneDataComplete, notificationDelegateAdmin, notificationAddUserRespond } = require('../test-data');
 
 const { dbManagement } = require('../db-management-utils');
+const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
+
 dbManagement();
 
 const URL_REQUEST = "delegate-admin";
@@ -74,19 +76,83 @@ describe("Test switchAdminRequest", () => {
     expect(res.error.output.payload.message).toMatch("Code utilisateur du/de la délégué.e non trouvé!");
   });
   it("Test 6) userTwo accept notificationRequestDelegateAdmin with transformed invitation notification", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
+    const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    
+    let deleteNotifReceivedFromTransformNotif;
+    objectClientSocket.clientSocketUserTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceivedFromTransformNotif = data;
+    });
+
+    let updateNotifReceivedFromTransformNotif;
+    objectClientSocket.clientSocketUserTwo.on("updateNotificationReceived", (data) => {
+      updateNotifReceivedFromTransformNotif = data;
+    });
+    
+    let updateNotifUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
+      updateNotifUserTwo = data;
+    });
+
+    let updateAllNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedUserTwo = data;
+    });
+
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+
+    let updateFamillyNotifUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateFamilly", (data) => {
+      updateFamillyNotifUserThree = data;
+    });
+
+    let updateNotifSendedAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
+      updateNotifSendedAdminOne = data;
+    });
+    
     const { 
       acceptNotification, 
       deletedNotification, 
       householdTwoAfterNewAdmin, 
       newAdminIndex, 
       newAdminTwo,
-      checkInviteNotification, 
+      checkInviteNotification,
+      inviteNotificationId,
       tranformedNotification
-    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne})
+    } = await userAcceptDelegateAdmin({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne});
 
+    expect(deleteNotifReceivedFromTransformNotif).toBe(inviteNotificationId);
+    expect(updateNotifReceivedFromTransformNotif._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifReceivedFromTransformNotif.type).toBe(tranformedNotification.type);
+
+    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifUserTwo.arrayData[0].type).toBe(tranformedNotification.type);
+    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
+
+    expect(updateAllNotifReceivedUserTwo[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateAllNotifReceivedUserTwo[0].message).toBe(tranformedNotification.message);
+    expect(updateAllNotifReceivedUserTwo[0].type).toBe(tranformedNotification.type);
+
+    expect(updateUserAndFamillyUserTwo.userData.role).toBe("admin");
+    expect(updateUserAndFamillyUserTwo.userData.householdId.toString()).toBe(householdTwoAfterNewAdmin._id.toString());
+    expect(updateUserAndFamillyUserTwo.householdData.isWaiting).toBe(false);
+    expect(updateUserAndFamillyUserTwo.householdData.userId.toString()).toBe(userTwo._id.toString());
+    
+    expect(updateFamillyNotifUserThree.isWaiting).toBe(false);
+    expect(updateFamillyNotifUserThree.userId.toString()).toBe(userTwo._id.toString());
+
+    expect(updateNotifSendedAdminOne.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifSendedAdminOne.arrayData[0].message).toBe(tranformedNotification.message);
+    expect(updateNotifSendedAdminOne.arrayData[0].type).toBe(tranformedNotification.type);
+    expect(updateNotifSendedAdminOne.totalNotifSended).toBe(1);
+    
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
     expect(householdTwoAfterNewAdmin.userId.toString()).toBe(userTwo._id.toString());
@@ -95,6 +161,8 @@ describe("Test switchAdminRequest", () => {
     expect(deletedNotification).toBeNull();
     expect(checkInviteNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 7) userTwo accept notificationRequestDelegateAdmin without transformed invitation notification", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTestOneUser();
