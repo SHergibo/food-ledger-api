@@ -211,10 +211,38 @@ describe("Test switchAdminRequest", () => {
 
     disconnectSocketClient(objectClientSocket);
   });
-  it("Test 8) userTwo refuse notificationRequestDelegateAdmin", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+  it("Test 8) userTwo refuse notificationRequestDelegateAdmin with otherMember query", async () => {
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    
+    let updateFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateFamilly", (data) => {
+      updateFamillyUserTwo = data;
+    });
+
+    let deleteNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceivedUserTwo = data;
+    });
+
+    let updateFamillyUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateFamilly", (data) => {
+      updateFamillyUserThree = data;
+    });
+    
+    let updateNotifReceivedUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateNotificationReceived", (data) => {
+      updateNotifReceivedUserThree = data;
+    });
+
+    let udpateNotifArrayUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateNotifArray", (data) => {
+      udpateNotifArrayUserThree = data;
+    });
+    
     const { 
       rejectNotification, 
       deletedNotification, 
@@ -224,12 +252,29 @@ describe("Test switchAdminRequest", () => {
       tranformedNotification
     } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo, userThree});
 
+    expect(updateFamillyUserTwo.isWaiting).toBe(true);
+    expect(updateFamillyUserTwo.members[0].isFlagged).toBe(true);
+
+    expect(deleteNotifReceivedUserTwo).toBe(notificationRequestDelegateAdmin._id.toString());
+
+    expect(updateFamillyUserThree.isWaiting).toBe(true);
+    expect(updateFamillyUserThree.members[0].isFlagged).toBe(true);
+
+    expect(updateNotifReceivedUserThree._id.toString()).toBe(userThreeNotification._id.toString());
+    expect(updateNotifReceivedUserThree.type).toBe(userThreeNotification.type);
+    
+    expect(udpateNotifArrayUserThree.arrayData[0]._id.toString()).toBe(userThreeNotification._id.toString());
+    expect(udpateNotifArrayUserThree.arrayData[0].type).toBe(userThreeNotification.type);
+    expect(udpateNotifArrayUserThree.totalNotifReceived).toBe(1);
+    
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
     expect(deletedNotification).toBeNull();
     expect(userThreeNotification.userId.toString()).toBe(userThree._id.toString());
     expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 9) userTwo refuse notificationRequestDelegateAdmin without otherMember query", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo } = await createAddUserRespondTest();
