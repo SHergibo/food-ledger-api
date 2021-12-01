@@ -88,7 +88,7 @@ module.exports.userAcceptDelegateAdmin = async ({ userdata, username, notificati
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
-  return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification };
+  return { acceptNotification, deletedNotification, householdTwoAfterNewAdmin, newAdminIndex, newAdminTwo, checkInviteNotification, tranformedNotification, inviteNotificationId : inviteNotification._id.toString() };
 };
 
 module.exports.userRejectDelegateAdminWithOtherMember = async ({ userdata, username, notificationId, householdOne, householdTwo, userThree }) => {
