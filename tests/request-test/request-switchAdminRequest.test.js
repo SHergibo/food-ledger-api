@@ -506,27 +506,51 @@ describe("Test switchAdminRequest", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 13) userTwo reject last chance request delegate admin", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
-    await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+
+    await Notification.findByIdAndDelete(notificationRequestDelegateAdmin._id);
+
     const notifications = await createLastChanceDelegateAdminNotif([
       {username : "userTwo", userId: userTwo._id},
       {username : "userThree", userId: userThree._id},
     ], householdTwo);
 
+    let updateNotifUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
+      updateNotifUserTwo = data;
+    });
+
+    let deleteNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceivedUserTwo = data;
+    });
+
     const { 
       rejectNotification, 
       deletedNotification, 
       checkNumberLastChanceNotif, 
+      inviteNotification,
       checkInviteNotification, 
       tranformedNotification
     } = await userRejectLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne, householdTwo});
+
+    expect(deleteNotifReceivedUserTwo).toBe(notifications[0].notification._id.toString());
+
+    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(inviteNotification._id.toString());
+    expect(updateNotifUserTwo.arrayData[0].type).toBe(inviteNotification.type);
+    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
     expect(checkNumberLastChanceNotif).toBe(true);
     expect(checkInviteNotification.userId.toString()).toBe(userTwo._id.toString());
     expect(tranformedNotification).toBeNull();
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 14) userThree reject last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
