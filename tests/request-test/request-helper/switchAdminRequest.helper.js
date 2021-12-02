@@ -147,7 +147,7 @@ module.exports.createLastChanceDelegateAdminNotif = async (usersData, householdI
   let lastChanceDelegateNotifArray = [];
   for (const userData of usersData) {
     let userNotif = await new Notification({
-      message: "Notification last-chance-request-delegate-admin to userThree",
+      message: "Notification last-chance-request-delegate-admin to user",
       householdId: householdId,
       userId: userData.userId,
       type: "last-chance-request-delegate-admin",
@@ -198,7 +198,7 @@ module.exports.userRejectLastChanceDelegateAdmin = async ({ userdata, username, 
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
-  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkInviteNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkInviteNotification, tranformedNotification, inviteNotification };
 };
 
 module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, username, notifications, householdOne, householdTwo, userTwo, householdThree }) => {
