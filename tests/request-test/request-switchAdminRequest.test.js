@@ -1,4 +1,5 @@
 const Household = require('./../../api/models/household.model'),
+      Notification = require('./../../api/models/notification.model'),
       { createErrorTest } = require('./request-helper/createErrorTestRequest.helper'),
       { createAddUserRespondTest, createAddUserRespondTestOneUser, acceptAddUserRequest, delegateWithOtherMember } = require('./request-helper/addUserRespond.helper'),
       { userAcceptDelegateAdmin, 
@@ -443,13 +444,33 @@ describe("Test switchAdminRequest", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 12) userTwo accept last chance request delegate admin", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
-    await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
+    
+    await Notification.findByIdAndDelete(notificationRequestDelegateAdmin._id);
+
     const notifications = await createLastChanceDelegateAdminNotif([
       {username : "userTwo", userId: userTwo._id},
       {username : "userThree", userId: userThree._id},
     ], householdTwo);
+
+    let updateAllNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedUserTwo = data;
+    });
+
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+    
+    let updateFamillyUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateFamilly", (data) => {
+      updateFamillyUserThree = data;
+    });
 
     const { 
       acceptNotification, 
@@ -461,6 +482,17 @@ describe("Test switchAdminRequest", () => {
       tranformedNotification
     } = await userAcceptLastChanceDelegateAdmin({userdata: userTwo, username: "userTwo", notifications, householdOne});
 
+    expect(updateAllNotifReceivedUserTwo[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateAllNotifReceivedUserTwo[0].type).toBe(tranformedNotification.type);
+
+    expect(updateUserAndFamillyUserTwo.userData.role).toBe("admin");
+    expect(updateUserAndFamillyUserTwo.userData.householdId.toString()).toBe(householdTwo._id.toString());
+    expect(updateUserAndFamillyUserTwo.householdData.isWaiting).toBe(false);
+    expect(updateUserAndFamillyUserTwo.householdData.userId.toString()).toBe(userTwo._id.toString());
+    
+    expect(updateFamillyUserThree.userId.toString()).toBe(userTwo._id.toString());
+    expect(updateFamillyUserThree.members[1].userData._id.toString()).toBe(userThree._id.toString());
+
     expect(acceptNotification.statusCode).toBe(204);
     expect(allNotifDeleted).toBe(true);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -470,6 +502,8 @@ describe("Test switchAdminRequest", () => {
     expect(newAdminTwo.role).toMatch("admin");
     expect(checkInviteNotification).toBeNull();
     expect(tranformedNotification.userId.toString()).toBe(userTwo._id.toString());
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 13) userTwo reject last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
