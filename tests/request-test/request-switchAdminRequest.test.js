@@ -379,7 +379,9 @@ describe("Test switchAdminRequest", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 11) userThree refuse notificationRequestDelegateAdmin", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree } = await createAddUserRespondTest();
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    connectSocketClient(objectClientSocket);
+
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
     const { 
@@ -387,6 +389,22 @@ describe("Test switchAdminRequest", () => {
       checkInviteNotification, 
       tranformedNotification  
     } = await userRejectDelegateAdminWithOtherMember({userdata: userTwo, username: "userTwo", notificationId : notificationRequestDelegateAdmin._id, householdOne, householdTwo, userThree});
+
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+    
+    let updateUserAndFamillyUserThree;
+    objectClientSocket.clientSocketUserThree.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserThree = data;
+    });
+
+    let deleteNotifReceivedFromNoMoreAdminNotifUserThree;
+    objectClientSocket.clientSocketUserThree.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceivedFromNoMoreAdminNotifUserThree = data;
+    });
+
     const { 
       rejectNotification, 
       deletedNotification, 
@@ -397,6 +415,16 @@ describe("Test switchAdminRequest", () => {
       checkInviteNotificationUserThree,
       tranformedNotificationUserThree
     } = await userRejectDelegateAdminWithoutOtherMember({userdata: userThree, username: "userThree", notificationId : userThreeNotification._id, householdOne, householdTwo, userTwo, householdThree});
+    
+    expect(updateUserAndFamillyUserTwo.userData.householdId).toBeNull();
+    expect(updateUserAndFamillyUserTwo.householdData).toBeUndefined();
+
+    expect(updateUserAndFamillyUserThree.userData.role).toBe("admin");
+    expect(updateUserAndFamillyUserThree.userData.householdId.toString()).toBe(householdThree._id.toString());
+    expect(updateUserAndFamillyUserThree.householdData.isWaiting).toBe(false);
+    expect(updateUserAndFamillyUserThree.householdData.userId.toString()).toBe(userThree._id.toString());
+
+    expect(deleteNotifReceivedFromNoMoreAdminNotifUserThree).toBe(userThreeNotification._id.toString());
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
@@ -411,6 +439,8 @@ describe("Test switchAdminRequest", () => {
     expect(tranformedNotification).toBeNull();
     expect(checkInviteNotificationUserThree.userId.toString()).toBe(userThree._id.toString());
     expect(tranformedNotificationUserThree).toBeNull();
+
+    disconnectSocketClient(objectClientSocket);
   });
   it("Test 12) userTwo accept last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree } = await createAddUserRespondTest();
