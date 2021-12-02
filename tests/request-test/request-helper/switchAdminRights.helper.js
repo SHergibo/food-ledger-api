@@ -4,7 +4,8 @@ const request = require("supertest"),
       { login } = require('../../login.helper'),
       Notification = require('../../../api/models/notification.model'),
       {adminOneDataComplete, userTwoDataComplete} = require('../../test-data'),
-      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper');
+      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper'),
+      Client = require("socket.io-client");
 
 const switchAdminRightsRequest = async (objectData, accessToken) => {
   return await request(app)
@@ -13,22 +14,37 @@ const switchAdminRightsRequest = async (objectData, accessToken) => {
   .set('Authorization', `Bearer ${accessToken}`);
 };
 
-const createUsers = async () => {
-  let adminOne = await createUser(adminOneDataComplete);
+const createUsers = async (withSocket) => {
+  let clientSocketAdminOne, clientSocketUserTwo;
+  if(withSocket){
+    clientSocketAdminOne = Client(`http://localhost:8003`);
+    clientSocketUserTwo = Client(`http://localhost:8003`);
+  }
+
+  let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
   const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
   adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
 
-  let userTwo = await createUser(userTwoDataComplete);
+  let userTwo = await createUser({userData : userTwoDataComplete, clientSocket: clientSocketUserTwo});
   userTwo = await updateUserHouseholdId(userTwo._id, householdOne._id);
   householdTwo = await updateHouseholdMembers(householdOne._id, householdOne.members, userTwo._id);
 
-  return { adminOne, householdOne, userTwo };
+  const objectClientSocket = {
+    clientSocketAdminOne,
+    clientSocketUserTwo,
+  };
+
+  return { adminOne, householdOne, userTwo, objectClientSocket };
 };
 
 const createNotif = async (objectNotifData) => {
   let createRequestNotif = await new Notification(objectNotifData);
   await createRequestNotif.save();
 };
+
+module.exports.createUsersSwitchAdminRights = async (withSocket) => {
+  return { adminOne, householdOne, userTwo, objectClientSocket } = await createUsers(withSocket);
+}
 
 module.exports.createErrorTest = async (testName) => {
   const { adminOne, householdOne, userTwo } = await createUsers();
@@ -68,9 +84,7 @@ module.exports.createErrorTest = async (testName) => {
   return {statusCode : response.statusCode, error : JSON.parse(response.error.text)};
 };
 
-module.exports.switchAdminRightsRequest = async () => {
-  const { adminOne, householdOne, userTwo } = await createUsers();
-
+module.exports.switchAdminRightsRequest = async ({adminOne, householdOne, userTwo}) => {
   const accessTokenAdminOne = await login(adminOneDataComplete.email, adminOneDataComplete.password);
 
   let objectData = {
@@ -86,6 +100,6 @@ module.exports.switchAdminRightsRequest = async () => {
     type: "request-admin"
   });
 
-  return {statusCode : response.statusCode, checkNotification, adminOne, householdOne, userTwo};
+  return {statusCode : response.statusCode, checkNotification};
 };
 
