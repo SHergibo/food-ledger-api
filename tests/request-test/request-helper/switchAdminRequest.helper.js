@@ -220,5 +220,5 @@ module.exports.lastUserRejectLastChanceDelegateAdmin = async ({ userdata, userna
 
   const { checkInviteNotification, tranformedNotification } = await checkTransformedInviteNotification(inviteNotification._id, userdata._id, householdOne._id);
 
-  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification };
+  return { rejectNotification, deletedNotification, checkNumberLastChanceNotif, checkHouseholdTwo, checkUserTwo, checkHouseholdThree, checkUserThree, checkInviteNotification, tranformedNotification, inviteNotification };
 };
