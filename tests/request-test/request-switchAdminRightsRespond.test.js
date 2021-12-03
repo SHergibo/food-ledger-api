@@ -54,7 +54,19 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.error.isBoom).toBe(true);
     expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
   });
-  it("Test 5) accept request admin notification", async () => {
+  it("Test 5) send switchAdminRightsRespond request with a wrong type query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationRequestAdmin,
+      '?type=wrongTypeQuery'
+      );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
+  });
+  it("Test 6) accept request admin notification", async () => {
     const { checkNotification, adminOne, userTwo, householdOne } = await switchAdminRightsRequest();
     const { 
       statusCode, 
@@ -80,7 +92,7 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(adminOneNotifTransformed.userId.toString()).toBe(adminOne._id.toString());
     expect(userTwoNotifTransformed.userId.toString()).toBe(userTwo._id.toString());
   });
-  it("Test 6) reject request admin notification", async () => {
+  it("Test 7) reject request admin notification", async () => {
     const { checkNotification, adminOne, userTwo, householdOne } = await switchAdminRightsRequest();
     const { 
       statusCode, 
