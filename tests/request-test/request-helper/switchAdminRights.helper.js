@@ -43,7 +43,7 @@ const createNotif = async (objectNotifData) => {
 };
 
 module.exports.createUsersSwitchAdminRights = async (withSocket) => {
-  return { adminOne, householdOne, userTwo, objectClientSocket } = await createUsers(withSocket);
+  return await createUsers(withSocket);
 }
 
 module.exports.createErrorTest = async (testName) => {
