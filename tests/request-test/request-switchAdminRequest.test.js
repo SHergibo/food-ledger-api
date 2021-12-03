@@ -626,4 +626,16 @@ describe("Test switchAdminRequest", () => {
 
     disconnectSocketClient(objectClientSocket);
   });
+  it("Test 15) send delegate admin request with a wrong type query", async () => {
+    const res = await createErrorTest(
+      adminOneDataComplete, 
+      URL_REQUEST,
+      notificationDelegateAdmin,
+      '?type=wrongTypeQuery'
+    );
+    
+    expect(res.statusCode).toBe(400);
+    expect(res.error.isBoom).toBe(true);
+    expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
+  });
 });
