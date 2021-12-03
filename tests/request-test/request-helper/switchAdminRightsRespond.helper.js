@@ -20,7 +20,7 @@ const createNotif = async (objectNotifData) => {
 };
 
 const createNotificationToTransform = async (adminOneId, userTwoId ) => {
-  let adminTwo = await createUser(adminTwoDataComplete);
+  let adminTwo = await createUser({userData : adminTwoDataComplete});
   let householdTwo = await createHousehold(adminTwo._id, adminTwoDataComplete.householdName);
   adminTwo = await updateUserHouseholdId(adminTwo._id, householdTwo._id);
 
