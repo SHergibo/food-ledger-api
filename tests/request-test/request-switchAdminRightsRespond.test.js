@@ -72,6 +72,39 @@ describe("Test switchAdminRightsRespond request controller", () => {
     connectSocketClient(objectClientSocket);
 
     const { checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
+
+    let updateUserAndFamillyAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyAdminOne = data;
+    });
+    
+    let updateAllNotifReceivedAdminOne;
+    objectClientSocket.clientSocketAdminOne.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedAdminOne = data;
+    });
+
+    let updateNotifAdminOne = {};
+    objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
+      if(Object.keys(data).find(key => key === 'totalNotifSended')) updateNotifAdminOne['updateSendedNotif'] = data;
+      if(Object.keys(data).find(key => key === 'totalNotifReceived')) updateNotifAdminOne['updateReceivedNotif'] = data;
+    });
+
+    let updateUserAndFamillyUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateUserAndFamillyData", (data) => {
+      updateUserAndFamillyUserTwo = data;
+    });
+     
+    let updateAllNotifReceivedUserTwo;
+    objectClientSocket.clientSocketUserTwo.on("updateAllNotificationsReceived", (data) => {
+      updateAllNotifReceivedUserTwo = data;
+    });
+
+    let updateNotifUserTwo = {};
+    objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
+      if(Object.keys(data).find(key => key === 'totalNotifSended')) updateNotifUserTwo['updateSendedNotif'] = data;
+      if(Object.keys(data).find(key => key === 'totalNotifReceived')) updateNotifUserTwo['updateReceivedNotif'] = data;
+    });
+
     const { 
       statusCode, 
       deletedNotification, 
@@ -84,6 +117,34 @@ describe("Test switchAdminRightsRespond request controller", () => {
       adminOneNotifTransformed,
       userTwoNotifTransformed
     } = await switchAdminRightsRespondRequest(checkNotification, adminOne, userTwo, householdOne, 'yes');
+
+    expect(updateUserAndFamillyAdminOne.userData.role).toBe("user");
+    expect(updateUserAndFamillyAdminOne.householdData.userId.toString()).toBe(userTwo._id.toString());
+    expect(updateUserAndFamillyAdminOne.householdData.members[1].userData._id.toString()).toBe(adminOne._id.toString());
+
+    expect(updateAllNotifReceivedAdminOne[0]._id.toString()).toBe(adminOneNotifTransformed._id.toString());
+    expect(updateAllNotifReceivedAdminOne[0].type).toBe(adminOneNotifTransformed.type);
+
+    expect(updateNotifAdminOne.updateReceivedNotif.arrayData[0]._id.toString()).toBe(adminOneNotifTransformed._id.toString());
+    expect(updateNotifAdminOne.updateReceivedNotif.arrayData[0].type).toBe(adminOneNotifTransformed.type);
+    expect(updateNotifAdminOne.updateReceivedNotif.totalNotifReceived).toBe(1);
+
+    expect(updateNotifAdminOne.updateSendedNotif.arrayData).toEqual([]);
+    expect(updateNotifAdminOne.updateSendedNotif.totalNotifSended).toBe(0);
+
+    expect(updateUserAndFamillyUserTwo.userData.role).toBe("admin");
+    expect(updateUserAndFamillyUserTwo.householdData.userId.toString()).toBe(userTwo._id.toString());
+    expect(updateUserAndFamillyUserTwo.householdData.members[0].userData._id.toString()).toBe(userTwo._id.toString());
+
+    expect(updateAllNotifReceivedUserTwo[0]._id.toString()).toBe(userTwoNotifTransformed._id.toString());
+    expect(updateAllNotifReceivedUserTwo[0].type).toBe(userTwoNotifTransformed.type);
+
+    expect(updateNotifUserTwo.updateReceivedNotif.arrayData[0]._id.toString()).toBe(userTwoNotifTransformed._id.toString());
+    expect(updateNotifUserTwo.updateReceivedNotif.arrayData[0].type).toBe(userTwoNotifTransformed.type);
+    expect(updateNotifUserTwo.updateReceivedNotif.totalNotifReceived).toBe(1);
+
+    expect(updateNotifUserTwo.updateSendedNotif.arrayData).toEqual([]);
+    expect(updateNotifUserTwo.updateSendedNotif.totalNotifSended).toBe(0);
     
     expect(statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
