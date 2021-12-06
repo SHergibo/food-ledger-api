@@ -1,5 +1,5 @@
 const { createUser } = require('./auth-helper/create-user-auth.helper'),
-      { loginAuth } = require('./auth-helper/login-auth.helper'),
+      { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
       { checkTokenDataAuth } = require('./auth-helper/check-token-auth.helper');
 
 const { dbManagement } = require('../db-management-utils');
@@ -12,7 +12,7 @@ describe("Test login auth controller", () => {
       email : "wrongEmail@gmail.com",
       password : "123456789"
     }
-    const response = await loginAuth({userCredentials});
+    const response = await basicRouteAuth({userCredentials, route: "login"});
 
     expect(response.body.output.statusCode).toBe(401);
     expect(response.body.isBoom).toBe(true);
@@ -26,7 +26,7 @@ describe("Test login auth controller", () => {
       password : adminOne.clearPasswordForTesting
     }
 
-    const response = await loginAuth({userCredentials});
+    const response = await basicRouteAuth({userCredentials, route: "login"});
     const checkTokenData = await checkTokenDataAuth({tokenData : response.body, userId : adminOne._id});
 
     expect(response.statusCode).toBe(200);
