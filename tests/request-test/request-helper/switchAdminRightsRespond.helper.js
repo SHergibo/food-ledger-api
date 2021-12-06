@@ -6,7 +6,7 @@ const request = require("supertest"),
       User = require('../../../api/models/user.model'),
       Household = require('../../../api/models/household.model'),
       {adminTwoDataComplete, userTwoDataComplete} = require('../../test-data'),
-      {createUser, createHousehold, updateUserHouseholdId} = require('./createUserManagement.helper');
+      {createUser, createHousehold, updateUserHouseholdId} = require('../../global-helper/createUserManagement.helper');
 
 const switchAdminRightsRequestRespond = async (notification, accessToken, queryParams) => {
   return await request(app)

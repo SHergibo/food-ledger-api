@@ -4,7 +4,7 @@ const request = require("supertest"),
       { login } = require('../../login.helper'),
       Notification = require('../../../api/models/notification.model'),
       {adminOneDataComplete, userTwoDataComplete} = require('../../test-data'),
-      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper'),
+      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('../../global-helper/createUserManagement.helper'),
       Client = require("socket.io-client");
 
 const switchAdminRightsRequest = async (objectData, accessToken) => {

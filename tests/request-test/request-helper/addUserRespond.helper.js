@@ -7,7 +7,7 @@ const request = require("supertest"),
       Notification = require('../../../api/models/notification.model'),
       cryptoRandomString = require('crypto-random-string'),
       {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data'),
-      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('./createUserManagement.helper'),
+      {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('../../global-helper/createUserManagement.helper'),
       Client = require("socket.io-client");
 
 const createHouseholdWithoutAdmin = async (userId, householdName) => {
