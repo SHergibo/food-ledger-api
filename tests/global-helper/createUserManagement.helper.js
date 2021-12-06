@@ -17,7 +17,7 @@ module.exports.createUser = async ({userData, clientSocket}) => {
   let option = new Option({userId : createdUser._id});
   await option.save();
 
-  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id });
+  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id }).lean();
 
   if(clientSocket){
     clientSocket.emit('enterSocketRoom', {socketRoomName: createdUser._id});
