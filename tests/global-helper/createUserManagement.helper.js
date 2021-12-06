@@ -1,6 +1,6 @@
-const Household = require('../../../api/models/household.model'),
-      User = require('../../../api/models/user.model'),
-      Option = require('../../../api/models/option.model'),
+const Household = require('../../api/models/household.model'),
+      User = require('../../api/models/user.model'),
+      Option = require('../../api/models/option.model'),
       cryptoRandomString = require('crypto-random-string');
 
 module.exports.createUser = async ({userData, clientSocket}) => {
