@@ -38,15 +38,13 @@ const _generateTokenResponse = function (user, accessToken) {
  */
 exports.login = async (req, res, next) => {
   try {
-    const user = await User.findOne({email : req.body.email});
-    if(user){
-      const { user, accessToken } = await User.findAndGenerateToken(req.body);
-      const token = _generateTokenResponse(user, accessToken);
-      return res.json({ token, user: user.transform() });
-    }else{
-      return next(Boom.unauthorized("This email doesn't exist!"));
-    }
-    
+    const checkUser = await User.findOne({email : req.body.email});
+
+    if(!checkUser) return next(Boom.unauthorized("This email doesn't exist!"));
+
+    const { user, accessToken } = await User.findAndGenerateToken(req.body);
+    const token = _generateTokenResponse(user, accessToken);
+    return res.json({ token, user: user.transform() });
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
