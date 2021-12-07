@@ -89,17 +89,24 @@ exports.login = async (req, res, next) => {
 exports.refresh = async (req, res, next) => {
   try {
     const { email, refreshToken } = req.body;
+
+    const checkUser = await User.findOne({email});
+    if(!checkUser) return next(Boom.unauthorized("This email doesn't exist!"));
+
     const refreshObject = await RefreshToken.findOneAndDelete({
       userEmail: email,
       token: refreshToken
     });
+
     const { user, accessToken } = await User.findAndGenerateToken({ email, refreshObject });
     const response = _generateTokenResponse(user, accessToken);
+
     return res.json(response);
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
 };
+
 const disconnect = async (req) => {
   const { email, token } = req.body;
   if(!email || !token) return next(Boom.badRequest('An email or a token is required to logout !'));
