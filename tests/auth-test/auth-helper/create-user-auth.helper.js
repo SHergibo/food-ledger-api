@@ -1,5 +1,6 @@
 const { createUser } = require('../../global-helper/createUserManagement.helper'),
-      { adminOneDataComplete } = require('../../test-data');
+      { adminOneDataComplete } = require('../../test-data'),
+      Client = require("socket.io-client");
 
 module.exports.createUser = async (withSocket) => {
   let clientSocketAdminOne;
