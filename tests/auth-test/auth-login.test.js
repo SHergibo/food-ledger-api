@@ -1,4 +1,4 @@
-const { createUser } = require('./auth-helper/create-user-auth.helper'),
+const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
       { checkTokenDataAuth } = require('./auth-helper/check-token-auth.helper');
 
@@ -19,7 +19,7 @@ describe("Test login auth controller", () => {
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) login with good user credentials", async () => {
-    const { adminOne } = await createUser();
+    const { adminOne } = await createUserAuth();
 
     let userCredentials = {
       email : adminOne.email,
