@@ -343,7 +343,7 @@ describe("Test addUserRespond", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 11) admin switch household without otherMember query params", async () => {
-    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest({withSocket : true});
+    const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest(true);
     connectSocketClient(objectClientSocket);
 
     let updateUserAndFamillyAdminTwo;
@@ -410,7 +410,7 @@ describe("Test addUserRespond", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 12) Test if invitation notification is transforming into need switch admin notification", async () => {
-    const { adminOne, householdOne, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser({withSocket : true});
+    const { adminOne, householdOne, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser(true);
     connectSocketClient(objectClientSocket);
 
     let updateNotifAdminOne;
