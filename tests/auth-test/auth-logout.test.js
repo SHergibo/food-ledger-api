@@ -1,4 +1,4 @@
-const { createUser } = require('./auth-helper/create-user-auth.helper'),
+const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper');
 
 const { dbManagement } = require('../db-management-utils');
@@ -8,7 +8,7 @@ dbManagement();
 
 describe("Test logout auth controller", () => {
   it("Test 1) logout with no email", async () => {
-    const { adminOne } = await createUser();
+    const { adminOne } = await createUserAuth();
 
     let userCredentialsLogin = {
       email: adminOne.email,
@@ -29,7 +29,7 @@ describe("Test logout auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 2) logout with no token", async () => {
-    const { adminOne } = await createUser();
+    const { adminOne } = await createUserAuth();
 
     let userCredentialsLogin = {
       email: adminOne.email,
@@ -50,7 +50,7 @@ describe("Test logout auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 3) logout", async () => {
-    const { adminOne, objectClientSocket } = await createUser({withToken : true});
+    const { adminOne, objectClientSocket } = await createUserAuth(true);
     connectSocketClient(objectClientSocket);
 
     let userCredentialsLogin = {
