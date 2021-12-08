@@ -2,12 +2,17 @@ const { createUser } = require('../../global-helper/createUserManagement.helper'
       { adminOneDataComplete } = require('../../test-data'),
       Client = require("socket.io-client");
 
-module.exports.createUser = async (withSocket) => {
+module.exports.createUserAuth = async (withSocket) => {
   let clientSocketAdminOne;
   if(withSocket) clientSocketAdminOne = Client(`http://localhost:8003`);
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
-  adminOne.clearPasswordForTesting = adminOneDataComplete.password;
+
+  adminOne = {
+    _id : adminOne._id,
+    email : adminOne.email,
+    clearPasswordForTesting : adminOneDataComplete.password
+  }
 
   const objectClientSocket = { clientSocketAdminOne };
 
