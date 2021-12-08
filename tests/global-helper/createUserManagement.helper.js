@@ -17,14 +17,12 @@ module.exports.createUser = async ({userData, clientSocket}) => {
   let option = new Option({userId : createdUser._id});
   await option.save();
 
-  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id }).lean();
+  createdUser = await User.findByIdAndUpdate(createdUser._id, { optionId: option._id });
 
   if(clientSocket){
     clientSocket.emit('enterSocketRoom', {socketRoomName: createdUser._id});
     clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationReceived/0`});
     clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationSended/0`});
-    clientSocket.emit('enterSocketRoom', {socketRoomName: `logoutSameNavigator`});
-    clientSocket.emit('enterSocketRoom', {socketRoomName: `refreshData`});
   }
 
   return createdUser;
