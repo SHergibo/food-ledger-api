@@ -35,7 +35,7 @@ describe("Test switchAdminRights request controller", () => {
     expect(error.output.payload.message).toMatch("Cet.te utilisateur.trice n'existe pas!");
   });
   it("Test 5) send switch admin rights request", async () => {
-    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights({withSocket : true});
+    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
     connectSocketClient(objectClientSocket);
 
     let updateNotifAdminOne;
