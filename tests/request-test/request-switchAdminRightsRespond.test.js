@@ -68,7 +68,7 @@ describe("Test switchAdminRightsRespond request controller", () => {
     expect(res.error.output.payload.message).toMatch("Paramètre de requête invalide!");
   });
   it("Test 6) accept request admin notification", async () => {
-    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights({withSocket : true});
+    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
     connectSocketClient(objectClientSocket);
 
     const { checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
@@ -160,7 +160,7 @@ describe("Test switchAdminRightsRespond request controller", () => {
     disconnectSocketClient(objectClientSocket);
   });
   it("Test 7) reject request admin notification", async () => {
-    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights({withSocket : true});
+    const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
     connectSocketClient(objectClientSocket);
 
     const { checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
