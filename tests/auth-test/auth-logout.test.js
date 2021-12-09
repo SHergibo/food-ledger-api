@@ -73,7 +73,7 @@ describe("Test logout auth controller", () => {
     const responseLogout = await basicRouteAuth({userCredentials: userCredentialsLogout, route: "logout", accessToken : responseLogin.body.token.accessToken});
 
     // expect(logoutSameNavigator).toBe(true);
-    expect(responseLogout.statusCode).toBe(200);
+    expect(responseLogout.statusCode).toBe(204);
 
     disconnectSocketClient(objectClientSocket);
   });
