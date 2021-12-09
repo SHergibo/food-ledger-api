@@ -110,11 +110,11 @@ exports.refresh = async (req, res, next) => {
 const disconnect = async (req, res, next) => {
   const { email, token } = req.body;
   if(!email || !token) return next(Boom.badRequest('An email or a token is required to logout !'));
-  let response = await RefreshToken.findOneAndDelete({
+  await RefreshToken.findOneAndDelete({
     token : token,
     userEmail : email
   });
-  return response;
+  return;
 }
 
 /**
@@ -130,10 +130,10 @@ const disconnect = async (req, res, next) => {
  */
 exports.logout = async (req, res, next) =>{
   try {
-    const response = await disconnect(req, res, next);
+    await disconnect(req, res, next);
     const user = await User.findOne({email : req.body.email});
     socketIoEmit(user._id, [{name : "logoutSameNavigator"}]);
-    return res.json(response);
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
@@ -152,10 +152,10 @@ exports.logout = async (req, res, next) =>{
  */
  exports.logoutAndRefresh = async (req, res, next) =>{
   try {
-    const response = await disconnect(req, res, next);
+    await disconnect(req, res, next);
     const user = await User.findOne({email : req.body.email});
     socketIoEmit(user._id, [{name : "refreshData"}]);
-    return res.json(response);
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
