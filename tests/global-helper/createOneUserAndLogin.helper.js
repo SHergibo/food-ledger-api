@@ -1,4 +1,5 @@
 const { createUser } = require('./createUserManagement.helper'),
+      { basicRouteAuth } = require('../auth-test/auth-helper/route-auth.helper'),
       { adminOneDataComplete } = require('../test-data'),
       Client = require("socket.io-client"),
       { connectSocketClient } = require('../socket-io-management-utils');
@@ -26,7 +27,7 @@ const createOneAdmin = async (withSocket) => {
   return returnedObject;
 };
 
-module.exports.createOneUserAndLogin = async ({ withSocket, routeFunc, route }) => {
+module.exports.createOneUserAndLogin = async ({ withSocket, route }) => {
   const { adminOne, objectClientSocket } = await createOneAdmin(withSocket);
 
   let userCredentialsLogin = {
@@ -34,7 +35,7 @@ module.exports.createOneUserAndLogin = async ({ withSocket, routeFunc, route }) 
     password: adminOne.clearPasswordForTesting
   };
 
-  const responseLogin = await routeFunc({userCredentials: userCredentialsLogin, route});
+  const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route});
 
   return { adminOne, responseLogin, objectClientSocket };
 };
