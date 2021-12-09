@@ -214,7 +214,6 @@ describe("Test addUserRespond", () => {
   });
   it("Test 8) create delegate Notification and check if that notification is created", async () => {
     const { householdOne, adminTwo, objectClientSocket } = await createAddUserRespondTest({withSocket: true});
-    connectSocketClient(objectClientSocket);
     
     let notifReceivedAdminTwo;
     objectClientSocket.clientSocketAdminTwo.on("updateNotificationReceived", (data) => {
@@ -266,7 +265,6 @@ describe("Test addUserRespond", () => {
   });
   it("Test 10) admin delegate admin rights with a good otherMember query", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTest({withSocket: true});
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
 
@@ -344,7 +342,6 @@ describe("Test addUserRespond", () => {
   });
   it("Test 11) admin switch household without otherMember query params", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     let updateUserAndFamillyAdminTwo;
     objectClientSocket.clientSocketAdminTwo.on("updateUserAndFamillyData", (data) => {
@@ -411,7 +408,6 @@ describe("Test addUserRespond", () => {
   });
   it("Test 12) Test if invitation notification is transforming into need switch admin notification", async () => {
     const { adminOne, householdOne, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser(true);
-    connectSocketClient(objectClientSocket);
 
     let updateNotifAdminOne;
     objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
