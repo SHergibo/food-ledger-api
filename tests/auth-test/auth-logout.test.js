@@ -2,7 +2,7 @@ const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper');
 
 const { dbManagement } = require('../db-management-utils');
-const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
+const { disconnectSocketClient } = require('../socket-io-management-utils');
 
 dbManagement();
 
@@ -51,7 +51,6 @@ describe("Test logout auth controller", () => {
   });
   it("Test 3) logout", async () => {
     const { adminOne, objectClientSocket } = await createUserAuth(true);
-    connectSocketClient(objectClientSocket);
 
     let userCredentialsLogin = {
       email: adminOne.email,
