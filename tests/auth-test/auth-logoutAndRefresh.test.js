@@ -1,21 +1,14 @@
-const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
-      { basicRouteAuth } = require('./auth-helper/route-auth.helper');
+const { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
+      { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper');
 
 const { dbManagement } = require('../db-management-utils');
-const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
+const { disconnectSocketClient } = require('../socket-io-management-utils');
 
 dbManagement();
 
 describe("Test logout and refresh auth controller", () => {
   it("Test 1) logout with no email", async () => {
-    const { adminOne } = await createUserAuth();
-
-    let userCredentialsLogin = {
-      email: adminOne.email,
-      password: adminOne.clearPasswordForTesting
-    };
-
-    const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route: "login"});
+    const {responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
 
     const userCredentialsLogout = {
       email: null,
@@ -29,14 +22,7 @@ describe("Test logout and refresh auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 2) logout with no token", async () => {
-    const { adminOne } = await createUserAuth();
-
-    let userCredentialsLogin = {
-      email: adminOne.email,
-      password: adminOne.clearPasswordForTesting
-    };
-
-    const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route: "login"});
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
 
     const userCredentialsLogout = {
       email: adminOne.email,
@@ -50,14 +36,7 @@ describe("Test logout and refresh auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 3) logout and refresh", async () => {
-    const { adminOne, objectClientSocket } = await createUserAuth(true);
-
-    let userCredentialsLogin = {
-      email: adminOne.email,
-      password: adminOne.clearPasswordForTesting
-    };
-
-    const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route: "login"});
+    const {adminOne, responseLogin, objectClientSocket} = await createOneUserAndLogin({ withSocket : true, routeFunc : basicRouteAuth, route : "login" });
 
     const userCredentialsLogout = {
       email: adminOne.email,
