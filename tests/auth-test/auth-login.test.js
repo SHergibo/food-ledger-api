@@ -1,4 +1,4 @@
-const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
+const { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
       { checkTokenDataAuth } = require('./auth-helper/check-token-auth.helper');
 
@@ -19,17 +19,11 @@ describe("Test login auth controller", () => {
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) login with good user credentials", async () => {
-    const { adminOne } = await createUserAuth();
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
 
-    let userCredentials = {
-      email : adminOne.email,
-      password : adminOne.clearPasswordForTesting
-    }
+    const checkTokenData = await checkTokenDataAuth({tokenData : responseLogin.body, userId : adminOne._id});
 
-    const response = await basicRouteAuth({userCredentials, route: "login"});
-    const checkTokenData = await checkTokenDataAuth({tokenData : response.body, userId : adminOne._id});
-
-    expect(response.statusCode).toBe(200);
+    expect(responseLogin.statusCode).toBe(200);
     expect(checkTokenData.accessToken).toBe(true);
     expect(checkTokenData.type).toBe(true);
     expect(checkTokenData.refreshToken).toBe(true);
