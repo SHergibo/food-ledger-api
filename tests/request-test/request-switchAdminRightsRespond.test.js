@@ -69,7 +69,6 @@ describe("Test switchAdminRightsRespond request controller", () => {
   });
   it("Test 6) accept request admin notification", async () => {
     const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
-    connectSocketClient(objectClientSocket);
 
     const { checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
 
@@ -161,7 +160,6 @@ describe("Test switchAdminRightsRespond request controller", () => {
   });
   it("Test 7) reject request admin notification", async () => {
     const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
-    connectSocketClient(objectClientSocket);
 
     const { checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
 
