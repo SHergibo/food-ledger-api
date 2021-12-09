@@ -8,7 +8,7 @@ dbManagement();
 
 describe("Test logout and refresh auth controller", () => {
   it("Test 1) logout with no email", async () => {
-    const {responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
+    const {responseLogin} = await createOneUserAndLogin({ route : "login" });
 
     const userCredentialsLogout = {
       email: null,
@@ -22,7 +22,7 @@ describe("Test logout and refresh auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 2) logout with no token", async () => {
-    const {adminOne, responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "login" });
 
     const userCredentialsLogout = {
       email: adminOne.email,
@@ -36,7 +36,7 @@ describe("Test logout and refresh auth controller", () => {
     expect(responseLogout.body.output.payload.message).toMatch("An email or a token is required to logout !");
   });
   it("Test 3) logout and refresh", async () => {
-    const {adminOne, responseLogin, objectClientSocket} = await createOneUserAndLogin({ withSocket : true, routeFunc : basicRouteAuth, route : "login" });
+    const {adminOne, responseLogin, objectClientSocket} = await createOneUserAndLogin({ withSocket : true, route : "login" });
 
     const userCredentialsLogout = {
       email: adminOne.email,

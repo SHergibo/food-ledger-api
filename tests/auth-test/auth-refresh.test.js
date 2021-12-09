@@ -20,7 +20,7 @@ describe("Test refresh auth controller", () => {
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) refresh auth roken", async () => {
-    const {adminOne, responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "login" });
 
     const userCredentialsRefresh = {
       email: adminOne.email,

@@ -19,7 +19,7 @@ describe("Test login auth controller", () => {
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) send wrong password", async () => {
-    const {adminOne} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
+    const {adminOne} = await createOneUserAndLogin({ route : "login" });
 
     let userCredentials = {
       email : adminOne.email,
@@ -33,7 +33,7 @@ describe("Test login auth controller", () => {
     expect(response.body.output.payload.message).toMatch("Wrong password!");
   });
   it("Test 3) send with good credentials", async () => {
-    const {adminOne} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
+    const {adminOne} = await createOneUserAndLogin({ route : "login" });
 
     let userCredentials = {
       email : adminOne.email,
