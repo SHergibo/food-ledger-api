@@ -78,7 +78,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 6) userTwo accept notificationRequestDelegateAdmin with transformed invitation notification", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -167,7 +166,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 7) userTwo accept notificationRequestDelegateAdmin without transformed invitation notification", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, objectClientSocket } = await createAddUserRespondTestOneUser(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -214,7 +212,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 8) userTwo refuse notificationRequestDelegateAdmin with otherMember query", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -296,7 +293,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 10) userThree accept notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -381,7 +377,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 11) userThree refuse notificationRequestDelegateAdmin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, householdThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -445,7 +440,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 12) userTwo accept last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -507,7 +501,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 13) userTwo reject last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     const { notificationRequestDelegateAdmin } = await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
@@ -554,7 +547,6 @@ describe("Test switchAdminRequest", () => {
   });
   it("Test 14) userThree reject last chance request delegate admin", async () => {
     const { householdOne, adminTwo, householdTwo, userTwo, userThree, objectClientSocket } = await createAddUserRespondTest(true);
-    connectSocketClient(objectClientSocket);
 
     const { notificationDelegateUser } = await acceptAddUserRequest(adminTwo, householdOne);
     await delegateWithOtherMember(adminTwo, householdOne, householdTwo, notificationDelegateUser._id, userTwo._id);
