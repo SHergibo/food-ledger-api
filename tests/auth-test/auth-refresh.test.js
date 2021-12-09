@@ -1,4 +1,4 @@
-const { createUserAuth } = require('./auth-helper/create-user-auth.helper'),
+const { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
       { checkRefreshToken } = require('./auth-helper/check-token-auth.helper'),
       RefreshToken = require('../../api/models/refresh-token.model');
@@ -20,14 +20,7 @@ describe("Test refresh auth controller", () => {
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) refresh auth roken", async () => {
-    const { adminOne } = await createUserAuth();
-
-    let userCredentialsLogin = {
-      email: adminOne.email,
-      password: adminOne.clearPasswordForTesting
-    };
-
-    const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route: "login"});
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ routeFunc : basicRouteAuth, route : "login" });
 
     const userCredentialsRefresh = {
       email: adminOne.email,
