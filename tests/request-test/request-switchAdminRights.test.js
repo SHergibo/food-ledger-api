@@ -1,7 +1,7 @@
 const { createUsersSwitchAdminRights, createErrorTest, switchAdminRightsRequest } = require('./request-helper/switchAdminRights.helper');
 
 const { dbManagement } = require('../db-management-utils');
-const { connectSocketClient, disconnectSocketClient } = require('../socket-io-management-utils');
+const { disconnectSocketClient } = require('../socket-io-management-utils');
 
 dbManagement();
 
@@ -36,7 +36,6 @@ describe("Test switchAdminRights request controller", () => {
   });
   it("Test 5) send switch admin rights request", async () => {
     const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
-    connectSocketClient(objectClientSocket);
 
     let updateNotifAdminOne;
     objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
