@@ -5,7 +5,8 @@ const request = require("supertest"),
       Notification = require('../../../api/models/notification.model'),
       {adminOneDataComplete, userTwoDataComplete} = require('../../test-data'),
       {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('../../global-helper/createUserManagement.helper'),
-      Client = require("socket.io-client");
+      Client = require("socket.io-client"),
+      { connectSocketClient } = require('../../socket-io-management-utils');
 
 const switchAdminRightsRequest = async (objectData, accessToken) => {
   return await request(app)
@@ -19,6 +20,7 @@ const createUsers = async (withSocket) => {
   if(withSocket){
     clientSocketAdminOne = Client(`http://localhost:8003`);
     clientSocketUserTwo = Client(`http://localhost:8003`);
+    connectSocketClient({clientSocketAdminOne, clientSocketUserTwo});
   }
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
