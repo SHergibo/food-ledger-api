@@ -8,7 +8,8 @@ const request = require("supertest"),
       cryptoRandomString = require('crypto-random-string'),
       {adminOneDataComplete, adminTwoDataComplete, userTwoDataComplete, userThreeDataComplete} = require('../../test-data'),
       {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('../../global-helper/createUserManagement.helper'),
-      Client = require("socket.io-client");
+      Client = require("socket.io-client"),
+      { connectSocketClient } = require('../../socket-io-management-utils');
 
 const createHouseholdWithoutAdmin = async (userId, householdName) => {
   let newHousehold = new Household({
@@ -38,6 +39,7 @@ module.exports.createAddUserRespondTest = async (withSocket) => {
     clientSocketAdminTwo = Client(`http://localhost:8003`);
     clientSocketUserTwo = Client(`http://localhost:8003`);
     clientSocketUserThree = Client(`http://localhost:8003`);
+    connectSocketClient({clientSocketAdminOne, clientSocketAdminTwo, clientSocketUserTwo, clientSocketUserThree});
   }
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
@@ -73,6 +75,7 @@ module.exports.createAddUserRespondTestOneUser = async (withSocket) => {
     clientSocketAdminOne = Client(`http://localhost:8003`);
     clientSocketAdminTwo = Client(`http://localhost:8003`);
     clientSocketUserTwo = Client(`http://localhost:8003`);
+    connectSocketClient({clientSocketAdminOne, clientSocketAdminTwo, clientSocketUserTwo});
   }
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
