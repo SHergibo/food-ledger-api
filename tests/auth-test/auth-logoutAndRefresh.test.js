@@ -51,7 +51,6 @@ describe("Test logout and refresh auth controller", () => {
   });
   it("Test 3) logout and refresh", async () => {
     const { adminOne, objectClientSocket } = await createUserAuth(true);
-    connectSocketClient(objectClientSocket);
 
     let userCredentialsLogin = {
       email: adminOne.email,
