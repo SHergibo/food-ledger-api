@@ -8,13 +8,15 @@ const createOneAdmin = async (withSocket) => {
   let clientSocketAdminOne;
   if(withSocket){
     clientSocketAdminOne = Client(`http://localhost:8003`);
-    connectSocketClient({clientSocketAdminOne});
+    await connectSocketClient({clientSocketAdminOne});
   } 
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
   const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
   adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
 
+  if(withSocket) clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/productLog/0`});
+  
   adminOne = {
     _id : adminOne._id,
     email : adminOne.email,
