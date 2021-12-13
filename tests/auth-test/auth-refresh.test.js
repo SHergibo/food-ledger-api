@@ -13,21 +13,21 @@ describe("Test refresh auth controller", () => {
       email : "wrongEmail@gmail.com",
       password : "123456789"
     }
-    const response = await basicRouteAuth({userCredentials, route: "refresh-token"});
+    const response = await basicRouteAuth({userCredentials, route: "auth/refresh-token"});
 
     expect(response.body.output.statusCode).toBe(401);
     expect(response.body.isBoom).toBe(true);
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) refresh auth roken", async () => {
-    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "login" });
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "auth/login" });
 
     const userCredentialsRefresh = {
       email: adminOne.email,
       refreshToken: responseLogin.body.token.refreshToken.token
     };
 
-    const responseRefresh = await basicRouteAuth({userCredentials: userCredentialsRefresh, route: "refresh-token"});
+    const responseRefresh = await basicRouteAuth({userCredentials: userCredentialsRefresh, route: "auth/refresh-token"});
 
     let oldRefreshToken = await RefreshToken.findOne({token : responseLogin.body.token.refreshToken.token, email: adminOne.email});
 
