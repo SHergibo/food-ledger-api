@@ -12,35 +12,35 @@ describe("Test login auth controller", () => {
       password : "123456789"
     };
     
-    const response = await basicRouteAuth({userCredentials, route: "check-credential"});
+    const response = await basicRouteAuth({userCredentials, route: "auth/check-credential"});
 
     expect(response.body.output.statusCode).toBe(401);
     expect(response.body.isBoom).toBe(true);
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) send wrong password", async () => {
-    const {adminOne} = await createOneUserAndLogin({ route : "login" });
+    const {adminOne} = await createOneUserAndLogin({ route : "auth/login" });
 
     let userCredentials = {
       email : adminOne.email,
       password : "wrongPassword"
     };
 
-    const response = await basicRouteAuth({userCredentials, route: "check-credential"});
+    const response = await basicRouteAuth({userCredentials, route: "auth/check-credential"});
 
     expect(response.body.output.statusCode).toBe(401);
     expect(response.body.isBoom).toBe(true);
     expect(response.body.output.payload.message).toMatch("Wrong password!");
   });
   it("Test 3) send with good credentials", async () => {
-    const {adminOne} = await createOneUserAndLogin({ route : "login" });
+    const {adminOne} = await createOneUserAndLogin({ route : "auth/login" });
 
     let userCredentials = {
       email : adminOne.email,
       password : adminOne.clearPasswordForTesting
     }
 
-    const response = await basicRouteAuth({userCredentials, route: "check-credential"});
+    const response = await basicRouteAuth({userCredentials, route: "auth/check-credential"});
 
     expect(response.statusCode).toBe(204);
   });
