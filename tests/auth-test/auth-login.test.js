@@ -12,14 +12,14 @@ describe("Test login auth controller", () => {
       email : "wrongEmail@gmail.com",
       password : "123456789"
     }
-    const response = await basicRouteAuth({userCredentials, route: "login"});
+    const response = await basicRouteAuth({userCredentials, route: "auth/login"});
 
     expect(response.body.output.statusCode).toBe(401);
     expect(response.body.isBoom).toBe(true);
     expect(response.body.output.payload.message).toMatch("This email doesn't exist!");
   });
   it("Test 2) login with good user credentials", async () => {
-    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "login" });
+    const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "auth/login" });
 
     const checkTokenData = await checkTokenDataAuth({tokenData : responseLogin.body, userId : adminOne._id});
 
