@@ -9,7 +9,7 @@ module.exports.routeRequest = async ({route, sendedObject, accessToken, restType
   }
 
   return await request(app)
-  [restType](`/api/${api}/auth/${route}`)
+  [restType](`/api/${api}/${route}`)
   .send(sendedObject)
   .set(header);
 };
