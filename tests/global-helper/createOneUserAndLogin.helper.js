@@ -1,4 +1,4 @@
-const { createUser } = require('./createUserManagement.helper'),
+const { createUser, createHousehold, updateUserHouseholdId } = require('./createUserManagement.helper'),
       { basicRouteAuth } = require('../auth-test/auth-helper/route-auth.helper'),
       { adminOneDataComplete } = require('../test-data'),
       Client = require("socket.io-client"),
@@ -12,10 +12,13 @@ const createOneAdmin = async (withSocket) => {
   } 
 
   let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
+  const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
+  adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
 
   adminOne = {
     _id : adminOne._id,
     email : adminOne.email,
+    householdId: adminOne.householdId,
     clearPasswordForTesting : adminOneDataComplete.password
   }
 
