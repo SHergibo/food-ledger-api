@@ -24,18 +24,19 @@ describe("Test remove one product log", () => {
 
     expect(response.statusCode).toBe(204);
     expect(deletedProductLog).toBeNull();
-   
-    for (const data of socketToProductLog.arrayData) {
+
+    productLogArray.shift();
+    for (const [index, data] of socketToProductLog.arrayData.entries()) {
       for (const key in data) {
         if(key === "_id" || key === "householdId"){
-          expect(data[key].toString()).toBe(productLogArray[1][key].toString());
+          expect(data[key].toString()).toBe(productLogArray[index][key].toString());
         } else if(key === "user") {
-          expect(data[key]._id.toString()).toBe(productLogArray[1][key]._id.toString());
+          expect(data[key]._id.toString()).toBe(productLogArray[index][key]._id.toString());
         } else if(key === "createdAt") {
           date = new Date(data[key]);
-          expect(date.toString()).toBe(productLogArray[1][key].toString());
+          expect(date.toString()).toBe(productLogArray[index][key].toString());
         } else {
-          expect(data[key]).toBe(productLogArray[1][key]);
+          expect(data[key]).toBe(productLogArray[index][key]);
         }
       }
     }
