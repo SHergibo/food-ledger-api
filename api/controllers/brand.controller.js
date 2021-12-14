@@ -9,8 +9,7 @@ const Brand = require('./../models/brand.model'),
 */
 exports.findOne = async (req, res, next) => {
   try {
-    const brand = await Brand.findById(req.params.brandId)
-    .sort({brandName : 1});
+    const brand = await Brand.findById(req.params.brandId);
 
     return res.json(brand.transform());
   } catch (error) {
