@@ -2,11 +2,11 @@ const Brand = require('../../../api/models/brand.model');
 
 module.exports.createBrands = async ({householdId}) => {
   let brandsArray = [];
-  for (const data of ['1', '2']) {    
+  for (let index = 0; index < 15; index++) {
     let objectBrand = {
       brandName: {
-        label: `brand-${data}`,
-        value: `brand-${data}`
+        label: `brand-${index}`,
+        value: `brand-${index}`
       },
       numberOfProduct: 1,
       numberOfHistoric: 0,
