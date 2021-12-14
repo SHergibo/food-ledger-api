@@ -40,7 +40,7 @@ exports.removeAll = async (req, res, next) => {
   try {
     await socketIoToProductLog({data : {householdId: req.params.householdId}, type : "deleteAll", model: ProductLog});
     await ProductLog.deleteMany({householdId : req.params.householdId});
-    return res.status(200).send();
+    return res.status(204).send();
   } catch (error) {
     next({error: error, boom: Boom.badImplementation(error.message)});
   }
