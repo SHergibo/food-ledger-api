@@ -2,11 +2,11 @@ const ProductLog = require('../../../api/models/product-log.model');
 
 module.exports.createProductLog = async ({householdId, userId}) => {
   let productLogArray = [];
-  for (const data of ['1', '2']) {    
+  for (let index = 0; index < 15; index++) {
     let objectProduct = {
-      productName: `product-${data}`,
-      productBrand: `brand-product-${data}`,
-      productWeight: `product-${data}-weight`,
+      productName: `product-${index}`,
+      productBrand: `brand-product-${index}`,
+      productWeight: `product-${index}-weight`,
       infoProduct: "Ajout",
       numberProduct: 1,
       householdId: householdId,
