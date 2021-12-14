@@ -13,16 +13,15 @@ describe("Test find paginate brands", () => {
 
     const response = await routeRequest({route: `brands/pagination/${adminOne.householdId}?page=0`, restType : "get", accessToken : responseLogin.body.token.accessToken});
 
-    for (const brand of response.body.arrayData) {
-      let findBrandIndex = brandsArray.findIndex(el => el._id.toString() === brand._id.toString());
+    for (const [index, brand] of response.body.arrayData.entries()) {
       for (const key in brand) {
         if(key === "_id"){
-          expect(brand[key].toString()).toBe(brandsArray[findBrandIndex][key].toString());
+          expect(brand[key].toString()).toBe(brandsArray[index][key].toString());
         } else if(key === "brandName") {
-          expect(brand[key].value).toBe(brandsArray[findBrandIndex][key].value);
-          expect(brand[key].label).toBe(brandsArray[findBrandIndex][key].label);
+          expect(brand[key].value).toBe(brandsArray[index][key].value);
+          expect(brand[key].label).toBe(brandsArray[index][key].label);
         } else {
-          expect(brand[key]).toBe(brandsArray[findBrandIndex][key]);
+          expect(brand[key]).toBe(brandsArray[index][key]);
         }
       }
     }
