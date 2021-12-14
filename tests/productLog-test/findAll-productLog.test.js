@@ -28,6 +28,7 @@ describe("Test find all product log", () => {
       }
     }
 
-    expect(response.body.totalData).toBe(2);
+    expect(response.body.totalData).toBe(15);
+    expect(response.body.arrayData.findIndex(el => el._id.toString() === productLogArray[14]._id.toString())).toBe(-1);
   });
 });
