@@ -15,7 +15,10 @@ const createOneAdmin = async (withSocket) => {
   const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
   adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
 
-  if(withSocket) clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/productLog/0`});
+  if(withSocket){
+    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/productLog/0`});
+    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/brand/0`});
+  }
   
   adminOne = {
     _id : adminOne._id,
