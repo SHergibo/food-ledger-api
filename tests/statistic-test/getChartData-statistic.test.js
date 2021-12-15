@@ -6,8 +6,8 @@ const { dbManagement } = require('../db-management-utils');
 
 dbManagement();
 
-describe("Test find one brand", () => {
-  it("Test 1) test find one brand", async () => {
+describe("Test get chart data", () => {
+  it("Test 1) test get chart data", async () => {
     const {adminOne, responseLogin} = await createOneUserAndLogin({ route : "auth/login" });
     const createProductData = await createProduct({householdId : adminOne.householdId});
 
