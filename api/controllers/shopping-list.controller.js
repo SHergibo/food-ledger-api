@@ -169,7 +169,7 @@ exports.sendMail = async (req, res, next) => {
       </table>
       `;
   
-      NodeMailer.send(output, 'Votre liste de course pour votre stock !');
+      await NodeMailer.send(output, 'Votre liste de course pour votre stock !');
     }
     return res.status(204).send();
   } catch (error) {
