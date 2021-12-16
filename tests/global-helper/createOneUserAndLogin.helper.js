@@ -18,6 +18,7 @@ const createOneAdmin = async (withSocket) => {
   if(withSocket){
     clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/productLog/0`});
     clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/brand/0`});
+    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/shoppingList/0`});
   }
   
   adminOne = {
