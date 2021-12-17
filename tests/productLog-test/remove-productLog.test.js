@@ -1,4 +1,4 @@
-const { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper'),
+const { createOneUserAndLogin } = require('../global-helper/createUserAndLogin.helper'),
       { createProductLog } = require('./productLog-helper/createProductLog.helper'),
       { routeRequest } = require('../global-helper/routeRequest.helper'),
       ProductLog = require('../../api/models/product-log.model');

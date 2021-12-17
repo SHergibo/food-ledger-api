@@ -1,4 +1,4 @@
-const { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper'),
+const { createOneUserAndLogin } = require('../global-helper/createUserAndLogin.helper'),
       { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
       { checkRefreshToken } = require('./auth-helper/check-token-auth.helper'),
       RefreshToken = require('../../api/models/refresh-token.model');

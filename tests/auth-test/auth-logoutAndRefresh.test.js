@@ -1,5 +1,5 @@
 const { basicRouteAuth } = require('./auth-helper/route-auth.helper'),
-      { createOneUserAndLogin } = require('../global-helper/createOneUserAndLogin.helper');
+      { createOneUserAndLogin } = require('../global-helper/createUserAndLogin.helper');
 
 const { dbManagement } = require('../db-management-utils');
 const { disconnectSocketClient } = require('../socket-io-management-utils');
