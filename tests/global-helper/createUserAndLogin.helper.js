@@ -1,107 +1,137 @@
 const { createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers } = require('./createUserManagement.helper'),
       { basicRouteAuth } = require('../auth-test/auth-helper/route-auth.helper'),
-      { adminOneDataComplete, userTwoDataComplete } = require('../test-data'),
+      { adminOneDataComplete, userTwoDataComplete, adminTwoDataComplete, userFourDataComplete } = require('../test-data'),
       Client = require("socket.io-client"),
       { connectSocketClient } = require('../socket-io-management-utils');
 
-const createOneAdmin = async (withSocket) => {
-  let clientSocketAdminOne;
+const createOneAdmin = async ({withSocket, userData}) => {
+  let clientSocket;
   if(withSocket){
-    clientSocketAdminOne = Client(`http://localhost:8003`);
-    await connectSocketClient({clientSocketAdminOne});
+    clientSocket = Client(`http://localhost:8003`);
+    await connectSocketClient({clientSocket});
   } 
 
-  let adminOne = await createUser({userData : adminOneDataComplete, clientSocket: clientSocketAdminOne});
-  const householdOne = await createHousehold(adminOne._id, adminOneDataComplete.householdName);
-  adminOne = await updateUserHouseholdId(adminOne._id, householdOne._id);
+  let admin = await createUser({userData : userData, clientSocket});
+  const household = await createHousehold(admin._id, userData.householdName);
+  admin = await updateUserHouseholdId(admin._id, household._id);
 
   if(withSocket){
-    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/productLog/0`});
-    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/brand/0`});
-    clientSocketAdminOne.emit('enterSocketRoom', {socketRoomName: `${adminOne.householdId}/shoppingList/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${admin.householdId}/productLog/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${admin.householdId}/brand/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${admin.householdId}/shoppingList/0`});
   }
   
-  adminOne = {
-    _id : adminOne._id,
-    email : adminOne.email,
-    householdId: adminOne.householdId,
-    clearPasswordForTesting : adminOneDataComplete.password
+  user = {
+    _id : admin._id,
+    email : admin.email,
+    householdId: admin.householdId,
+    clearPasswordForTesting : userData.password
   }
 
-  const objectClientSocket = { clientSocketAdminOne };
+  const objectClientSocket = { clientSocket };
 
-  let returnedObject = { adminOne, householdOne };
-  if(objectClientSocket.clientSocketAdminOne) returnedObject = {...returnedObject, objectClientSocket};
+  let returnedObject = { user, household };
+  if(objectClientSocket.clientSocket) returnedObject = {...returnedObject, objectClientSocket};
 
   return returnedObject;
 };
 
-const createOneUser = async (withSocket, householdOne) => {
-  let clientSocketUserOne;
+const createOneUser = async ({withSocket, household, userData}) => {
+  let clientSocket;
   if(withSocket){
-    clientSocketUserOne = Client(`http://localhost:8003`);
-    await connectSocketClient({clientSocketUserOne});
+    clientSocket = Client(`http://localhost:8003`);
+    await connectSocketClient({clientSocket});
   } 
 
-  let userOne = await createUser({userData : userTwoDataComplete, clientSocket: clientSocketUserOne});
-  userOne = await updateUserHouseholdId(userOne._id, householdOne._id);
-  householdOne = await updateHouseholdMembers(householdOne._id, householdOne.members, userOne._id);
+  let user = await createUser({userData : userData, clientSocket: clientSocket});
+  user = await updateUserHouseholdId(user._id, household._id);
+  household = await updateHouseholdMembers(household._id, household.members, user._id);
 
   if(withSocket){
-    clientSocketUserOne.emit('enterSocketRoom', {socketRoomName: `${userOne.householdId}/productLog/0`});
-    clientSocketUserOne.emit('enterSocketRoom', {socketRoomName: `${userOne.householdId}/brand/0`});
-    clientSocketUserOne.emit('enterSocketRoom', {socketRoomName: `${userOne.householdId}/shoppingList/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${user.householdId}/productLog/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${user.householdId}/brand/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${user.householdId}/shoppingList/0`});
   }
   
-  userOne = {
-    _id : userOne._id,
-    email : userOne.email,
-    householdId: userOne.householdId,
-    clearPasswordForTesting : userTwoDataComplete.password
+  user = {
+    _id : user._id,
+    email : user.email,
+    householdId: user.householdId,
+    clearPasswordForTesting : userData.password
   }
 
-  const objectClientSocketUserOne = { clientSocketUserOne };
+  const objectClientSocket = { clientSocket };
 
-  let returnedObject = { userOne };
-  if(objectClientSocketUserOne.clientSocketUserOne) returnedObject = {...returnedObject, objectClientSocketUserOne};
+  let returnedObject = { user };
+  if(objectClientSocket.clientSocket) returnedObject = {...returnedObject, objectClientSocket};
 
   return returnedObject;
 };
 
 module.exports.createOneUserAndLogin = async ({ withSocket, route }) => {
-  const { adminOne, objectClientSocket } = await createOneAdmin(withSocket);
+  const { user, objectClientSocket } = await createOneAdmin({withSocket, userData: adminOneDataComplete});
 
   let userCredentialsLogin = {
-    email: adminOne.email,
-    password: adminOne.clearPasswordForTesting
+    email: user.email,
+    password: user.clearPasswordForTesting
   };
 
   const responseLogin = await basicRouteAuth({userCredentials: userCredentialsLogin, route});
 
-  return { adminOne, responseLogin, objectClientSocket };
+  return { adminOne: user, responseLogin, objectClientSocket };
 };
 
-module.exports.createTwoUserAndLogin = async ({ withSocket, route }) => {
-  const { adminOne, householdOne, objectClientSocket } = await createOneAdmin(withSocket);
-  const objectClientSocketAdminOne = objectClientSocket;
-  const { userOne, objectClientSocketUserOne } = await createOneUser(withSocket, householdOne);
+module.exports.createTwoUsersAndLogin = async ({ withSocket, route }) => {
+  const adminOneData = await createOneAdmin({withSocket, userData: adminOneDataComplete});
+  const userOneData = await createOneUser({withSocket, household: adminOneData.household, userData: userTwoDataComplete});
 
   let admineOneCredentialsLogin = {
-    email: adminOne.email,
-    password: adminOne.clearPasswordForTesting
+    email: adminOneData.user.email,
+    password: adminOneData.user.clearPasswordForTesting
   };
 
   const responseLoginAdminOne = await basicRouteAuth({userCredentials: admineOneCredentialsLogin, route});
 
   let userOneCredentialsLogin = {
-    email: userOne.email,
-    password: userOne.clearPasswordForTesting
+    email: userOneData.user.email,
+    password: userOneData.user.clearPasswordForTesting
   };
 
   const responseLoginUserOne = await basicRouteAuth({userCredentials: userOneCredentialsLogin, route});
 
   return { 
-    adminOne : { adminOne, responseLoginAdminOne, objectClientSocketAdminOne },
-    userOne : { userOne, responseLoginUserOne, objectClientSocketUserOne },
+    adminOne : { userData : adminOneData.user, responseLogin : responseLoginAdminOne, objectClientSocket : adminOneData.objectClientSocket },
+    userOne : { userData : userOneData.user, responseLogin : responseLoginUserOne, objectClientSocket : userOneData.objectClientSocket },
   };
+};
+
+module.exports.createFourUsersAndLogin = async ({ withSocket, route }) => {
+  const adminOneData = await createOneAdmin({withSocket, userData: adminOneDataComplete});
+  const userOneData = await createOneUser({withSocket, household: adminOneData.household, userData: userTwoDataComplete});
+
+  const adminTwoData = await createOneAdmin({withSocket, userData: adminTwoDataComplete});
+  const userTwoData = await createOneUser({withSocket, household: adminTwoData.household, userData: userFourDataComplete});
+
+  const userObject = {
+    adminOne : adminOneData,
+    userOne : userOneData,
+    adminTwo : adminTwoData,
+    userTwo : userTwoData,
+  };
+
+  let returnObject = {};
+  for (const key in userObject) {
+    const responseLogin = await basicRouteAuth(
+      {userCredentials: {
+        email: userObject[key].user.email,
+        password: userObject[key].user.clearPasswordForTesting
+      }, 
+      route
+    });
+    returnObject[key] = {
+      userData : userObject[key].user, responseLogin : responseLogin, objectClientSocket : userObject[key].objectClientSocket
+    }
+  }
+
+  return returnObject;
 };
