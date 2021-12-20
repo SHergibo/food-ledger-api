@@ -14,7 +14,7 @@ describe("Test remove one shopping list", () => {
     const shoppingListArray = await createShoppingList({householdId : adminOne.householdId});
 
     let socketToShoppingList;
-    objectClientSocket.clientSocketAdminOne.on("updateDataArray", (data) => {
+    objectClientSocket.clientSocket.on("updateDataArray", (data) => {
       socketToShoppingList = data;
     });
 

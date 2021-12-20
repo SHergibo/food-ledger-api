@@ -44,7 +44,7 @@ describe("Test logout auth controller", () => {
     };
 
     let logoutSameNavigator;
-    objectClientSocket.clientSocketAdminOne.on("logoutSameNavigator", () => {
+    objectClientSocket.clientSocket.on("logoutSameNavigator", () => {
       logoutSameNavigator = true;
     });
 

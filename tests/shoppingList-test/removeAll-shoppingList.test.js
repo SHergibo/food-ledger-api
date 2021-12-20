@@ -14,7 +14,7 @@ describe("Test remove all shopping list", () => {
     await createShoppingList({householdId : adminOne.householdId, userId : adminOne._id});
 
     let socketToShoppingList;
-    objectClientSocket.clientSocketAdminOne.on("updateDataArray", (data) => {
+    objectClientSocket.clientSocket.on("updateDataArray", (data) => {
       socketToShoppingList = data;
     });
 

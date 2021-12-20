@@ -14,7 +14,7 @@ describe("Test remove one brand", () => {
     const brandsArray = await createBrands({householdId : adminOne.householdId});
 
     let socketToBrand;
-    objectClientSocket.clientSocketAdminOne.on("updateDataArray", (data) => {
+    objectClientSocket.clientSocket.on("updateDataArray", (data) => {
       socketToBrand = data;
     });
 

@@ -44,7 +44,7 @@ describe("Test logout and refresh auth controller", () => {
     };
 
     let refreshData;
-    objectClientSocket.clientSocketAdminOne.on("refreshData", () => {
+    objectClientSocket.clientSocket.on("refreshData", () => {
       refreshData = true;
     });
 

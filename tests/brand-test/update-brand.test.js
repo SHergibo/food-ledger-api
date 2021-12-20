@@ -23,7 +23,7 @@ describe("Test update brand", () => {
     };
 
     let socketToBrand;
-    objectClientSocket.clientSocketAdminOne.on("updatedData", (data) => {
+    objectClientSocket.clientSocket.on("updatedData", (data) => {
       socketToBrand = data;
     });
 

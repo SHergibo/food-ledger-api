@@ -14,7 +14,7 @@ describe("Test remove all product log", () => {
     await createProductLog({householdId : adminOne.householdId, userId : adminOne._id});
 
     let socketToProductLog;
-    objectClientSocket.clientSocketAdminOne.on("updateDataArray", (data) => {
+    objectClientSocket.clientSocket.on("updateDataArray", (data) => {
       socketToProductLog = data;
     });
 
