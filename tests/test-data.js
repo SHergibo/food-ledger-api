@@ -33,6 +33,14 @@ module.exports.userThreeDataComplete = {
   householdName: "Familly-JulesDoe"
 };
 
+module.exports.userFourDataComplete = {
+  firstname: 'Gaelle',
+  lastname: 'Doe',
+  email: 'gaelleDoe@test.com',
+  password: '123456789',
+  role : 'user',
+};
+
 module.exports.userDataMissing = {
   firstname: 'John',
   lastname: 'Doe',
