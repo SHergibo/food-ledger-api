@@ -1,6 +1,7 @@
 const ShoppingList = require('../../../api/models/shopping-list.model'),
       Product = require('../../../api/models/product.model'),
-      Brand = require('../../../api/models/brand.model');
+      Brand = require('../../../api/models/brand.model'),
+      {setTimeout} = require('timers/promises');
 
 module.exports.createShoppingList = async ({householdId}) => {
 
@@ -43,6 +44,8 @@ module.exports.createShoppingList = async ({householdId}) => {
       product: product._id,
       householdId: householdId
     }
+
+    await setTimeout(10, 'result');
     const shoppingList = new ShoppingList(objectShoppingList);
     await shoppingList.save();
     shoppinListArray = [shoppingList, ...shoppinListArray];
