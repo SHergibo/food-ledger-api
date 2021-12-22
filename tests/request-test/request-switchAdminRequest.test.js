@@ -92,9 +92,9 @@ describe("Test switchAdminRequest", () => {
       updateNotifReceivedFromTransformNotif = data;
     });
     
-    let updateNotifUserTwo;
+    let updateNotifUserTwo = [];
     objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
-      updateNotifUserTwo = data;
+      updateNotifUserTwo = [...updateNotifUserTwo, data];
     });
 
     let updateAllNotifReceivedUserTwo;
@@ -112,9 +112,9 @@ describe("Test switchAdminRequest", () => {
       updateFamillyNotifUserThree = data;
     });
 
-    let updateNotifSendedAdminOne;
+    let updateNotifSendedAdminOne = [];
     objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
-      updateNotifSendedAdminOne = data;
+      updateNotifSendedAdminOne = [...updateNotifSendedAdminOne, data];
     });
     
     const { 
@@ -132,9 +132,9 @@ describe("Test switchAdminRequest", () => {
     expect(updateNotifReceivedFromTransformNotif._id.toString()).toBe(tranformedNotification._id.toString());
     expect(updateNotifReceivedFromTransformNotif.type).toBe(tranformedNotification.type);
 
-    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
-    expect(updateNotifUserTwo.arrayData[0].type).toBe(tranformedNotification.type);
-    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
+    expect(updateNotifUserTwo[0].arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifUserTwo[0].arrayData[0].type).toBe(tranformedNotification.type);
+    expect(updateNotifUserTwo[0].totalNotifReceived).toBe(1);
 
     expect(updateAllNotifReceivedUserTwo[0]._id.toString()).toBe(tranformedNotification._id.toString());
     expect(updateAllNotifReceivedUserTwo[0].message).toBe(tranformedNotification.message);
@@ -148,10 +148,10 @@ describe("Test switchAdminRequest", () => {
     expect(updateFamillyNotifUserThree.isWaiting).toBe(false);
     expect(updateFamillyNotifUserThree.userId.toString()).toBe(userTwo._id.toString());
 
-    expect(updateNotifSendedAdminOne.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
-    expect(updateNotifSendedAdminOne.arrayData[0].message).toBe(tranformedNotification.message);
-    expect(updateNotifSendedAdminOne.arrayData[0].type).toBe(tranformedNotification.type);
-    expect(updateNotifSendedAdminOne.totalNotifSended).toBe(1);
+    expect(updateNotifSendedAdminOne[0].arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifSendedAdminOne[0].arrayData[0].message).toBe(tranformedNotification.message);
+    expect(updateNotifSendedAdminOne[0].arrayData[0].type).toBe(tranformedNotification.type);
+    expect(updateNotifSendedAdminOne[0].totalNotifSended).toBe(1);
     
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -236,9 +236,9 @@ describe("Test switchAdminRequest", () => {
       updateNotifReceivedUserThree = data;
     });
 
-    let udpateNotifArrayUserThree;
+    let udpateNotifArrayUserThree = [];
     objectClientSocket.clientSocketUserThree.on("updateNotifArray", (data) => {
-      udpateNotifArrayUserThree = data;
+      udpateNotifArrayUserThree = [...udpateNotifArrayUserThree, data];
     });
     
     const { 
@@ -261,9 +261,9 @@ describe("Test switchAdminRequest", () => {
     expect(updateNotifReceivedUserThree._id.toString()).toBe(userThreeNotification._id.toString());
     expect(updateNotifReceivedUserThree.type).toBe(userThreeNotification.type);
     
-    expect(udpateNotifArrayUserThree.arrayData[0]._id.toString()).toBe(userThreeNotification._id.toString());
-    expect(udpateNotifArrayUserThree.arrayData[0].type).toBe(userThreeNotification.type);
-    expect(udpateNotifArrayUserThree.totalNotifReceived).toBe(1);
+    expect(udpateNotifArrayUserThree[0].arrayData[0]._id.toString()).toBe(userThreeNotification._id.toString());
+    expect(udpateNotifArrayUserThree[0].arrayData[0].type).toBe(userThreeNotification.type);
+    expect(udpateNotifArrayUserThree[0].totalNotifReceived).toBe(1);
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(userTwoIsFlagged.isFlagged).toBe(true);
@@ -323,9 +323,9 @@ describe("Test switchAdminRequest", () => {
       updateNotifReceivedFromTransformNotifUserThree = data;
     });
     
-    let updateNotifUserThree;
+    let updateNotifUserThree = [];
     objectClientSocket.clientSocketUserThree.on("updateNotifArray", (data) => {
-      updateNotifUserThree = data;
+      updateNotifUserThree = [...updateNotifUserThree, data];
     });
     
     const { 
@@ -358,9 +358,9 @@ describe("Test switchAdminRequest", () => {
     expect(updateNotifReceivedFromTransformNotifUserThree._id.toString()).toBe(tranformedNotification._id.toString());
     expect(updateNotifReceivedFromTransformNotifUserThree.type).toBe(tranformedNotification.type);
 
-    expect(updateNotifUserThree.arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
-    expect(updateNotifUserThree.arrayData[0].type).toBe(tranformedNotification.type);
-    expect(updateNotifUserThree.totalNotifReceived).toBe(1);
+    expect(updateNotifUserThree[0].arrayData[0]._id.toString()).toBe(tranformedNotification._id.toString());
+    expect(updateNotifUserThree[0].arrayData[0].type).toBe(tranformedNotification.type);
+    expect(updateNotifUserThree[0].totalNotifReceived).toBe(1);
 
     expect(acceptNotification.statusCode).toBe(204);
     expect(householdTwoAfterNewAdmin.isWaiting).toBe(false);
@@ -512,9 +512,9 @@ describe("Test switchAdminRequest", () => {
       {username : "userThree", userId: userThree._id},
     ], householdTwo);
 
-    let updateNotifUserTwo;
+    let updateNotifUserTwo = [];
     objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
-      updateNotifUserTwo = data;
+      updateNotifUserTwo = [...updateNotifUserTwo, data];
     });
 
     let deleteNotifReceivedUserTwo;
@@ -533,9 +533,9 @@ describe("Test switchAdminRequest", () => {
 
     expect(deleteNotifReceivedUserTwo).toBe(notifications[0].notification._id.toString());
 
-    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(inviteNotification._id.toString());
-    expect(updateNotifUserTwo.arrayData[0].type).toBe(inviteNotification.type);
-    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
+    expect(updateNotifUserTwo[0].arrayData[0]._id.toString()).toBe(inviteNotification._id.toString());
+    expect(updateNotifUserTwo[0].arrayData[0].type).toBe(inviteNotification.type);
+    expect(updateNotifUserTwo[0].totalNotifReceived).toBe(1);
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
@@ -571,9 +571,9 @@ describe("Test switchAdminRequest", () => {
       deleteNotifReceivedUserThree = data;
     });
 
-    let updateNotifUserThree;
+    let updateNotifUserThree = [];
     objectClientSocket.clientSocketUserThree.on("updateNotifArray", (data) => {
-      updateNotifUserThree = data;
+      updateNotifUserThree = [...updateNotifUserThree, data];
     });
 
     const { 
@@ -599,9 +599,9 @@ describe("Test switchAdminRequest", () => {
     
     expect(deleteNotifReceivedUserThree).toBe(notifications[1].notification._id.toString());
 
-    expect(updateNotifUserThree.arrayData[0]._id.toString()).toBe(inviteNotification._id.toString());
-    expect(updateNotifUserThree.arrayData[0].type).toBe(inviteNotification.type);
-    expect(updateNotifUserThree.totalNotifReceived).toBe(1);
+    expect(updateNotifUserThree[0].arrayData[0]._id.toString()).toBe(inviteNotification._id.toString());
+    expect(updateNotifUserThree[0].arrayData[0].type).toBe(inviteNotification.type);
+    expect(updateNotifUserThree[0].totalNotifReceived).toBe(1);
     
     expect(rejectNotification.statusCode).toBe(204);
     expect(deletedNotification).toBeNull();
