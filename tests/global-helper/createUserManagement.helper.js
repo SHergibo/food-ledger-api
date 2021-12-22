@@ -23,6 +23,8 @@ module.exports.createUser = async ({userData, clientSocket}) => {
     clientSocket.emit('enterSocketRoom', {socketRoomName: createdUser._id});
     clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationReceived/0`});
     clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationSended/0`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationReceived/1`});
+    clientSocket.emit('enterSocketRoom', {socketRoomName: `${createdUser._id}/notificationSended/1`});
   }
 
   return createdUser;
