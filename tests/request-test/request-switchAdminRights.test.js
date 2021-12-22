@@ -37,9 +37,9 @@ describe("Test switchAdminRights request controller", () => {
   it("Test 5) send switch admin rights request", async () => {
     const { adminOne, householdOne, userTwo, objectClientSocket } = await createUsersSwitchAdminRights(true);
 
-    let updateNotifAdminOne;
+    let updateNotifAdminOne = [];
     objectClientSocket.clientSocketAdminOne.on("updateNotifArray", (data) => {
-      updateNotifAdminOne = data;
+      updateNotifAdminOne = [...updateNotifAdminOne, data];
     });
     
     let updateNotifRecievedUserTwo;
@@ -47,9 +47,9 @@ describe("Test switchAdminRights request controller", () => {
       updateNotifRecievedUserTwo = data;
     });
 
-    let updateNotifUserTwo;
+    let updateNotifUserTwo = [];
     objectClientSocket.clientSocketUserTwo.on("updateNotifArray", (data) => {
-      updateNotifUserTwo = data;
+      updateNotifUserTwo = [...updateNotifUserTwo, data];
     });
 
     const { statusCode, checkNotification } = await switchAdminRightsRequest({adminOne, householdOne, userTwo});
@@ -57,13 +57,13 @@ describe("Test switchAdminRights request controller", () => {
     expect(updateNotifRecievedUserTwo._id.toString()).toBe(checkNotification._id.toString());
     expect(updateNotifRecievedUserTwo.type).toBe(checkNotification.type);
 
-    expect(updateNotifUserTwo.arrayData[0]._id.toString()).toBe(checkNotification._id.toString());
-    expect(updateNotifUserTwo.arrayData[0].type).toBe(checkNotification.type);
-    expect(updateNotifUserTwo.totalNotifReceived).toBe(1);
+    expect(updateNotifUserTwo[0].arrayData[0]._id.toString()).toBe(checkNotification._id.toString());
+    expect(updateNotifUserTwo[0].arrayData[0].type).toBe(checkNotification.type);
+    expect(updateNotifUserTwo[0].totalNotifReceived).toBe(1);
 
-    expect(updateNotifAdminOne.arrayData[0]._id.toString()).toBe(checkNotification._id.toString());
-    expect(updateNotifAdminOne.arrayData[0].type).toBe(checkNotification.type);
-    expect(updateNotifAdminOne.totalNotifSended).toBe(1);
+    expect(updateNotifAdminOne[0].arrayData[0]._id.toString()).toBe(checkNotification._id.toString());
+    expect(updateNotifAdminOne[0].arrayData[0].type).toBe(checkNotification.type);
+    expect(updateNotifAdminOne[0].totalNotifSended).toBe(1);
 
     expect(statusCode).toBe(200);
     expect(checkNotification.userId.toString()).toBe(userTwo._id.toString());
