@@ -60,8 +60,11 @@ describe("Test remove notification", () => {
 
     const response = await routeRequest({route: `notifications/${notificationObject.adminOne.notifSended[0]._id}`, restType : "delete", accessToken : adminOne.responseLogin.body.token.accessToken});
 
+    const checkDeletedNotif = await Notification.findById(notificationObject.adminOne.notifSended[0]._id);
+
     expect(response.statusCode).toBe(204);
     expect(deleteNotifReceived).toBe(notificationObject.adminOne.notifSended[0]._id.toString());
+    expect(checkDeletedNotif).toBeNull();
 
     disconnectSocketClient({
       clientSocketAdminOne : adminOne.objectClientSocket.clientSocket,
