@@ -15,6 +15,8 @@ const User = require('./../models/user.model'),
 */
 exports.add = async (req, res, next) => {
   try {
+    if(!req.query.householdCode && !req.body.householdName) return next(Boom.badRequest('Need a household name or a household code'));
+
     let user;
     let arrayOtherMember = [];
     let searchUserArray = [];
@@ -127,8 +129,6 @@ exports.add = async (req, res, next) => {
       await notification.save();
       socketIoEmit(household.userId, [{name : "updateNotificationReceived", data: notification.transform()}]);
       await sendNotifToSocket({userId : household.userId, notificationId : notification._id, type : "received", addedNotif: true});
-    } else {
-      return next(Boom.badRequest('Need a household name or a household code'));
     }
 
     return res.json(user.transform());
