@@ -43,8 +43,7 @@ describe("Test remove notification", () => {
     expect(response.body.output.statusCode).toBe(403);
     expect(response.body.output.payload.message).toBe("Vous ne pouvez pas supprimer cette notification!");
   });
-
-  it("Test 3) Delete notification without type and page query param", async () => {
+  it("Test 3) Delete notification sended without type and page query param", async () => {
     const {adminOne, userOne, adminTwo, userTwo} = await createFourUsersAndLogin({withSocket : true, route : "auth/login" });
     const notificationObject = await createNotification({
       adminOne : adminOne.userData, 
@@ -64,6 +63,71 @@ describe("Test remove notification", () => {
 
     expect(response.statusCode).toBe(204);
     expect(deleteNotifReceived).toBe(notificationObject.adminOne.notifSended[0]._id.toString());
+    expect(checkDeletedNotif).toBeNull();
+
+    disconnectSocketClient({
+      clientSocketAdminOne : adminOne.objectClientSocket.clientSocket,
+      clientSocketUserOne : userOne.objectClientSocket.clientSocket,
+      clientSocketAdminTwo : adminTwo.objectClientSocket.clientSocket,
+      clientSocketUserTwo : userTwo.objectClientSocket.clientSocket,
+    });
+  });
+  it("Test 4) Delete notification sended with type and page query param", async () => {
+    const {adminOne, userOne, adminTwo, userTwo} = await createFourUsersAndLogin({withSocket : true, route : "auth/login" });
+    const notificationObject = await createNotification({
+      adminOne : adminOne.userData, 
+      userOne : userOne.userData, 
+      adminTwo : adminTwo.userData, 
+      userTwo: userTwo.userData 
+    });
+
+    let updateNotifArrayAdminOne = [];
+    adminOne.objectClientSocket.clientSocket.on("updateNotifArray", (data) => {
+      updateNotifArrayAdminOne = [...updateNotifArrayAdminOne, data];
+    });
+
+    let updateNotifArrayUserTwo = [];
+    userTwo.objectClientSocket.clientSocket.on("updateNotifArray", (data) => {
+      updateNotifArrayUserTwo = [...updateNotifArrayUserTwo, data];
+    });
+
+    let deleteNotifReceived;
+    userTwo.objectClientSocket.clientSocket.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceived = data;
+    });
+
+    const response = await routeRequest({route: `notifications/${notificationObject.adminOne.notifSended[0]._id}?page=0&type=sended`, restType : "delete", accessToken : adminOne.responseLogin.body.token.accessToken});
+
+    const checkDeletedNotif = await Notification.findById(notificationObject.adminOne.notifSended[0]._id);
+
+    expect(deleteNotifReceived).toBe(notificationObject.adminOne.notifSended[0]._id.toString());
+
+    notificationObject.adminOne.notifSended.shift();
+    for (const [index, data] of updateNotifArrayAdminOne[0].arrayData.entries()) {
+      for (const key in data) {
+        if(key === "_id"){
+          expect(data[key].toString()).toBe(notificationObject.adminOne.notifSended[index][key].toString());
+        } else if(key !== "userId") {
+          expect(data[key]).toBe(notificationObject.adminOne.notifSended[index][key]);
+        }
+      }
+    }
+    expect(updateNotifArrayAdminOne[0].totalNotifSended).toBe(14);
+
+    expect(updateNotifArrayUserTwo[0].arrayData.length).toBe(0);
+    expect(updateNotifArrayUserTwo[0].totalNotifReceived).toBe(0);
+
+    for (const [index, data] of response.body.arrayData.entries()) {
+      for (const key in data) {
+        if(key === "_id"){
+          expect(data[key].toString()).toBe(notificationObject.adminOne.notifSended[index][key].toString());
+        } else if(key !== "userId") {
+          expect(data[key]).toBe(notificationObject.adminOne.notifSended[index][key]);
+        }
+      }
+    }
+    expect(response.body.totalNotifSended).toBe(14);
+
     expect(checkDeletedNotif).toBeNull();
 
     disconnectSocketClient({
