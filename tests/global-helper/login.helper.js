@@ -1,6 +1,6 @@
 const request = require("supertest"),
-      app = require("./../config/app.config"),
-      { api } = require('./../config/environment.config');
+      app = require("../../config/app.config"),
+      { api } = require('../../config/environment.config');
 
 module.exports.login = async (email, password) => {
   const login = await request(app)
