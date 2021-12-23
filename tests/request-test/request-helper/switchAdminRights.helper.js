@@ -1,7 +1,7 @@
 const request = require("supertest"),
       app = require("../../../config/app.config"), 
       { api } = require('../../../config/environment.config'),
-      { login } = require('../../login.helper'),
+      { login } = require('../../global-helper/login.helper'),
       Notification = require('../../../api/models/notification.model'),
       {adminOneDataComplete, userTwoDataComplete} = require('../../test-data'),
       {createUser, createHousehold, updateUserHouseholdId, updateHouseholdMembers} = require('../../global-helper/createUserManagement.helper'),

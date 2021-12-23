@@ -1,7 +1,7 @@
 const request = require("supertest"),
       app = require("./../../config/app.config"),
       { api } = require('./../../config/environment.config'),
-      { login } = require('./../login.helper'),
+      { login } = require('./../global-helper/login.helper'),
       { adminOneDataComplete } = require('./../test-data');
 
 const { dbManagement } = require('../db-management-utils');

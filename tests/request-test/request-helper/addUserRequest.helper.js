@@ -4,7 +4,7 @@ const { api } = require('../../../config/environment.config');
 const Household = require('../../../api/models/household.model');
 const User = require('../../../api/models/user.model');
 const Notification = require('../../../api/models/notification.model');
-const { login } = require('../../login.helper');
+const { login } = require('../../global-helper/login.helper');
 
 const createUsers = async (adminOneData, adminTwoData, objectClientSocket) => {
   const adminOne = await request(app)

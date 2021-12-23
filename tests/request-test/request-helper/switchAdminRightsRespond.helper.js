@@ -1,7 +1,7 @@
 const request = require("supertest"),
       app = require("../../../config/app.config"), 
       { api } = require('../../../config/environment.config'),
-      { login } = require('../../login.helper'),
+      { login } = require('../../global-helper/login.helper'),
       Notification = require('../../../api/models/notification.model'),
       User = require('../../../api/models/user.model'),
       Household = require('../../../api/models/household.model'),
