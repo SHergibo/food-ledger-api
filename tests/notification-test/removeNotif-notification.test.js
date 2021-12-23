@@ -137,4 +137,61 @@ describe("Test remove notification", () => {
       clientSocketUserTwo : userTwo.objectClientSocket.clientSocket,
     });
   });
+  it("Test 5) Delete notification received with type and page query param", async () => {
+    const {adminOne, userOne, adminTwo, userTwo} = await createFourUsersAndLogin({withSocket : true, route : "auth/login" });
+    const notificationObject = await createNotification({
+      adminOne : adminOne.userData, 
+      userOne : userOne.userData, 
+      adminTwo : adminTwo.userData, 
+      userTwo: userTwo.userData 
+    });
+
+    let updateNotifArrayAdminOne = [];
+    adminOne.objectClientSocket.clientSocket.on("updateNotifArray", (data) => {
+      updateNotifArrayAdminOne = [...updateNotifArrayAdminOne, data];
+    });
+
+    let deleteNotifReceived;
+    adminOne.objectClientSocket.clientSocket.on("deleteNotificationReceived", (data) => {
+      deleteNotifReceived = data;
+    });
+
+    const response = await routeRequest({route: `notifications/${notificationObject.adminOne.notifReceived[2]._id}?page=0&type=received`, restType : "delete", accessToken : adminOne.responseLogin.body.token.accessToken});
+
+    const checkDeletedNotif = await Notification.findById(notificationObject.adminOne.notifReceived[2]._id);
+
+    expect(deleteNotifReceived).toBe(notificationObject.adminOne.notifReceived[2]._id.toString());
+
+    notificationObject.adminOne.notifReceived.splice(2, 1);
+    for (const [index, data] of updateNotifArrayAdminOne[0].arrayData.entries()) {
+      for (const key in data) {
+        if(key === "_id"){
+          expect(data[key].toString()).toBe(notificationObject.adminOne.notifReceived[index][key].toString());
+        } else if(key !== "householdId") {
+          expect(data[key]).toBe(notificationObject.adminOne.notifReceived[index][key]);
+        }
+      }
+    }
+    expect(updateNotifArrayAdminOne[0].totalNotifReceived).toBe(14);
+
+    for (const [index, data] of response.body.arrayData.entries()) {
+      for (const key in data) {
+        if(key === "_id"){
+          expect(data[key].toString()).toBe(notificationObject.adminOne.notifReceived[index][key].toString());
+        } else if(key !== "householdId") {
+          expect(data[key]).toBe(notificationObject.adminOne.notifReceived[index][key]);
+        }
+      }
+    }
+    expect(response.body.totalNotifReceived).toBe(14);
+
+    expect(checkDeletedNotif).toBeNull();
+
+    disconnectSocketClient({
+      clientSocketAdminOne : adminOne.objectClientSocket.clientSocket,
+      clientSocketUserOne : userOne.objectClientSocket.clientSocket,
+      clientSocketAdminTwo : adminTwo.objectClientSocket.clientSocket,
+      clientSocketUserTwo : userTwo.objectClientSocket.clientSocket,
+    });
+  });
 });
