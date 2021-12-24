@@ -15,7 +15,7 @@ const User = require('./../models/user.model'),
 */
 exports.add = async (req, res, next) => {
   try {
-    if(!req.query.householdCode && !req.body.householdName) return next(Boom.badRequest('Need a household name or a household code'));
+    if(!req.query.householdCode && !req.body.householdName) return next(Boom.badRequest("Besoin d'un nom ou un code famille!"));
 
     let user;
     let arrayOtherMember = [];
@@ -26,7 +26,7 @@ exports.add = async (req, res, next) => {
     if (req.query.householdCode) {
       household = await Household.findOne({ householdCode: req.query.householdCode });
       if (!household) {
-        return next(Boom.badRequest('Pas de famille trouvée avec ce code famille!'));
+        return next(Boom.notFound('Pas de famille trouvée avec ce code famille!'));
       }
       if(household.isWaiting){
         return next(Boom.badRequest("Vous ne pouvez pas envoyer une requête d'invitation à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!"));
@@ -65,7 +65,7 @@ exports.add = async (req, res, next) => {
       }
       if(errorUserCode.length >= 1 ){
         searchUserArray = [];
-        return next(Boom.notFound('Il y a un ou plusieurs problèmes avec certains de vos codes utilisateurs', errorUserCode));
+        return next(Boom.badRequest('Il y a un ou plusieurs problèmes avec certains de vos codes utilisateurs!', errorUserCode));
       }
     }
 
