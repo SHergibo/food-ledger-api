@@ -21,7 +21,37 @@ describe("Add user", () => {
     expect(response.statusCode).toBe(400);
     expect(JSON.parse(response.error.text).isBoom).toBe(true);
   });
-  it("2) Add user with household name and without other member code", async () => {
+  it("2) Error test, add user with bad householdCode", async () => {
+    const response = await request(app)
+    .post(`/api/${api}/users?householdCode=skdjhkjshdjq`)
+    .send(userTwoDataComplete);
+
+    expect(response.statusCode).toBe(404);
+    expect(JSON.parse(response.error.text).isBoom).toBe(true);
+    expect(response.body.output.payload.message).toBe("Pas de famille trouvée avec ce code famille!");
+  });
+  it("3) Error test, add user with householdCode from an isWaiting household", async () => {
+    let isWaitingHousehold = new Household({
+      members: [
+        {userData : "606dad080ac1c22766b37a53", isFlagged: false}
+      ],
+      householdName: "householdIsWaiting",
+      userId: "606dad080ac1c22766b37a53",
+      householdCode: 'skdjhkjshd',
+      lastChance : new Date(),
+      isWaiting: true
+    });
+    isWaitingHousehold.save();
+
+    const response = await request(app)
+    .post(`/api/${api}/users?householdCode=${isWaitingHousehold.householdCode}`)
+    .send(userTwoDataComplete);
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.error.text).isBoom).toBe(true);
+    expect(response.body.output.payload.message).toBe("Vous ne pouvez pas envoyer une requête d'invitation à cette famille car elle n'a, en ce moment, pas d'administrateur.trice!");
+  });
+  it("4) Add user with household name and without other member code", async () => {
     const response = await request(app)
     .post(`/api/${api}/users`)
     .send(adminOneDataComplete);
@@ -32,7 +62,7 @@ describe("Add user", () => {
     expect(response.body.role).toBe("admin");
     expect(household.userId.toString()).toBe(response.body._id.toString());
   });
-  it("3) Add user with household name and bad other member codes (usercode doesn't exist and member is in isWaiting familly)", async () => {
+  it("5) Add user with household name and bad other member codes (usercode doesn't exist and member is in isWaiting familly)", async () => {
     let userOne = await createUser({userData : userTwoDataComplete});
 
     let newNotification = await new Notification({
@@ -45,11 +75,12 @@ describe("Add user", () => {
     });
     await newNotification.save();
 
-    adminOneDataComplete.othermember = [userOne.usercode, "ksdjfhsjfkds"];
+    let adminOneData = {...adminOneDataComplete};
+    adminOneData.othermember = [userOne.usercode, "ksdjfhsjfkds"];
 
     const response = await request(app)
     .post(`/api/${api}/users`)
-    .send(adminOneDataComplete);
+    .send(adminOneData);
 
     expect(response.body.data[0].usercode).toBe(userOne.usercode);
     expect(response.body.data[0].errorType).toBe("userIsWaiting");
@@ -59,7 +90,7 @@ describe("Add user", () => {
     expect(JSON.parse(response.error.text).isBoom).toBe(true);
     expect(response.body.output.payload.message).toBe("Il y a un ou plusieurs problèmes avec certains de vos codes utilisateurs!");
   });
-  it("4) Add user with household name and good other member codes", async () => {
+  it("6) Add user with household name and good other member codes", async () => {
     let clientSocketAdminOne = Client(`http://localhost:8003`);
     let clientSocketUserOne = Client(`http://localhost:8003`);
     let clientSocketUserTwo = Client(`http://localhost:8003`);
@@ -88,11 +119,12 @@ describe("Add user", () => {
       updateNotifArrayUserTwo = [...updateNotifArrayUserTwo, data];
     });
 
-    adminOneDataComplete.othermember = [userOne.usercode, userTwo.usercode];
+    let adminOneData = {...adminOneDataComplete};
+    adminOneData.othermember = [userOne.usercode, userTwo.usercode];
 
     const response = await request(app)
     .post(`/api/${api}/users`)
-    .send(adminOneDataComplete);
+    .send(adminOneData);
 
     const household = await Household.findById(response.body.householdId);
     expect(response.statusCode).toBe(200);
@@ -116,7 +148,7 @@ describe("Add user", () => {
 
     disconnectSocketClient({clientSocketAdminOne, clientSocketUserOne,clientSocketUserTwo});
   });
-  it("5) Add user with household code", async () => {
+  it("7) Add user with household code", async () => {
     let clientSocketAdminOne = Client(`http://localhost:8003`);
     connectSocketClient({clientSocketAdminOne});
 
