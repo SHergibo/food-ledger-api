@@ -60,7 +60,7 @@ exports.add = async (req, res, next) => {
         }
 
         if(searchUser && !notification){
-          searchUserArray = [...searchUserArray, otherUsercode];
+          searchUserArray = [...searchUserArray, searchUser._id];
         }
       }
       if(errorUserCode.length >= 1 ){
@@ -94,11 +94,11 @@ exports.add = async (req, res, next) => {
 
 
       if (req.body.othermember) {
-        for (const otherUser of searchUserArray) {
+        for (const otherUserId of searchUserArray) {
           let notification = await new Notification({
             message: `L'administrateur.trice de la famille {householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`,
             householdId: newHousehold._id,
-            userId: otherUser._id,
+            userId: otherUserId,
             type: "invitation-household-to-user",
             urlRequest: "add-user-respond"
           });
@@ -110,8 +110,8 @@ exports.add = async (req, res, next) => {
             select: 'householdName -_id'
           });
 
-          socketIoEmit(otherUser._id, [{name : "updateNotificationReceived", data: injectHouseholdName(notification.transform({withHouseholdId: true}))}]);
-          await sendNotifToSocket({userId : otherUser._id, notificationId : notification._id, type : "received", addedNotif: true});
+          socketIoEmit(otherUserId, [{name : "updateNotificationReceived", data: injectHouseholdName(notification.transform({withHouseholdId: true}))}]);
+          await sendNotifToSocket({userId : otherUserId, notificationId : notification._id, type : "received", addedNotif: true});
         }
         searchUserArray = [];
       }
