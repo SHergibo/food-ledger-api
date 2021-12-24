@@ -2,7 +2,8 @@ const request = require("supertest"),
       app = require("./../../config/app.config"),
       { api } = require('./../../config/environment.config'),
       Household = require('./../../api/models/household.model'),
-      { adminOneDataComplete, userDataMissing, userTwoDataComplete } = require('./../test-data'),
+      { adminOneDataComplete, userDataMissing, userTwoDataComplete, userFourDataComplete } = require('./../test-data'),
+      { createUser } = require('../global-helper/createUserManagement.helper'),
       Client = require("socket.io-client");
 
 const { dbManagement } = require('../db-management-utils');
@@ -41,15 +42,61 @@ describe("Add user", () => {
     // expect(household.userId.toString()).toBe(response.body._id.toString());
   });
   it("4) Add user with household name and good other member codes", async () => {
-    // const response = await request(app)
-    // .post(`/api/${api}/users`)
-    // .send(adminOneDataComplete);
+    let clientSocketAdminOne = Client(`http://localhost:8003`);
+    let clientSocketUserOne = Client(`http://localhost:8003`);
+    let clientSocketUserTwo = Client(`http://localhost:8003`);
+    connectSocketClient({clientSocketAdminOne, clientSocketUserOne,clientSocketUserTwo});
 
-    // const household = await Household.findById(response.body.householdId);
-    // expect(response.statusCode).toBe(200);
-    // expect(response.body.householdId.toString()).toBe(household._id.toString());
-    // expect(response.body.role).toBe("admin");
-    // expect(household.userId.toString()).toBe(response.body._id.toString());
+    let userOne = await createUser({clientSocket : clientSocketUserOne, userData : userTwoDataComplete});
+    let userTwo = await createUser({clientSocket : clientSocketUserTwo, userData : userFourDataComplete});
+
+    let updateNotifReceivedUserOne;
+    clientSocketUserOne.on("updateNotificationReceived", (data) => {
+      updateNotifReceivedUserOne = data;
+    });
+
+    let updateNotifArrayUserOne = [];
+    clientSocketUserOne.on("updateNotifArray", (data) => {
+      updateNotifArrayUserOne = [...updateNotifArrayUserOne, data];
+    });
+
+    let updateNotifReceivedUserTwo;
+    clientSocketUserTwo.on("updateNotificationReceived", (data) => {
+      updateNotifReceivedUserTwo = data;
+    });
+
+    let updateNotifArrayUserTwo = [];
+    clientSocketUserTwo.on("updateNotifArray", (data) => {
+      updateNotifArrayUserTwo = [...updateNotifArrayUserTwo, data];
+    });
+
+    adminOneDataComplete.othermember = [userOne.usercode, userTwo.usercode];
+
+    const response = await request(app)
+    .post(`/api/${api}/users`)
+    .send(adminOneDataComplete);
+
+    const household = await Household.findById(response.body.householdId);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.householdId.toString()).toBe(household._id.toString());
+    expect(response.body.role).toBe("admin");
+    expect(household.userId.toString()).toBe(response.body._id.toString());
+
+    expect(updateNotifReceivedUserOne.message).toBe(`L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`);
+    expect(updateNotifReceivedUserOne.type).toBe(`invitation-household-to-user`);
+
+    expect(updateNotifArrayUserOne[0].arrayData[0]._id.toString()).toBe(updateNotifReceivedUserOne._id.toString());
+    expect(updateNotifArrayUserOne[0].arrayData[0].message).toBe(updateNotifReceivedUserOne.message);
+    expect(updateNotifArrayUserOne[0].arrayData[0].type).toBe(updateNotifReceivedUserOne.type);
+
+    expect(updateNotifReceivedUserTwo.message).toBe(`L'administrateur.trice de la famille ${household.householdName} vous invite à rejoindre sa famille. Acceptez-vous l'invitation?`);
+    expect(updateNotifReceivedUserTwo.type).toBe(`invitation-household-to-user`);
+
+    expect(updateNotifArrayUserTwo[0].arrayData[0]._id.toString()).toBe(updateNotifReceivedUserTwo._id.toString());
+    expect(updateNotifArrayUserTwo[0].arrayData[0].message).toBe(updateNotifReceivedUserTwo.message);
+    expect(updateNotifArrayUserTwo[0].arrayData[0].type).toBe(updateNotifReceivedUserTwo.type);
+
+    disconnectSocketClient({clientSocketAdminOne, clientSocketUserOne,clientSocketUserTwo});
   });
   it("5) Add user with household code", async () => {
     let clientSocketAdminOne = Client(`http://localhost:8003`);
