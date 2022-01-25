@@ -13,6 +13,12 @@
 config/secrets.js
 /logs
 
+# environment
+development.env
+production.env
+staging.env
+test.env
+
 # misc
 .DS_Store
 .env.local
