@@ -1,4 +1,4 @@
-#Food ledger REST API
+# Food ledger REST API
 
 Food ledger API is a simple REST API developed using Node.js, Express and MongoDB. This API is used to save the data of all your food and non-perishable food. If you want, you can use [food-ledger-front](https://github.com/SHergibo/food-ledger-front) with this API to be able to directly use all the functionality of this API on your browser.
 
