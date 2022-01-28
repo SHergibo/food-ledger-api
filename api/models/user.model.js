@@ -1,13 +1,17 @@
-const Mongoose = require('mongoose'),
-      DomPurify = require('isomorphic-dompurify'),
-      Moment = require('moment-timezone'),
-      Jwt = require('jwt-simple'),
-      Bcrypt = require('bcrypt'),
-      Boom = require('@hapi/boom');
+const Mongoose = require("mongoose"),
+  DomPurify = require("isomorphic-dompurify"),
+  Moment = require("moment-timezone"),
+  Jwt = require("jwt-simple"),
+  Bcrypt = require("bcrypt"),
+  Boom = require("@hapi/boom");
 
-const { env, jwtSecret, jwtExpirationInterval } = require('../../config/environment.config');
+const {
+  env,
+  jwtSecret,
+  jwtExpirationInterval,
+} = require("../../config/environment.config");
 
-const roles = ['admin', 'user', 'ghost'];
+const roles = ["admin", "user", "ghost"];
 const [MINLENGTH_PASSWORD, MAXLENGTH_PASSWORD] = [6, 128];
 
 let Schema = Mongoose.Schema;
@@ -19,7 +23,7 @@ let schema = new Schema({
     trim: true,
     set: function (val) {
       return DomPurify.sanitize(val);
-    }
+    },
   },
   lastname: {
     type: String,
@@ -27,48 +31,51 @@ let schema = new Schema({
     trim: true,
     set: function (val) {
       return DomPurify.sanitize(val);
-    }
+    },
   },
   email: {
     type: String,
-    required: 'You must specify an email',
+    required: "You must specify an email",
     trim: true,
     lowercase: true,
     unique: true,
-    match: [/^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/, 'Please fill a valid email address']
+    match: [
+      /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()\.,;\s@\"]+\.{0,1})+([^<>()\.,;:\s@\"]{2,}|[\d\.]+))$/,
+      "Please fill a valid email address",
+    ],
   },
   password: {
     type: String,
     required: true,
     minlength: MINLENGTH_PASSWORD,
-    maxlength: MAXLENGTH_PASSWORD
+    maxlength: MAXLENGTH_PASSWORD,
   },
   role: {
     type: String,
     enum: roles,
-    required: true
+    required: true,
   },
   usercode: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   householdId: {
     type: Schema.Types.ObjectId,
-    ref: 'Household',
+    ref: "Household",
   },
   optionId: {
     type: Schema.Types.ObjectId,
-    ref: 'Option',
-  }
+    ref: "Option",
+  },
 });
 
-schema.pre('save', async function (next) {
+schema.pre("save", async function (next) {
   try {
-    if (!this.isModified('password')) {
+    if (!this.isModified("password")) {
       return next();
     }
-    let salt = env === 'staging' ? 1 : 10;
+    let salt = env === "staging" ? 1 : 10;
     let hash = await Bcrypt.hash(this.password, salt);
     this.password = hash;
     return next();
@@ -77,14 +84,26 @@ schema.pre('save', async function (next) {
   }
 });
 
-schema.pre('findOneAndUpdate', async function (next) {
+schema.pre("findOneAndUpdate", async function (next) {
   try {
     const userUpdate = this.getUpdate();
-    if(userUpdate.actualPassword && userUpdate.newPassword){
+    if (userUpdate.actualPassword && userUpdate.newPassword) {
       let user = await this.model.findOne(this.getQuery());
-      if (await Bcrypt.compare(userUpdate.actualPassword, user.password) === false) return next(Boom.unauthorized('Mauvais mot de passe!'));
-      let salt = env === 'staging' ? 1 : 10;
-      if(userUpdate.newPassword.length < MINLENGTH_PASSWORD || userUpdate.newPassword.length > MAXLENGTH_PASSWORD) return next(Boom.badRequest('Nouveau mot de passe invalide! Le mot de passe doit avoir entre 6 et 128 caractères!'));
+      if (
+        (await Bcrypt.compare(userUpdate.actualPassword, user.password)) ===
+        false
+      )
+        return next(Boom.unauthorized("Mauvais mot de passe!"));
+      let salt = env === "staging" ? 1 : 10;
+      if (
+        userUpdate.newPassword.length < MINLENGTH_PASSWORD ||
+        userUpdate.newPassword.length > MAXLENGTH_PASSWORD
+      )
+        return next(
+          Boom.badRequest(
+            "Nouveau mot de passe invalide! Le mot de passe doit avoir entre 6 et 128 caractères!"
+          )
+        );
       let hash = await Bcrypt.hash(userUpdate.newPassword, salt);
       userUpdate.password = hash;
     }
@@ -97,8 +116,8 @@ schema.pre('findOneAndUpdate', async function (next) {
 schema.methods.token = function () {
   const payload = {
     iat: Moment().unix(),
-    exp: Moment().add(jwtExpirationInterval, 'minutes').unix(),
-    sub: this._id
+    exp: Moment().add(jwtExpirationInterval, "minutes").unix(),
+    sub: this._id,
   };
   return Jwt.encode(payload, jwtSecret);
 };
@@ -108,7 +127,16 @@ schema.methods.passwordMatches = async function (pwd) {
 };
 
 schema.methods.transform = function () {
-  const fields = ['_id', 'firstname', 'lastname', 'email', 'role', "usercode", "householdCode", "householdId"];
+  const fields = [
+    "_id",
+    "firstname",
+    "lastname",
+    "email",
+    "role",
+    "usercode",
+    "householdCode",
+    "householdId",
+  ];
   const object = {};
   fields.forEach((field) => {
     object[field] = this[field];
@@ -122,13 +150,13 @@ schema.statics.get = async function (id) {
   try {
     let user;
     if (!Mongoose.Types.ObjectId.isValid(id)) {
-      throw Boom.badRequest('ID is not valid');
+      throw Boom.badRequest("ID is not valid");
     }
 
     user = await this.findById(id);
 
     if (!user) {
-      throw Boom.notFound('User not found');
+      throw Boom.notFound("User not found");
     }
     return user;
   } catch (error) {
@@ -139,40 +167,49 @@ schema.statics.get = async function (id) {
 schema.statics.findAndGenerateToken = async function (options) {
   const { email, password, refreshObject } = options;
 
-  if (!email) throw Boom.badRequest('An email is required to generate a token');
+  if (!email) throw Boom.badRequest("An email is required to generate a token");
   if (!refreshObject) {
-    if (!password) throw Boom.badRequest('A password is required to authorize a token generation');
+    if (!password)
+      throw Boom.badRequest(
+        "A password is required to authorize a token generation"
+      );
   }
 
   const user = await this.findOne({ email });
   if (!user) {
-    throw Boom.notFound('User not found');
+    throw Boom.notFound("User not found");
   }
 
   if (!refreshObject) {
-    if (await user.passwordMatches(password) === false) {
-      throw Boom.unauthorized('Password must match to authorize a token generation');
+    if ((await user.passwordMatches(password)) === false) {
+      throw Boom.unauthorized(
+        "Password must match to authorize a token generation"
+      );
     }
   }
 
-  if (refreshObject && refreshObject.userEmail === email && Moment(refreshObject.expires).isBefore()) {
-    throw Boom.unauthorized('Invalid refresh token');
+  if (
+    refreshObject &&
+    refreshObject.userEmail === email &&
+    Moment(refreshObject.expires).isBefore()
+  ) {
+    throw Boom.unauthorized("Invalid refresh token");
   }
 
   return { user, accessToken: user.token() };
 };
 
 schema.statics.checkDuplicateEmail = function (error) {
-  if (error.name === "MongoError" && error.code === 11000) {
-    return Boom.conflict('Validation error', {
-      errors: [{
+  if (error.name === "MongoServerError" && error.code === 11000) {
+    return Boom.conflict("Validation error", {
+      errors: {
         field: "email",
-        location: 'body',
-        messages: ['"Email" already exists']
-      }]
+        location: "body",
+        message: '"Email" already exists',
+      },
     });
   }
   return error;
-}
+};
 
-module.exports = Mongoose.model('User', schema);
+module.exports = Mongoose.model("User", schema);
