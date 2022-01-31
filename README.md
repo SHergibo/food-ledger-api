@@ -36,7 +36,7 @@ Finally, this API offers an invitation system allowing you to invite other users
 #### 1) Clone the repo
 
 ```bash
-git clone https://github.com/SHergibo/back-bone.git
+git clone https://github.com/SHergibo/food-ledger-api.git
 cd back-bone
 rm -rf .git
 ```
