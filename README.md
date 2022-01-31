@@ -37,7 +37,7 @@ Finally, this API offers an invitation system allowing you to invite other users
 
 ```bash
 git clone https://github.com/SHergibo/food-ledger-api.git
-cd back-bone
+cd food-ledger-api
 rm -rf .git
 ```
 
