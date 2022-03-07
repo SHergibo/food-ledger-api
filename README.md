@@ -1,8 +1,8 @@
 # Food ledger REST API
 
-Food ledger API is a simple REST API developed using Node.js, Express and MongoDB. This API is used to save the data of all your food and non-perishable food. If you want, you can use [food-ledger-front](https://github.com/SHergibo/food-ledger-front) with this API to be able to directly use all the functionality of this API on your browser.
+Food ledger API is a simple REST API developed using Node.js, Express and MongoDB. This API is used to save the data of all your food and non-perishable food. If you want, you can use [food-ledger-front](https://github.com/SHergibo/food-ledger-front) with this API to be able to directly use all the features of this API on your browser.
 
-The main goal of this API is to send you an alert (via gmail) on future products that have a near expiration date, allowing you not to waste food that you have forgotten at the bottom of your cupboard.
+The main goal of this API is to send you an alert (via gmail) on future products whose expiration date is close, allowing you not to waste the food you forgot at the bottom of your cupboard.
 
 Another goal of the API is to automatically generate a shopping list with all the products you have consumed lately.
 
@@ -45,7 +45,7 @@ rm -rf .git
 
 Rename `development-sample.env`, `production-sample.env` and `test-sample.env` to `development.env`, `production.env` and `test.env`.
 
-In these files, you need to add your `JWT_SECRET`, you can alse change your DB name in `MONGO_URI`, for example `mongodb://localhost:27017/my-rest-api`.
+In these files, you need to add your `JWT_SECRET`, you can also change your DB name in `MONGO_URI`, for example `mongodb://localhost:27017/my-rest-api`.
 
 In `production.env`, you can add one or multiple urls in `CORS_ORIGIN` for security reasons. Only those urls will have access to the REST API.
 
@@ -55,7 +55,7 @@ for multiple urls: `CORS_ORIGIN = ["www.example.com", "www.example2.com"]`
 
 #### 3) Add your secrets gmail data
 
-This API used googleapis to send email to your gmail account. If you want to receive information about products that are close to their expiration date, you must have a gmail account, because there is no other option to send emails in this API.
+This API uses googleapis to send email to your gmail account. If you want to receive information about products that are close to their expiration date, you must have a gmail account, because there is no other option to send emails in this API.
 
 First thing to do, you need to rename `secrets-sample.js` to `secrets.js` in the config folder.
 
