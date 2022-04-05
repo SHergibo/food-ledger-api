@@ -15,7 +15,7 @@ router.route("/refresh-token").post(AuthController.refresh);
 router
   .route("/check-token")
   .get(authorize([ADMIN, LOGGED_USER]), (req, res, next) => {
-    return res.status(200).send();
+    return res.status(204).send();
   });
 
 router
