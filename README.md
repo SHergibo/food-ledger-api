@@ -23,7 +23,7 @@ Finally, this API offers an invitation system allowing you to invite other users
 - Logging with [morgan](https://github.com/expressjs/morgan)
 - Authentication and Authorization with [passport](http://passportjs.org)
 - Uses [socket-io](http://passportjs.org) to send in real time update / notification to the front-end
-- Send email with [Nodemailer](https://nodemailer.com/about/) via gmail with [googleapis](https://www.npmjs.com/package/googleapis)
+- Send email with [SendGrid](https://sendgrid.com/)
 - Uses [cron](https://www.npmjs.com/package/cron) to execute function on a schedule (for example: sending your shopping list a the end of the week)
 
 ## Requirements
@@ -55,7 +55,7 @@ for multiple urls: `CORS_ORIGIN = ["www.example.com", "www.example2.com"]`
 
 #### 3) Create your SendGrid account to receive email
 
-This API uses [SendGrid](https://sendgrid.com/) to receive/send emails. If you want to receive/send emails, you need to create a SendGrid account. Then, follow the initial step to add a sender email or domain, and then create an API key.
+This API uses [SendGrid](https://sendgrid.com/) to send emails. If you want the app to send you informations emails, you need to create a SendGrid account. Then, follow the initial step to add a sender email or domain, and then create an API key.
 
 Once you have added a sender email or domain and generated your SendGrid API key, you need to add them in your `development.env` and `production.env`.
 
