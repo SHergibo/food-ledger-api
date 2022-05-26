@@ -70,7 +70,7 @@ const findShoppingListAndMailIt = async (householdId, userId) => {
 
       const dynamic_template_data = {
         subject: "Votre liste de course pour votre stock !",
-        title: "Votre liste de course pour votre stock !",
+        title: "Gestion de stock",
         output: output,
       };
 
@@ -243,7 +243,7 @@ const findProductAndMailIt = async (
         const dynamic_template_data = {
           subject:
             "Vous avez des produits proches de leur date de péremptions!",
-          title: "Vous avez des produits proches de leur date de péremptions!",
+          title: "Gestion de stock",
           output: output,
         };
 
