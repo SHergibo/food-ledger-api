@@ -188,7 +188,7 @@ exports.sendMail = async (req, res, next) => {
 
       const dynamic_template_data = {
         subject: "Votre liste de course pour votre stock !",
-        title: "Votre liste de course pour votre stock !",
+        title: "Gestion de stock",
         output: output,
       };
 
