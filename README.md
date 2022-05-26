@@ -53,31 +53,22 @@ For example:
 for one url: `CORS_ORIGIN = "www.example.com"`
 for multiple urls: `CORS_ORIGIN = ["www.example.com", "www.example2.com"]`
 
-#### 3) Add your secrets gmail data
+#### 3) Create your SendGrid account to receive email
 
-This API uses googleapis to send email to your gmail account. If you want to receive information about products that are close to their expiration date, you must have a gmail account, because there is no other option to send emails in this API.
+This API uses [SendGrid](https://sendgrid.com/) to receive/send emails. If you want to receive/send emails, you need to create a SendGrid account. Then, follow the initial step to add a sender email or domain, and then create an API key.
 
-First thing to do, you need to rename `secrets-sample.js` to `secrets.js` in the config folder.
+Once you have added a sender email or domain and generated your SendGrid API key, you need to add them in your `development.env` and `production.env`.
 
-Next, you need to add the gmail address in the `MAIL` value.
+For example:
+`SENDGRID_FROM = "your sender email or domain here"`
+`SENDGRID_API_KEY = "your SendGrid API key here"`
 
-Lastly, you need to generate your `CLIENT_ID`, `CLIENT_SECRET` and `REFRESH_TOKEN`, to generate these value, read the information below.
+After that, you need to create a template for your email. To create a template, go to Email API menu in your SendGrid account and click on Dynamic Templates. Here, click on create a Dynamic Template, add a name and click on Create. Next, click on your new template and click on Add version, select Blank Template and then Code Editor. Delete everything in the editor and go to [here](https://github.com/SHergibo/food-ledger-api/blob/master/api/views/layouts/email-sendgrid-list-template.hbs), copy and paste everything from this file to the template editor in SendGrid, save and return to the previous page.
 
-##### 1) Generate your `CLIENT_ID` and `CLIENT_SECRET`
+Now click on your template, copy the Template ID and paste it in yout development.env and production.env.
 
-- Go to [Google Cloud](https://console.cloud.google.com/) and create a new project.
-- Search for “APIs & Services”
-- Click on “Credentials” > Click “+ Create credentials” > “OAuth client ID”
-- Type: Web Application
-- Name: “Enter Your Name of Client”
-- Authorized redirect URIs: https://developers.google.com/oauthplayground
-- Copy both the Client ID and Client Secret in `secrets.js`.
-
-##### 2) Generate your `REFRESH_TOKEN`
-
-- Go to [Oauth Playground](https://developers.google.com/oauthplayground/) > Click on Setting icon on the right > Enable Use your own Oauth credentials > Enter Oauth Client ID & Oauth Client Secret that you get from the above step > Close
-- In Select & Authorize APIs, Type https://mail.google.com > Authorize APIs > Login with the account that you want to send from (same as MAIL in `secrets.js`).
-- Click Exchange authorization code for tokens > Copy Refresh Token in `secrets.js`
+for example:
+`SENDGRID_LIST_TEMPLATE_ID = "your template id here"`
 
 #### 4) Install dependencies
 
