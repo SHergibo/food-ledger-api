@@ -8,7 +8,11 @@ const {
 
 sgMail.setApiKey(SendGridAPIKey);
 
-exports.sendGridEmail = async ({ to, templateType, dynamic_template_data }) => {
+exports.sendGridEmail = async ({
+  to,
+  templateType = "base",
+  dynamic_template_data,
+}) => {
   try {
     const msg = {
       to,
