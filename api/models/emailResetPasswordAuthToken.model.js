@@ -2,7 +2,7 @@ const Mongoose = require("mongoose"),
   Crypto = require("crypto"),
   Moment = require("moment-timezone"),
   { UrlEmail } = require("../../config/environment.config"),
-  { sendGridEmail } = require("./../helpers/sendGrid-mail.helper");
+  { sendGridEmail } = require("../helpers/sendGrid-mail.helper");
 
 let Schema = Mongoose.Schema;
 
